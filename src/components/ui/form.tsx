@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -42,14 +43,22 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
-
-  const fieldState = getFieldState(fieldContext.name, formState)
-
+  
+  // This is where the error occurs - we need to make sure formContext exists
+  const formContext = useFormContext()
+  
+  // Add a check to ensure formContext exists before destructuring
+  if (!formContext) {
+    throw new Error("useFormField should be used within <FormProvider>")
+  }
+  
+  const { getFieldState, formState } = formContext
+  
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
 
+  const fieldState = getFieldState(fieldContext.name, formState)
   const { id } = itemContext
 
   return {
