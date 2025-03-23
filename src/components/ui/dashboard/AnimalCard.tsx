@@ -6,6 +6,7 @@ import {
   Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface AnimalCardProps {
   animalId: number;
@@ -30,14 +31,24 @@ export function AnimalCard({
   className,
   onClick
 }: AnimalCardProps) {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      navigate(`/animal/${animalId}`);
+    }
+  };
+
   return (
     <div 
       className={cn("animal-card overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow-md", className)}
-      onClick={onClick}
+      onClick={handleClick}
       role="button"
       tabIndex={0}
       aria-label={`View details for ${animalName}`}
-      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick()}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
     >
       {image && (
         <div className="h-40 overflow-hidden">

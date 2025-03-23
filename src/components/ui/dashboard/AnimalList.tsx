@@ -1,9 +1,9 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { AnimalCard } from "./AnimalCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, Weight, Ruler } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Initial animal data
 const INITIAL_ANIMAL_DATA = [
@@ -137,7 +137,6 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               weight={animal.weight}
               length={animal.length}
               image={animal.image}
-              onClick={() => handleAnimalClick(animal.id)}
             />
           </div>
         ))}

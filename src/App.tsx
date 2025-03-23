@@ -11,6 +11,7 @@ import SignUp from "./pages/SignUp";
 import Enclosures from "./pages/Enclosures";
 import Environment from "./pages/Environment";
 import Animals from "./pages/Animals";
+import AnimalRecord from "./pages/AnimalRecord";
 import Analytics from "./pages/Analytics";
 import Schedule from "./pages/Schedule";
 import Notifications from "./pages/Notifications";
@@ -32,7 +33,7 @@ const App = () => (
           <Route path="/enclosures" element={<Enclosures />} />
           <Route path="/enclosure/:id" element={<Environment />} />
           <Route path="/animals" element={<Animals />} />
-          <Route path="/animal/:id" element={<Environment />} />
+          <Route path="/animal/:id" element={<AnimalRecord />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/notifications" element={<Notifications />} />
