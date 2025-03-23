@@ -5,8 +5,10 @@ import {
   Droplet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EnclosureValueEditor } from "./EnclosureValueEditor";
 
 interface EnvironmentCardProps {
+  enclosureId: number;
   enclosureName: string;
   temperature: number;
   humidity: number;
@@ -14,9 +16,11 @@ interface EnvironmentCardProps {
   pressure: number;
   image?: string;
   className?: string;
+  onUpdateValues?: (id: number, values: { temperature: number; humidity: number }) => void;
 }
 
 export function EnvironmentCard({
+  enclosureId,
   enclosureName,
   temperature,
   humidity,
@@ -24,6 +28,7 @@ export function EnvironmentCard({
   pressure,
   image,
   className,
+  onUpdateValues
 }: EnvironmentCardProps) {
   const getTemperatureColor = (temp: number) => {
     if (temp > 90) return "text-red-500";
@@ -74,10 +79,17 @@ export function EnvironmentCard({
           </div>
         </div>
 
-        <div className="mt-4 flex justify-end">
-          <button className="text-xs text-reptile-600 hover:text-reptile-700 font-medium">
+        <div className="mt-4 flex justify-between items-center">
+          <EnclosureValueEditor
+            enclosureId={enclosureId}
+            enclosureName={enclosureName}
+            currentTemperature={temperature}
+            currentHumidity={humidity}
+            onUpdate={onUpdateValues}
+          />
+          <span className="text-xs text-reptile-600 hover:text-reptile-700 font-medium">
             View Details
-          </button>
+          </span>
         </div>
       </div>
     </div>

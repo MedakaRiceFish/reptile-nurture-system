@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -121,7 +122,14 @@ const Alerts = () => {
                 {ALERTS_DATA.map((alert) => (
                   <TableRow key={alert.id}>
                     <TableCell>{getSeverityBadge(alert.severity)}</TableCell>
-                    <TableCell>{alert.enclosureName}</TableCell>
+                    <TableCell>
+                      <Link 
+                        to={`/enclosure/${alert.enclosureId}`} 
+                        className="text-reptile-600 hover:text-reptile-800 hover:underline font-medium flex items-center gap-1"
+                      >
+                        {alert.enclosureName}
+                      </Link>
+                    </TableCell>
                     <TableCell className="flex items-center gap-2">
                       {getAlertIcon(alert.type)}
                       <span className="capitalize">{alert.type}</span>

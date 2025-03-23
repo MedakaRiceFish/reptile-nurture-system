@@ -1,10 +1,14 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EnvironmentCard } from "./EnvironmentCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Thermometer, Droplet } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { EnclosureValueEditor } from "./EnclosureValueEditor";
 
-const ENCLOSURE_DATA = [
+// Initial enclosure data
+const INITIAL_ENCLOSURE_DATA = [
   {
     id: 1,
     name: "Gargoyle Gecko Enclosure",
@@ -49,9 +53,26 @@ interface EnclosureListProps {
 
 export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [enclosures, setEnclosures] = useState(INITIAL_ENCLOSURE_DATA);
 
   const handleEnclosureClick = (id: number) => {
     navigate(`/enclosure/${id}`);
+  };
+
+  const handleUpdateValues = (id: number, values: { temperature: number; humidity: number }) => {
+    setEnclosures(prevEnclosures => 
+      prevEnclosures.map(enclosure => 
+        enclosure.id === id 
+          ? { ...enclosure, ...values } 
+          : enclosure
+      )
+    );
+
+    toast({
+      title: "Environment updated",
+      description: `Enclosure #${id} temperature and humidity have been updated.`,
+    });
   };
 
   const getTemperatureColor = (temp: number) => {
@@ -76,32 +97,52 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
               <TableHead>Temperature</TableHead>
               <TableHead>Humidity</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ENCLOSURE_DATA.map((enclosure) => (
+            {enclosures.map((enclosure) => (
               <TableRow 
                 key={enclosure.id} 
-                onClick={() => handleEnclosureClick(enclosure.id)}
                 className="cursor-pointer hover:bg-muted/50"
               >
-                <TableCell className="font-medium">{enclosure.name}</TableCell>
-                <TableCell className={getTemperatureColor(enclosure.temperature)}>
+                <TableCell 
+                  className="font-medium"
+                  onClick={() => handleEnclosureClick(enclosure.id)}
+                >
+                  {enclosure.name}
+                </TableCell>
+                <TableCell 
+                  className={getTemperatureColor(enclosure.temperature)}
+                  onClick={() => handleEnclosureClick(enclosure.id)}
+                >
                   <div className="flex items-center gap-2">
                     <Thermometer className="h-4 w-4" />
                     {enclosure.temperature}°F
                   </div>
                 </TableCell>
-                <TableCell className={getHumidityColor(enclosure.humidity)}>
+                <TableCell 
+                  className={getHumidityColor(enclosure.humidity)}
+                  onClick={() => handleEnclosureClick(enclosure.id)}
+                >
                   <div className="flex items-center gap-2">
                     <Droplet className="h-4 w-4" />
                     {enclosure.humidity}%
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={() => handleEnclosureClick(enclosure.id)}>
                   <span className="text-xs px-2 py-0.5 bg-reptile-100 text-reptile-800 rounded-full">
                     Active
                   </span>
+                </TableCell>
+                <TableCell>
+                  <EnclosureValueEditor
+                    enclosureId={enclosure.id}
+                    enclosureName={enclosure.name}
+                    currentTemperature={enclosure.temperature}
+                    currentHumidity={enclosure.humidity}
+                    onUpdate={handleUpdateValues}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -114,19 +155,20 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {ENCLOSURE_DATA.map((enclosure) => (
+        {enclosures.map((enclosure) => (
           <div 
             key={enclosure.id} 
-            onClick={() => handleEnclosureClick(enclosure.id)}
             className="cursor-pointer transition-transform hover:scale-[1.02]"
           >
             <EnvironmentCard
+              enclosureId={enclosure.id}
               enclosureName={enclosure.name}
               temperature={enclosure.temperature}
               humidity={enclosure.humidity}
               light={enclosure.light}
               pressure={enclosure.pressure}
               image={enclosure.image}
+              onUpdateValues={handleUpdateValues}
             />
           </div>
         ))}
