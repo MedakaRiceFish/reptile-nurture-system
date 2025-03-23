@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -311,6 +310,13 @@ const Environment = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Status:</span>
+                    <Badge className={`${getStatusColor(enclosure.readingStatus)} text-white`}>
+                      {enclosure.readingStatus === "online" ? "Online" : 
+                      enclosure.readingStatus === "warning" ? "Warning" : "Offline"}
+                    </Badge>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Type:</span>
                     <span>{enclosure.type}</span>
@@ -326,13 +332,6 @@ const Environment = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Plants:</span>
                     <span>{enclosure.plants.join(", ")}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Status:</span>
-                    <Badge className={`${getStatusColor(enclosure.readingStatus)} text-white`}>
-                      {enclosure.readingStatus === "online" ? "Online" : 
-                      enclosure.readingStatus === "warning" ? "Warning" : "Offline"}
-                    </Badge>
                   </div>
                 </div>
               </CardContent>
@@ -495,3 +494,4 @@ const Environment = () => {
 };
 
 export default Environment;
+
