@@ -7,11 +7,27 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { X, Save } from "lucide-react";
 
+// Define the interface for environment/enclosure data
+interface EnvironmentDetails {
+  type: string;
+  size: string;
+  substrate: string;
+  plants: string[];
+}
+
+// Define form values type (note that plants is a string in the form)
+interface EnvironmentFormValues {
+  type: string;
+  size: string;
+  substrate: string;
+  plants: string;
+}
+
 interface EditEnvironmentDetailsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  enclosure: any;
-  onSave: (data: any) => void;
+  enclosure: EnvironmentDetails;
+  onSave: (data: EnvironmentDetails) => void;
 }
 
 export const EditEnvironmentDetailsDialog: React.FC<EditEnvironmentDetailsDialogProps> = ({
@@ -20,7 +36,7 @@ export const EditEnvironmentDetailsDialog: React.FC<EditEnvironmentDetailsDialog
   enclosure,
   onSave
 }) => {
-  const form = useForm({
+  const form = useForm<EnvironmentFormValues>({
     defaultValues: {
       type: enclosure?.type || "",
       size: enclosure?.size || "",
@@ -29,9 +45,9 @@ export const EditEnvironmentDetailsDialog: React.FC<EditEnvironmentDetailsDialog
     }
   });
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: EnvironmentFormValues) => {
     // Convert plants string back to array
-    const formattedData = {
+    const formattedData: EnvironmentDetails = {
       ...data,
       plants: data.plants.split(",").map((plant: string) => plant.trim()).filter(Boolean)
     };
