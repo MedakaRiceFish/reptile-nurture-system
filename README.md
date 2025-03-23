@@ -181,6 +181,62 @@ The application is designed to connect with Supabase for:
 - Storage for images and documents
 - Realtime subscriptions for live updates
 
+## Performance Optimization Guidelines
+
+To ensure exceptional performance and responsiveness similar to McMaster-Carr's website, we implement the following techniques tailored to our technology stack:
+
+### Server-Side Rendering (SSR)
+- Utilize Vite's SSR capabilities to render pages on the server
+- Reduce client-side rendering overhead and improve initial page load times
+- Implement hybrid rendering where appropriate, with SSR for initial loads and client-side updates
+
+### Data and Route Prefetching
+- Leverage React Query's prefetching capabilities to anticipate data needs
+- Implement route prefetching in React Router when users hover over navigation links
+- Preload critical route data to minimize waiting times during navigation
+
+### Optimized Data Management
+- Implement aggressive caching strategies with React Query
+- Set appropriate staleTime and cacheTime values based on data volatility
+- Utilize Supabase's optimized indexing and query capabilities
+- Structure the database schema for optimal query performance
+
+### Asset Optimization
+- Configure Vite to preload critical JavaScript and CSS assets
+- Implement code-splitting and dynamic imports for non-critical components
+- Optimize and compress images with proper formats (WebP, AVIF)
+- Specify fixed image dimensions to prevent layout shifts
+
+### CSS Optimization with Tailwind
+- Use Tailwind's JIT compilation to inline critical CSS
+- Purge unused CSS in production builds
+- Implement responsive designs with minimal CSS overhead
+- Group related utility classes for better readability and maintenance
+
+### JavaScript Performance
+- Utilize Vite's built-in code splitting for smaller bundles
+- Implement lazy loading for complex components and routes
+- Minimize JavaScript execution time through efficient algorithms
+- Avoid unnecessary re-renders with proper React component structure
+- Use React.memo and useMemo for computationally expensive operations
+
+### Static Asset Optimization
+- Implement fixed dimensions for all images to prevent layout shifts
+- Consider using sprite sheets for frequently used icons
+- Utilize modern image formats with appropriate fallbacks
+- Implement proper caching strategies for static assets
+
+### Network Optimization
+- Minimize API calls through effective caching and data management
+- Implement debouncing and throttling for user input events
+- Batch related operations where possible
+- Use optimistic UI updates for improved perceived performance
+
+### Monitoring and Continuous Optimization
+- Implement performance monitoring using browser tools and analytics
+- Regularly audit and improve based on Core Web Vitals metrics
+- Test performance across different devices and network conditions
+
 ## Future Development Roadmap
 
 - Mobile application for on-the-go monitoring
