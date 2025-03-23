@@ -14,34 +14,38 @@ const Dashboard = () => {
       <div className="max-w-[1600px] mx-auto animate-fade-up">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="Average Temperature"
+            title="AVERAGE TEMPERATURE"
             value="82°F"
             icon={<Thermometer className="w-6 h-6" />}
             change={{
               value: "2.5°F",
               positive: true,
             }}
+            className="min-h-[180px]"
           />
           <StatCard
-            title="Average Humidity"
+            title="AVERAGE HUMIDITY"
             value="64%"
             icon={<Droplet className="w-6 h-6" />}
             change={{
               value: "5%",
               positive: false,
             }}
+            className="min-h-[180px]"
           />
           <StatCard
-            title="Active Alerts"
+            title="ACTIVE ALERTS"
             value="3"
             icon={<Bell className="w-6 h-6" />}
             isAlert={true}
             linkTo="/alerts"
+            className="min-h-[180px]"
           />
           <StatCard
-            title="Upcoming Tasks"
+            title="UPCOMING TASKS"
             value="4"
             icon={<Clock className="w-6 h-6" />}
+            className="min-h-[180px]"
           />
         </div>
 
