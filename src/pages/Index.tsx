@@ -21,7 +21,6 @@ const Dashboard = () => {
               value: "2.5°F",
               positive: true,
             }}
-            className="min-h-[180px]"
           />
           <StatCard
             title="AVERAGE HUMIDITY"
@@ -31,7 +30,6 @@ const Dashboard = () => {
               value: "5%",
               positive: false,
             }}
-            className="min-h-[180px]"
           />
           <StatCard
             title="ACTIVE ALERTS"
@@ -39,13 +37,11 @@ const Dashboard = () => {
             icon={<Bell className="w-6 h-6" />}
             isAlert={true}
             linkTo="/alerts"
-            className="min-h-[180px]"
           />
           <StatCard
             title="UPCOMING TASKS"
             value="4"
             icon={<Clock className="w-6 h-6" />}
-            className="min-h-[180px]"
           />
         </div>
 
