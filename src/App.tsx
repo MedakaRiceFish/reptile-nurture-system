@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import Enclosures from "./pages/Enclosures";
 import Environment from "./pages/Environment";
 import Analytics from "./pages/Analytics";
@@ -27,6 +28,7 @@ const App = () => (
         <Routes>
           <Route path="/landing" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/" element={<Index />} />
           <Route path="/enclosures" element={<Enclosures />} />
           <Route path="/enclosure/:id" element={<Environment />} />

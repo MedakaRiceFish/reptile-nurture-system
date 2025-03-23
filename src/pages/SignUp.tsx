@@ -7,24 +7,30 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export default function Login() {
+export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error("Please enter both email and password");
+    if (!email || !password || !confirmPassword) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -32,8 +38,8 @@ export default function Login() {
       if (error) {
         toast.error(error.message);
       } else {
-        navigate("/");
-        toast.success("Logged in successfully");
+        toast.success("Sign up successful! Please check your email to confirm your account.");
+        navigate("/login");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -43,7 +49,7 @@ export default function Login() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -77,9 +83,9 @@ export default function Login() {
         
         <Card className="glass-card border-0 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
+            <CardTitle className="text-2xl text-center">Create an account</CardTitle>
             <CardDescription className="text-center">
-              Sign in to your account to continue
+              Enter your details to sign up
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -100,14 +106,9 @@ export default function Login() {
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="text-sm font-medium text-reptile-800">
-                    Password
-                  </label>
-                  <a href="#" className="text-xs text-reptile-600 hover:text-reptile-800">
-                    Forgot password?
-                  </a>
-                </div>
+                <label htmlFor="password" className="text-sm font-medium text-reptile-800">
+                  Password
+                </label>
                 <Input 
                   id="password"
                   type="password" 
@@ -119,16 +120,31 @@ export default function Login() {
                 />
               </div>
               
+              <div className="space-y-2">
+                <label htmlFor="confirm-password" className="text-sm font-medium text-reptile-800">
+                  Confirm Password
+                </label>
+                <Input 
+                  id="confirm-password"
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-white/80"
+                  disabled={isLoading}
+                />
+              </div>
+              
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading ? "Signing up..." : "Sign up"}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 text-center">
             <div className="text-sm">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-reptile-600 hover:text-reptile-800 font-medium">
-                Sign up
+              Already have an account?{" "}
+              <Link to="/login" className="text-reptile-600 hover:text-reptile-800 font-medium">
+                Sign in
               </Link>
             </div>
             
@@ -147,7 +163,7 @@ export default function Login() {
               <Button 
                 variant="outline" 
                 className="w-full bg-white/80"
-                onClick={handleGoogleSignIn}
+                onClick={handleGoogleSignUp}
                 type="button"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-google mr-2" viewBox="0 0 16 16">
