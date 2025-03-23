@@ -1,69 +1,220 @@
-# Welcome to your Lovable project
 
-## Project info
+# Zoo Management System
 
-**URL**: https://lovable.dev/projects/0ceb300a-3a6d-45c7-8d21-583162f9b226
+## Project Overview
 
-## How can I edit this code?
+This is a comprehensive Zoo Management System designed to help zookeepers and staff manage animals, enclosures, environmental conditions, scheduling, and analytics. The system provides an intuitive interface for tracking animal health, monitoring enclosure conditions, scheduling tasks, and generating insights.
 
-There are several ways of editing your application.
+## Key Features
 
-**Use Lovable**
+### Animals Management
+- Complete animal database with detailed profiles
+- Weight tracking with historical data and trend visualization
+- Health records and observations
+- Animal source/breeder information
+- Animal-to-enclosure assignment system
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0ceb300a-3a6d-45c7-8d21-583162f9b226) and start prompting.
+### Enclosures Management
+- Enclosure profiles with environmental parameters
+- Real-time environmental monitoring (temperature, humidity, etc.)
+- Maintenance scheduling and history tracking
+- Equipment status monitoring
 
-Changes made via Lovable will be committed automatically to this repo.
+### Environmental Monitoring
+- Sensor integration for critical parameters
+- Historical data visualization via charts
+- Alert system for out-of-range parameters
+- Customizable ranges for different species requirements
 
-**Use your preferred IDE**
+### Task Scheduling
+- Staff task assignment and scheduling
+- Maintenance reminders and tracking
+- Feeding schedules and special care requirements
+- Calendar integration with notifications
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Analytics and Reporting
+- Weight trend analysis for animal health
+- Environmental parameter correlation analysis
+- Maintenance efficiency metrics
+- Custom report generation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Notifications System
+- Real-time alerts for critical conditions
+- Scheduled reminders for routine tasks
+- Escalation paths for unresolved issues
+- Mobile-friendly notification delivery
 
-Follow these steps:
+## Technical Documentation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Project Structure
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+The project follows a component-based architecture with React and TypeScript, organized as follows:
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+├── components/
+│   ├── ui/               # UI components from shadcn/ui and custom components
+│   │   ├── dashboard/    # Specialized dashboard components
+│   │   └── layout/       # Layout components (Header, SideNav, etc.)
+├── hooks/                # Custom React hooks
+├── integrations/         # External service integrations (Supabase)
+├── lib/                  # Utility functions and helpers
+└── pages/                # Page components for each route
 ```
 
-**Edit a file directly in GitHub**
+### Routes
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application includes the following routes:
 
-**Use GitHub Codespaces**
+- `/` - Dashboard with overview statistics
+- `/landing` - Public landing page
+- `/login` - User authentication
+- `/signup` - New user registration
+- `/enclosures` - List of all enclosures
+- `/enclosure/:id` - Detailed view of specific enclosure with environmental data
+- `/animals` - List of all animals
+- `/animal/:id` - Detailed animal record with weight history
+- `/analytics` - Data visualization and reports
+- `/schedule` - Task scheduling and calendar
+- `/notifications` - System notifications and alerts
+- `/alerts` - Critical alerts requiring attention
+- `/settings` - System configuration and documentation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Data Models
 
-## What technologies are used for this project?
+#### Animal
+```typescript
+interface Animal {
+  id: number;
+  name: string;
+  species: string;
+  age: string; // Often stored as descriptive text (e.g., "2 years")
+  enclosureId: number;
+  imageUrl?: string;
+  weight: number; // Current weight in grams
+  sex: 'Male' | 'Female' | 'Unknown';
+  acquisitionDate?: string;
+  breederSource?: string;
+}
+```
 
-This project is built with .
+#### Weight Record
+```typescript
+interface WeightRecord {
+  date: string; // ISO date string
+  weight: number; // Weight in grams
+}
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+#### Enclosure
+```typescript
+interface Enclosure {
+  id: number;
+  name: string;
+  type: string;
+  capacity: number;
+  currentAnimals: number;
+  status: 'Active' | 'Maintenance' | 'Inactive';
+  lastCleaned?: string; // ISO date string
+}
+```
 
-## How can I deploy this project?
+#### Environmental Data
+```typescript
+interface EnvironmentalData {
+  enclosureId: number;
+  timestamp: string;
+  temperature: number;
+  humidity: number;
+  lightLevel: number;
+  waterQuality?: number;
+  airflow?: number;
+}
+```
 
-Simply open [Lovable](https://lovable.dev/projects/0ceb300a-3a6d-45c7-8d21-583162f9b226) and click on Share -> Publish.
+#### Maintenance Record
+```typescript
+interface MaintenanceRecord {
+  id: number;
+  enclosureId: number;
+  date: string;
+  type: string;
+  performedBy: string;
+  notes?: string;
+}
+```
 
-## I want to use a custom domain - is that possible?
+### Key Components
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+#### UI Components
+- `AnimalCard` - Displays animal summary information
+- `AnimalList` - Renders a filterable list of animals
+- `AnimalWeightChart` - Visualizes weight history over time
+- `EnclosureList` - Shows all enclosures with status indicators
+- `SensorChart` - Displays environmental parameter charts
+- `WeightHistoryList` - Tabular view of weight measurements
+- `EnvironmentCard` - Shows enclosure environmental conditions
+- `MainLayout` - Standard page layout with navigation
+
+#### Specialized Pages
+- `AnimalRecord` - Complete animal profile and history
+- `Environment` - Enclosure environmental monitoring and control
+- `Analytics` - Data visualization and reporting tools
+
+### Technologies Used
+
+- **Frontend Framework**: React with TypeScript
+- **UI Library**: shadcn/ui components
+- **Styling**: Tailwind CSS
+- **Routing**: React Router
+- **State Management**: React Query (TanStack Query)
+- **Data Visualization**: Recharts
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
+- **Building/Bundling**: Vite
+
+### Backend Integration
+
+The application is designed to connect with Supabase for:
+- Authentication and user management
+- Database for all application data
+- Storage for images and documents
+- Realtime subscriptions for live updates
+
+## Future Development Roadmap
+
+- Mobile application for on-the-go monitoring
+- Advanced analytics with predictive capabilities
+- Medical record integration
+- Dietary management system
+- Breeding program tracking
+- Public exhibit information portal
+- Staff management and scheduling
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
+4. Open the application at: `http://localhost:8080`
+
+## API Documentation
+
+The system is designed to work with a RESTful API providing the following endpoints:
+
+### Animals
+- `GET /animals` - Retrieve all animals
+- `GET /animals/:id` - Get specific animal details
+- `POST /animals` - Create new animal record
+- `PUT /animals/:id` - Update animal information
+- `DELETE /animals/:id` - Remove animal record
+- `GET /animals/:id/weight-history` - Get weight history for animal
+
+### Enclosures
+- `GET /enclosures` - List all enclosures
+- `GET /enclosures/:id` - Get enclosure details
+- `GET /enclosures/:id/environmental-data` - Get environmental readings
+- `GET /enclosures/:id/maintenance-history` - Get maintenance records
+- `POST /enclosures/:id/maintenance` - Record maintenance event
+
+The current implementation uses mock data for development purposes, with plans to integrate a full backend API.
