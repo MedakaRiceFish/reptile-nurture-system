@@ -26,7 +26,7 @@ export function StatCard({
   linkTo
 }: StatCardProps) {
   const ValueDisplay = () => (
-    <p className={cn("dash-value", isAlert && linkTo && "cursor-pointer hover:text-reptile-500 transition-colors flex items-center")}>
+    <p className={cn("dash-value", isAlert && linkTo && Number(value) > 0 && "cursor-pointer hover:text-reptile-500 transition-colors flex items-center")}>
       {value}
       {isAlert && Number(value) > 0 && (
         <span className="ml-1 text-xs bg-red-500 text-white rounded-full w-2 h-2"></span>
@@ -38,7 +38,7 @@ export function StatCard({
     <div className={cn("dash-stat", className)}>
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="dash-header whitespace-normal">{title}</h3>
+          <h3 className="dash-header whitespace-normal min-h-[40px] flex items-center">{title}</h3>
           
           {isAlert && linkTo && Number(value) > 0 ? (
             <Link to={linkTo}>
