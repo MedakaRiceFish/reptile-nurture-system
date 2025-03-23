@@ -143,8 +143,15 @@ const AnimalRecord = () => {
     navigate("/animals");
   };
 
-  const handleAddWeight = () => {
-    if (!newWeight || isNaN(parseFloat(newWeight))) {
+  const weightForm = useForm({
+    defaultValues: {
+      weight: "",
+      date: new Date()
+    }
+  });
+
+  const handleAddWeight = (data: any) => {
+    if (!data.weight || isNaN(parseFloat(data.weight))) {
       toast({
         title: "Invalid weight",
         description: "Please enter a valid weight value",
@@ -153,15 +160,15 @@ const AnimalRecord = () => {
       return;
     }
 
-    if (animal && newWeightDate) {
+    if (animal && data.date) {
       const newRecord = {
-        date: format(newWeightDate, "yyyy-MM-dd"),
-        weight: parseFloat(newWeight)
+        date: format(data.date, "yyyy-MM-dd"),
+        weight: parseFloat(data.weight)
       };
       
       const updatedAnimal = {
         ...animal,
-        weight: parseFloat(newWeight),
+        weight: parseFloat(data.weight),
         weightHistory: [...animal.weightHistory, newRecord].sort((a, b) => 
           new Date(a.date).getTime() - new Date(b.date).getTime()
         )
@@ -171,11 +178,11 @@ const AnimalRecord = () => {
       
       toast({
         title: "Weight record added",
-        description: `New weight of ${newWeight}g recorded for ${animal.name}`,
+        description: `New weight of ${data.weight}g recorded for ${animal.name}`,
       });
       
       setIsWeightDialogOpen(false);
-      setNewWeight("");
+      weightForm.reset();
     }
   };
 
@@ -630,44 +637,59 @@ const AnimalRecord = () => {
             <DialogHeader>
               <DialogTitle>Add Weight Record</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <FormLabel htmlFor="weight-date">Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="weight-date"
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newWeightDate ? format(newWeightDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={newWeightDate}
-                      onSelect={(date) => setNewWeightDate(date)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="grid gap-2">
-                <FormLabel htmlFor="weight">Weight (g)</FormLabel>
-                <Input
-                  id="weight"
-                  placeholder="Enter weight in grams"
-                  value={newWeight}
-                  onChange={(e) => setNewWeight(e.target.value)}
+            <Form {...weightForm}>
+              <form onSubmit={weightForm.handleSubmit(handleAddWeight)} className="space-y-4">
+                <FormField
+                  control={weightForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start text-left font-normal"
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsWeightDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddWeight}>Save Record</Button>
-            </DialogFooter>
+                <FormField
+                  control={weightForm.control}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weight (g)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter weight in grams"
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button variant="outline" type="button" onClick={() => setIsWeightDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit">Save Record</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>

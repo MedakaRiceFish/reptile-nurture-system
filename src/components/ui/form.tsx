@@ -27,6 +27,10 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 )
 
+const FormFieldContext = React.createContext<FormFieldContextValue>(
+  {} as FormFieldContextValue
+)
+
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
@@ -43,13 +47,18 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  
-  // This is where the error occurs - we need to make sure formContext exists
   const formContext = useFormContext()
-  
-  // Add a check to ensure formContext exists before destructuring
+
+  // If no FormProvider is present, return default empty values instead of throwing
   if (!formContext) {
-    throw new Error("useFormField should be used within <FormProvider>")
+    return {
+      id: itemContext?.id || "",
+      name: fieldContext?.name || "",
+      formItemId: "",
+      formDescriptionId: "",
+      formMessageId: "",
+      error: undefined,
+    }
   }
   
   const { getFieldState, formState } = formContext
