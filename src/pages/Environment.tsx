@@ -11,8 +11,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
-import { EnclosureValueEditor } from "@/components/ui/dashboard/EnclosureValueEditor";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 const ENCLOSURE_DATA = [
   {
@@ -107,6 +108,9 @@ const Environment = () => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [temperature, setTemperature] = useState(enclosure?.temperature || 75);
   const [humidity, setHumidity] = useState(enclosure?.humidity || 50);
+  const [isValueDialogOpen, setIsValueDialogOpen] = useState(false);
+  const [editingField, setEditingField] = useState<"temperature" | "humidity" | null>(null);
+  const [tempValue, setTempValue] = useState(0);
   
   const inhabitantForm = useForm<InhabitantFormData>({
     defaultValues: {
@@ -123,13 +127,25 @@ const Environment = () => {
     }
   });
   
-  const handleUpdateValues = (id: number, values: { temperature: number; humidity: number }) => {
-    setTemperature(values.temperature);
-    setHumidity(values.humidity);
+  const handleOpenValueDialog = (field: "temperature" | "humidity") => {
+    setEditingField(field);
+    setTempValue(field === "temperature" ? temperature : humidity);
+    setIsValueDialogOpen(true);
+  };
+  
+  const handleSaveValue = () => {
+    if (editingField === "temperature") {
+      setTemperature(tempValue);
+    } else if (editingField === "humidity") {
+      setHumidity(tempValue);
+    }
+    
     toast({
       title: "Environment updated",
-      description: `${enclosure?.name} temperature and humidity have been updated.`,
+      description: `${enclosure?.name} ${editingField} has been updated.`,
     });
+    
+    setIsValueDialogOpen(false);
   };
   
   if (!enclosure) {
@@ -264,9 +280,64 @@ const Environment = () => {
                     <div className="rounded-full p-2 bg-amber-100 text-amber-600">
                       <Thermometer className="h-5 w-5" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm text-muted-foreground">Temperature</p>
-                      <p className="text-2xl font-semibold">{temperature}°F</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-2xl font-semibold">{temperature}°F</p>
+                        <Dialog open={isValueDialogOpen && editingField === "temperature"} onOpenChange={(open) => {
+                          if (!open) setIsValueDialogOpen(false);
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 text-xs px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              onClick={() => handleOpenValueDialog("temperature")}
+                            >
+                              <Pen className="h-3 w-3 mr-1" />
+                              Set value
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Set Temperature</DialogTitle>
+                            </DialogHeader>
+                            <div className="py-4 space-y-6">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Thermometer className="h-4 w-4 text-amber-500" />
+                                    <Label htmlFor="temperature">Temperature</Label>
+                                  </div>
+                                  <div className="font-medium">{tempValue}°F</div>
+                                </div>
+                                <Slider
+                                  id="temperature"
+                                  min={65}
+                                  max={100}
+                                  step={1}
+                                  value={[tempValue]}
+                                  onValueChange={(value) => setTempValue(value[0])}
+                                  className="w-full"
+                                />
+                                <Input
+                                  type="number"
+                                  value={tempValue}
+                                  onChange={(e) => setTempValue(Number(e.target.value))}
+                                  min={65}
+                                  max={100}
+                                  className="col-span-2 h-9"
+                                />
+                              </div>
+
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setIsValueDialogOpen(false)}>Cancel</Button>
+                                <Button onClick={handleSaveValue}>Save Changes</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -276,30 +347,65 @@ const Environment = () => {
                     <div className="rounded-full p-2 bg-blue-100 text-blue-600">
                       <Droplet className="h-5 w-5" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm text-muted-foreground">Humidity</p>
-                      <p className="text-2xl font-semibold">{humidity}%</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-2xl font-semibold">{humidity}%</p>
+                        <Dialog open={isValueDialogOpen && editingField === "humidity"} onOpenChange={(open) => {
+                          if (!open) setIsValueDialogOpen(false);
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 text-xs px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => handleOpenValueDialog("humidity")}
+                            >
+                              <Pen className="h-3 w-3 mr-1" />
+                              Set value
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Set Humidity</DialogTitle>
+                            </DialogHeader>
+                            <div className="py-4 space-y-6">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Droplet className="h-4 w-4 text-blue-500" />
+                                    <Label htmlFor="humidity">Humidity</Label>
+                                  </div>
+                                  <div className="font-medium">{tempValue}%</div>
+                                </div>
+                                <Slider
+                                  id="humidity"
+                                  min={20}
+                                  max={90}
+                                  step={1}
+                                  value={[tempValue]}
+                                  onValueChange={(value) => setTempValue(value[0])}
+                                  className="w-full"
+                                />
+                                <Input
+                                  type="number"
+                                  value={tempValue}
+                                  onChange={(e) => setTempValue(Number(e.target.value))}
+                                  min={20}
+                                  max={90}
+                                  className="col-span-2 h-9"
+                                />
+                              </div>
+
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setIsValueDialogOpen(false)}>Cancel</Button>
+                                <Button onClick={handleSaveValue}>Save Changes</Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="mb-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      Environment Control
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <EnclosureValueEditor
-                      enclosureId={enclosureId}
-                      enclosureName={enclosure.name}
-                      currentTemperature={temperature}
-                      currentHumidity={humidity}
-                      onUpdate={handleUpdateValues}
-                    />
                   </CardContent>
                 </Card>
               </div>
