@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -10,8 +9,7 @@ import {
   Bell, 
   Settings, 
   BarChart3, 
-  Droplet,
-  Lizard
+  Droplet
 } from "lucide-react";
 
 type NavItem = {
@@ -34,7 +32,7 @@ const navItems: NavItem[] = [
   {
     label: "Animals",
     href: "/animals",
-    icon: <Lizard className="w-5 h-5" />,
+    icon: <PawPrint className="w-5 h-5" />,
   },
   {
     label: "Data & Analytics",
