@@ -12,7 +12,7 @@ export const ANIMALS_DATA = [
     feedingSchedule: "Every 2 days",
     breederSource: "Reptile World",
     description: "Friendly and active gecko with distinctive markings. Responds well to handling and has a healthy appetite.",
-    image: "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1591913139831-6a5a1a5bfe1c?w=800&auto=format&fit=crop&q=60",
     weightHistory: [
       { date: "2023-08-01", weight: 32 },
       { date: "2023-09-01", weight: 33 },
@@ -35,7 +35,7 @@ export const ANIMALS_DATA = [
     feedingSchedule: "Daily",
     breederSource: "Exotic Pets Inc.",
     description: "Mature bearded dragon with vibrant coloration. Very docile and enjoys basking under the heat lamp.",
-    image: "https://images.unsplash.com/photo-1497339100210-9e87df79c218?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1517364203918-c3e66fe8cbf9?w=800&auto=format&fit=crop&q=60",
     weightHistory: [
       { date: "2023-08-01", weight: 340 },
       { date: "2023-09-01", weight: 345 },
@@ -58,7 +58,7 @@ export const ANIMALS_DATA = [
     feedingSchedule: "Every 7 days",
     breederSource: "Snake Specialists",
     description: "Well-tempered ball python with beautiful patterns. Has never refused a meal and sheds regularly.",
-    image: "https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1517519014922-8fc06b814a0e?w=800&auto=format&fit=crop&q=60",
     weightHistory: [
       { date: "2023-08-01", weight: 1150 },
       { date: "2023-09-01", weight: 1160 },
@@ -81,7 +81,7 @@ export const ANIMALS_DATA = [
     feedingSchedule: "Every 2 days",
     breederSource: "Local Breeder",
     description: "Young leopard gecko with vibrant spots. Still growing and has a great appetite for crickets.",
-    image: "https://images.unsplash.com/photo-1504450874802-0ba2bcd9b5ae?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1562117532-d969b8cf8f4c?w=800&auto=format&fit=crop&q=60",
     weightHistory: [
       { date: "2023-08-01", weight: 20 },
       { date: "2023-09-01", weight: 22 },

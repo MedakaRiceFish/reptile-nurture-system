@@ -27,7 +27,7 @@ const ENCLOSURE_DATA = [
     humidity: 65,
     lastReading: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
     readingStatus: "online",
-    image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1580502778874-ad1e78d2e252?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Spike", species: "Gargoyle Gecko", age: "3 years" },
       { id: 2, name: "Crest", species: "Gargoyle Gecko", age: "2 years" }
@@ -45,7 +45,7 @@ const ENCLOSURE_DATA = [
     humidity: 35,
     lastReading: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
     readingStatus: "online",
-    image: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1534415378365-b8dd2e261c6d?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Rex", species: "Bearded Dragon", age: "4 years" }
     ],
@@ -61,7 +61,7 @@ const ENCLOSURE_DATA = [
     humidity: 60,
     lastReading: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
     readingStatus: "warning",
-    image: "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1558958806-d5088c734714?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Monty", species: "Ball Python", age: "5 years" }
     ],
@@ -77,7 +77,7 @@ const ENCLOSURE_DATA = [
     humidity: 45,
     lastReading: new Date(Date.now() - 1000 * 60 * 60 * 24), // 24 hours ago
     readingStatus: "offline",
-    image: "https://images.unsplash.com/photo-1487252665478-49b61b47f302?w=800&auto=format&fit=crop&q=60",
+    image: "https://images.unsplash.com/photo-1617775047746-5b89a320f916?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Spots", species: "Leopard Gecko", age: "2 years" },
       { id: 2, name: "Dots", species: "Leopard Gecko", age: "1 year" }
