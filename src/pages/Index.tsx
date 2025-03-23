@@ -32,14 +32,14 @@ const Dashboard = () => {
             }}
           />
           <StatCard
-            title="Active\nAlerts"
+            title="Active\\Alerts"
             value="3"
             icon={<Bell className="w-6 h-6" />}
             isAlert={true}
             linkTo="/alerts"
           />
           <StatCard
-            title="Upcoming\nTasks"
+            title="Upcoming\\Tasks"
             value="4"
             icon={<Clock className="w-6 h-6" />}
           />

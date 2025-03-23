@@ -39,7 +39,12 @@ export function StatCard({
       <div className="flex justify-between items-start">
         <div>
           <h3 className="dash-header min-h-[48px] flex items-center">
-            {title}
+            {title.split("\\").map((part, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <br />}
+                {part}
+              </React.Fragment>
+            ))}
           </h3>
           
           {isAlert && linkTo && Number(value) > 0 ? (
