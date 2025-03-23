@@ -102,7 +102,13 @@ const Environment = () => {
   const enclosureId = Number(id);
   const { toast } = useToast();
   
-  const enclosure = ENCLOSURE_DATA.find(e => e.id === enclosureId);
+  const enclosureData = ENCLOSURE_DATA.find(e => e.id === enclosureId);
+  
+  const [enclosure, setEnclosure] = useState(enclosureData ? {
+    ...enclosureData,
+    inhabitants: [...enclosureData.inhabitants],
+    hardware: [...enclosureData.hardware]
+  } : null);
   
   const [imageUrl, setImageUrl] = useState<string>(enclosure?.image || "");
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
@@ -180,14 +186,44 @@ const Environment = () => {
   };
   
   const handleAddInhabitant = (data: InhabitantFormData) => {
-    console.log("Adding new inhabitant:", data);
-    // In a real app, this would update state or make API calls
+    if (!enclosure) return;
+    
+    const newInhabitant = {
+      id: Math.max(0, ...enclosure.inhabitants.map(i => i.id)) + 1,
+      ...data
+    };
+    
+    setEnclosure({
+      ...enclosure,
+      inhabitants: [...enclosure.inhabitants, newInhabitant]
+    });
+    
+    toast({
+      title: "Inhabitant added",
+      description: `${data.name} has been added to ${enclosure.name}.`,
+    });
+    
     inhabitantForm.reset();
   };
   
   const handleAddHardware = (data: HardwareFormData) => {
-    console.log("Adding new hardware:", data);
-    // In a real app, this would update state or make API calls
+    if (!enclosure) return;
+    
+    const newHardware = {
+      id: Math.max(0, ...enclosure.hardware.map(h => h.id)) + 1,
+      ...data
+    };
+    
+    setEnclosure({
+      ...enclosure,
+      hardware: [...enclosure.hardware, newHardware]
+    });
+    
+    toast({
+      title: "Hardware added",
+      description: `${data.name} has been added to ${enclosure.name}.`,
+    });
+    
     hardwareForm.reset();
   };
 
@@ -582,3 +618,4 @@ const Environment = () => {
 };
 
 export default Environment;
+
