@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, Edit, Search, Weight, ArrowLeft, Camera, Save, X } from "lucide-react";
+import { Calendar as CalendarIcon, Edit, Search, Weight, ArrowLeft, Camera, Save, X, Plus, MessageSquare } from "lucide-react";
 import { AnimalWeightChart } from "@/components/ui/dashboard/AnimalWeightChart";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
@@ -17,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 
 // Initial data for animal details
 const ANIMALS_DATA = [
@@ -124,6 +124,8 @@ const AnimalRecord = () => {
   const [isSearchingEnclosure, setIsSearchingEnclosure] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNote, setNewNote] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -132,6 +134,12 @@ const AnimalRecord = () => {
   const [animalData, setAnimalData] = useState(() => 
     ANIMALS_DATA.find(animal => animal.id === animalId)
   );
+
+  // Add animal notes state
+  const [animalNotes, setAnimalNotes] = useState<{date: string, note: string}[]>([
+    // Initial example note
+    {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
+  ]);
 
   const animal = animalData;
 
@@ -208,6 +216,33 @@ const AnimalRecord = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Handle adding a new note
+  const handleAddNote = () => {
+    if (!newNote.trim()) {
+      toast({
+        title: "Invalid note",
+        description: "Please enter a valid note",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newNoteEntry = {
+      date: format(new Date(), "yyyy-MM-dd"),
+      note: newNote.trim()
+    };
+    
+    setAnimalNotes([...animalNotes, newNoteEntry]);
+    
+    toast({
+      title: "Note added",
+      description: `New note added for ${animal?.name}`,
+    });
+    
+    setIsAddingNote(false);
+    setNewNote("");
   };
 
   // Handle editing the animal details
@@ -466,11 +501,72 @@ const AnimalRecord = () => {
 
         {/* Description and Notes */}
         <Card>
-          <CardHeader>
-            <CardTitle>Notes & Description</CardTitle>
+          <CardHeader className="pb-0">
+            <div className="flex justify-between items-center">
+              <CardTitle>Notes & Description</CardTitle>
+              <Button onClick={() => setIsAddingNote(true)} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Note
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{animal.description}</p>
+            <div className="space-y-4">
+              {/* Static Description */}
+              <div className="p-4 bg-muted/40 rounded-md">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
+                <p className="text-sm">{animal.description}</p>
+              </div>
+              
+              {/* Notes Log */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-4">Notes Log</h3>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {animalNotes.map((note, index) => (
+                    <div key={index} className="border-l-2 border-primary pl-4 py-1">
+                      <div className="flex items-start">
+                        <MessageSquare className="w-4 h-4 text-muted-foreground mt-1 mr-2" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">{note.date}</p>
+                          <p className="text-sm mt-1">{note.note}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Add Note Form */}
+              {isAddingNote && (
+                <div className="border border-border rounded-md p-4 mt-4">
+                  <h3 className="text-sm font-medium mb-2">Add a New Note</h3>
+                  <Textarea
+                    placeholder="Enter your note here (max 500 characters)..."
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value.slice(0, 500))}
+                    className="min-h-[100px] mb-2"
+                  />
+                  <div className="text-xs text-muted-foreground mb-4">
+                    {newNote.length}/500 characters
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingNote(false);
+                        setNewNote("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleAddNote}>
+                      Save Note
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
