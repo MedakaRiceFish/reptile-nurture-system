@@ -2,27 +2,23 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Droplet, User, Image, List, CalendarIcon, Plus, Settings, Clock, Activity, Pencil, ArrowRight, CalendarClock } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { useToast } from "@/hooks/use-toast";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { ArrowLeft, Thermometer, Droplet, Sun, Wind, AlertTriangle, Monitor, Users, Lock, Turtle, Leaf } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { ANIMALS_DATA } from "@/data/animalsData";
 
-const ENCLOSURE_DATA = [
+// Sample data for enclosures
+const enclosureData = [
   {
     id: 1,
-    name: "Gargoyle Gecko Enclosure",
+    name: "Desert Terrarium",
+    type: "Arid",
+    size: "36\" x 18\" x 18\"",
+    substrate: "Desert Sand Mix",
+    plants: ["Aloe Vera", "Desert Grass"],
     temperature: 78,
     humidity: 65,
     lastReading: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
@@ -32,144 +28,99 @@ const ENCLOSURE_DATA = [
       { id: 1, name: "Spike", species: "Gargoyle Gecko", age: "3 years" },
       { id: 2, name: "Crest", species: "Gargoyle Gecko", age: "2 years" }
     ],
-    hardware: [
-      { id: 1, name: "UVB Light", lastMaintenance: "2023-05-15", nextMaintenance: "2023-11-15" },
-      { id: 2, name: "Heating Pad", lastMaintenance: "2023-06-20", nextMaintenance: "2023-12-20" },
-      { id: 3, name: "Misting System", lastMaintenance: "2023-07-10", nextMaintenance: "2024-01-10" }
+    history: [
+      { date: "2024-02-01", temp: 78, humidity: 65 },
+      { date: "2024-02-02", temp: 77, humidity: 64 },
+      { date: "2024-02-03", temp: 79, humidity: 66 },
+      { date: "2024-02-04", temp: 78, humidity: 65 },
     ]
   },
   {
     id: 2,
-    name: "Bearded Dragon Habitat",
+    name: "Large Rock Habitat",
+    type: "Desert",
+    size: "48\" x 24\" x 24\"",
+    substrate: "Reptile Carpet with Slate Tiles",
+    plants: ["Desert Succulent", "Air Plant"],
     temperature: 92,
     humidity: 35,
     lastReading: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
     readingStatus: "online",
     image: "https://images.unsplash.com/photo-1534415378365-b8dd2e261c6d?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
-      { id: 1, name: "Rex", species: "Bearded Dragon", age: "4 years" }
+      { id: 2, name: "Rex", species: "Bearded Dragon", age: "4 years" }
     ],
-    hardware: [
-      { id: 1, name: "Heat Lamp", lastMaintenance: "2023-06-05", nextMaintenance: "2023-12-05" },
-      { id: 2, name: "UVB Fixture", lastMaintenance: "2023-07-20", nextMaintenance: "2024-01-20" }
+    history: [
+      { date: "2024-02-01", temp: 91, humidity: 35 },
+      { date: "2024-02-02", temp: 92, humidity: 34 },
+      { date: "2024-02-03", temp: 93, humidity: 33 },
+      { date: "2024-02-04", temp: 92, humidity: 35 },
     ]
   },
   {
     id: 3,
-    name: "Ball Python Terrarium",
+    name: "Forest Terrarium",
+    type: "Tropical",
+    size: "36\" x 18\" x 36\"",
+    substrate: "Coconut Fiber Mix",
+    plants: ["Pothos", "Fern", "Moss"],
     temperature: 82,
     humidity: 60,
     lastReading: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
     readingStatus: "warning",
     image: "https://images.unsplash.com/photo-1558958806-d5088c734714?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
-      { id: 1, name: "Monty", species: "Ball Python", age: "5 years" }
+      { id: 3, name: "Monty", species: "Ball Python", age: "5 years" }
     ],
-    hardware: [
-      { id: 1, name: "Heating Pad", lastMaintenance: "2023-05-25", nextMaintenance: "2023-11-25" },
-      { id: 2, name: "Thermostat", lastMaintenance: "2023-06-15", nextMaintenance: "2023-12-15" }
+    history: [
+      { date: "2024-02-01", temp: 82, humidity: 60 },
+      { date: "2024-02-02", temp: 81, humidity: 62 },
+      { date: "2024-02-03", temp: 83, humidity: 61 },
+      { date: "2024-02-04", temp: 82, humidity: 60 },
     ]
   },
   {
     id: 4,
-    name: "Leopard Gecko Home",
+    name: "Small Desert Setup",
+    type: "Arid",
+    size: "24\" x 18\" x 12\"",
+    substrate: "Fine Desert Sand",
+    plants: ["Small Cactus"],
     temperature: 80,
     humidity: 45,
     lastReading: new Date(Date.now() - 1000 * 60 * 60 * 24), // 24 hours ago
     readingStatus: "offline",
     image: "https://images.unsplash.com/photo-1617775047746-5b89a320f916?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
-      { id: 1, name: "Spots", species: "Leopard Gecko", age: "2 years" },
+      { id: 4, name: "Spots", species: "Leopard Gecko", age: "2 years" },
       { id: 2, name: "Dots", species: "Leopard Gecko", age: "1 year" }
     ],
-    hardware: [
-      { id: 1, name: "Heat Mat", lastMaintenance: "2023-07-05", nextMaintenance: "2024-01-05" },
-      { id: 2, name: "LED Light", lastMaintenance: "2023-08-10", nextMaintenance: "2024-02-10" }
+    history: [
+      { date: "2024-02-01", temp: 81, humidity: 44 },
+      { date: "2024-02-02", temp: 80, humidity: 45 },
+      { date: "2024-02-03", temp: 82, humidity: 43 },
+      { date: "2024-02-04", temp: 80, humidity: 45 },
     ]
-  }
+  },
 ];
-
-interface InhabitantFormData {
-  name: string;
-  species: string;
-  age: string;
-}
-
-interface HardwareFormData {
-  name: string;
-  lastMaintenance: string;
-  nextMaintenance: string;
-}
 
 const Environment = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const enclosureId = Number(id);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview");
   
-  const enclosureData = ENCLOSURE_DATA.find(e => e.id === enclosureId);
-  
-  const [enclosure, setEnclosure] = useState(enclosureData ? {
-    ...enclosureData,
-    inhabitants: [...enclosureData.inhabitants],
-    hardware: [...enclosureData.hardware]
-  } : null);
-  
-  const [imageUrl, setImageUrl] = useState<string>(enclosure?.image || "");
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [temperature, setTemperature] = useState(enclosure?.temperature || 75);
-  const [humidity, setHumidity] = useState(enclosure?.humidity || 50);
-  const [isValueDialogOpen, setIsValueDialogOpen] = useState(false);
-  const [editingField, setEditingField] = useState<"temperature" | "humidity" | null>(null);
-  const [tempValue, setTempValue] = useState(0);
-  
-  const inhabitantForm = useForm<InhabitantFormData>({
-    defaultValues: {
-      name: "",
-      species: "",
-      age: ""
-    }
-  });
-  
-  const hardwareForm = useForm<HardwareFormData>({
-    defaultValues: {
-      name: "",
-      lastMaintenance: new Date().toISOString().split('T')[0],
-      nextMaintenance: new Date(Date.now() + 1000 * 60 * 60 * 24 * 180).toISOString().split('T')[0]
-    }
-  });
-  
-  const handleOpenValueDialog = (field: "temperature" | "humidity") => {
-    setEditingField(field);
-    setTempValue(field === "temperature" ? temperature : humidity);
-    setIsValueDialogOpen(true);
-  };
-  
-  const handleSaveValue = () => {
-    if (editingField === "temperature") {
-      setTemperature(tempValue);
-    } else if (editingField === "humidity") {
-      setHumidity(tempValue);
-    }
-    
-    toast({
-      title: "Environment updated",
-      description: `${enclosure?.name} ${editingField} has been updated.`,
-    });
-    
-    setIsValueDialogOpen(false);
-  };
+  const enclosureId = parseInt(id || "0");
+  const enclosure = enclosureData.find(enc => enc.id === enclosureId);
   
   if (!enclosure) {
     return (
-      <MainLayout pageTitle="Enclosure Details">
-        <div className="max-w-[1600px] mx-auto animate-fade-up">
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight mb-4">Enclosure Not Found</h2>
-            <p className="text-muted-foreground">
-              The requested enclosure could not be found. Please return to the enclosures page.
-            </p>
-            <Button className="mt-4" onClick={() => navigate("/enclosures")}>
+      <MainLayout pageTitle="Enclosure Not Found">
+        <div className="max-w-[1200px] mx-auto py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Enclosure Not Found</h2>
+            <p className="mb-6">We couldn't find an enclosure with the ID {id}.</p>
+            <Button onClick={() => navigate("/enclosures")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Enclosures
             </Button>
           </div>
@@ -177,487 +128,319 @@ const Environment = () => {
       </MainLayout>
     );
   }
-  
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setImageUrl(result);
-        setIsImageDialogOpen(false);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  const handleAddInhabitant = (data: InhabitantFormData) => {
-    if (!enclosure) return;
-    
-    const newInhabitant = {
-      id: Math.max(0, ...enclosure.inhabitants.map(i => i.id)) + 1,
-      ...data
-    };
-    
-    setEnclosure({
-      ...enclosure,
-      inhabitants: [...enclosure.inhabitants, newInhabitant]
-    });
-    
-    toast({
-      title: "Inhabitant added",
-      description: `${data.name} has been added to ${enclosure.name}.`,
-    });
-    
-    inhabitantForm.reset();
-  };
-  
-  const handleAddHardware = (data: HardwareFormData) => {
-    if (!enclosure) return;
-    
-    const newHardware = {
-      id: Math.max(0, ...enclosure.hardware.map(h => h.id)) + 1,
-      ...data
-    };
-    
-    setEnclosure({
-      ...enclosure,
-      hardware: [...enclosure.hardware, newHardware]
-    });
-    
-    toast({
-      title: "Hardware added",
-      description: `${data.name} has been added to ${enclosure.name}.`,
-    });
-    
-    hardwareForm.reset();
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
-
-  const getTimeSinceLastReading = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
-    
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online': return 'bg-green-500 text-green-50';
-      case 'warning': return 'bg-yellow-500 text-yellow-50';
-      case 'offline': return 'bg-red-500 text-red-50';
-      default: return 'bg-gray-500 text-gray-50';
+      case "online": return "bg-green-500";
+      case "warning": return "bg-yellow-500";
+      case "offline": return "bg-red-500";
+      default: return "bg-gray-500";
     }
   };
 
+  const getTemperatureColor = (temp: number) => {
+    if (temp > 90) return "text-red-500";
+    if (temp < 70) return "text-blue-500";
+    return "text-green-500";
+  };
+
+  const getHumidityColor = (hum: number) => {
+    if (hum > 80) return "text-blue-500";
+    if (hum < 40) return "text-yellow-500";
+    return "text-green-500";
+  };
+
   return (
-    <MainLayout pageTitle={enclosure.name}>
-      <div className="max-w-[1600px] mx-auto animate-fade-up">
-        <div className="glass-card p-8 rounded-2xl mb-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="md:w-1/3">
-              <div className="relative rounded-lg overflow-hidden h-64 bg-muted">
-                <img 
-                  src={imageUrl} 
-                  alt={enclosure.name} 
-                  className="w-full h-full object-cover"
-                />
-                <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="icon" className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm">
-                      <Image className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Update Enclosure Image</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="image-upload">Upload Image</Label>
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Upload a photo of your enclosure. Supported formats: JPG, PNG, GIF.
-                      </p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-            
-            <div className="md:w-2/3">
-              <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold tracking-tight">{enclosure.name}</h1>
-                <Badge className={`${getStatusColor(enclosure.readingStatus)} flex items-center gap-1.5`}>
-                  <Activity className="h-3.5 w-3.5" />
-                  {enclosure.readingStatus.charAt(0).toUpperCase() + enclosure.readingStatus.slice(1)}
-                </Badge>
-                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  Last reading: {getTimeSinceLastReading(enclosure.lastReading)}
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <Card>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="rounded-full p-2 bg-amber-100 text-amber-600">
-                      <Thermometer className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Temperature</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-2xl font-semibold">{temperature}°F</p>
-                        <Dialog open={isValueDialogOpen && editingField === "temperature"} onOpenChange={(open) => {
-                          if (!open) setIsValueDialogOpen(false);
-                        }}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 text-xs px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                              onClick={() => handleOpenValueDialog("temperature")}
-                            >
-                              Set threshold
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle>Set Temperature</DialogTitle>
-                            </DialogHeader>
-                            <div className="py-4 space-y-6">
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Thermometer className="h-4 w-4 text-amber-500" />
-                                    <Label htmlFor="temperature">Temperature</Label>
-                                  </div>
-                                  <div className="font-medium">{tempValue}°F</div>
-                                </div>
-                                <Slider
-                                  id="temperature"
-                                  min={65}
-                                  max={100}
-                                  step={1}
-                                  value={[tempValue]}
-                                  onValueChange={(value) => setTempValue(value[0])}
-                                  className="w-full"
-                                />
-                                <Input
-                                  type="number"
-                                  value={tempValue}
-                                  onChange={(e) => setTempValue(Number(e.target.value))}
-                                  min={65}
-                                  max={100}
-                                  className="col-span-2 h-9"
-                                />
-                              </div>
-
-                              <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setIsValueDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleSaveValue}>Save Changes</Button>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="rounded-full p-2 bg-blue-100 text-blue-600">
-                      <Droplet className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Humidity</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-2xl font-semibold">{humidity}%</p>
-                        <Dialog open={isValueDialogOpen && editingField === "humidity"} onOpenChange={(open) => {
-                          if (!open) setIsValueDialogOpen(false);
-                        }}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 text-xs px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => handleOpenValueDialog("humidity")}
-                            >
-                              Set threshold
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle>Set Humidity</DialogTitle>
-                            </DialogHeader>
-                            <div className="py-4 space-y-6">
-                              <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Droplet className="h-4 w-4 text-blue-500" />
-                                    <Label htmlFor="humidity">Humidity</Label>
-                                  </div>
-                                  <div className="font-medium">{tempValue}%</div>
-                                </div>
-                                <Slider
-                                  id="humidity"
-                                  min={20}
-                                  max={90}
-                                  step={1}
-                                  value={[tempValue]}
-                                  onValueChange={(value) => setTempValue(value[0])}
-                                  className="w-full"
-                                />
-                                <Input
-                                  type="number"
-                                  value={tempValue}
-                                  onChange={(e) => setTempValue(Number(e.target.value))}
-                                  min={20}
-                                  max={90}
-                                  className="col-span-2 h-9"
-                                />
-                              </div>
-
-                              <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setIsValueDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleSaveValue}>Save Changes</Button>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
+    <MainLayout pageTitle={`${enclosure.name} - Environment`}>
+      <div className="max-w-[1200px] mx-auto py-6">
+        <div className="mb-6 flex items-center">
+          <Button variant="outline" onClick={() => navigate("/enclosures")} className="mr-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">{enclosure.name}</h1>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2">
+            <Card>
+              <div className="relative">
+                <img 
+                  src={enclosure.image} 
+                  alt={enclosure.name} 
+                  className="w-full h-[300px] object-cover rounded-t-lg"
+                />
+                <div className="absolute top-4 right-4">
+                  <Badge className={`${getStatusColor(enclosure.readingStatus)} text-white`}>
+                    {enclosure.readingStatus === "online" ? "Online" : 
+                     enclosure.readingStatus === "warning" ? "Warning" : "Offline"}
+                  </Badge>
+                </div>
+              </div>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="flex flex-col items-center p-4 bg-muted/50 rounded-lg">
+                    <Thermometer className="h-6 w-6 mb-2 text-muted-foreground" />
+                    <span className={`text-2xl font-semibold ${getTemperatureColor(enclosure.temperature)}`}>
+                      {enclosure.temperature}°F
+                    </span>
+                    <span className="text-sm text-muted-foreground">Temperature</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center p-4 bg-muted/50 rounded-lg">
+                    <Droplet className="h-6 w-6 mb-2 text-muted-foreground" />
+                    <span className={`text-2xl font-semibold ${getHumidityColor(enclosure.humidity)}`}>
+                      {enclosure.humidity}%
+                    </span>
+                    <span className="text-sm text-muted-foreground">Humidity</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center p-4 bg-muted/50 rounded-lg">
+                    <Sun className="h-6 w-6 mb-2 text-muted-foreground" />
+                    <span className="text-2xl font-semibold">12/12</span>
+                    <span className="text-sm text-muted-foreground">Light Cycle</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center p-4 bg-muted/50 rounded-lg">
+                    <Wind className="h-6 w-6 mb-2 text-muted-foreground" />
+                    <span className="text-2xl font-semibold">Low</span>
+                    <span className="text-sm text-muted-foreground">Ventilation</span>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  Last reading: {format(enclosure.lastReading, "PPp")}
+                  {enclosure.readingStatus !== "online" && (
+                    <span className="flex items-center mt-2 text-amber-500">
+                      <AlertTriangle className="h-4 w-4 mr-1" />
+                      {enclosure.readingStatus === "warning" 
+                        ? "Sensor readings delayed. Check connection." 
+                        : "Sensors offline. Maintenance required."}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-muted-foreground" />
                   Inhabitants
                 </CardTitle>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button size="sm" variant="outline" className="h-8">
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      Add
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Add New Inhabitant</SheetTitle>
-                    </SheetHeader>
-                    <div className="py-6">
-                      <Form {...inhabitantForm}>
-                        <form onSubmit={inhabitantForm.handleSubmit(handleAddInhabitant)} className="space-y-4">
-                          <FormField
-                            control={inhabitantForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Name" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={inhabitantForm.control}
-                            name="species"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Species</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Species" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={inhabitantForm.control}
-                            name="age"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Age</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Age (e.g. 2 years)" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <Button type="submit" className="w-full">Add Inhabitant</Button>
-                        </form>
-                      </Form>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {enclosure.inhabitants.map(inhabitant => (
-                  <Link 
-                    key={inhabitant.id} 
-                    to={`/inhabitant/${inhabitant.id}`}
-                    className="block"
-                  >
-                    <div className="flex justify-between items-center p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors">
-                      <div>
-                        <p className="font-medium">{inhabitant.name}</p>
-                        <p className="text-sm text-muted-foreground">{inhabitant.species} • {inhabitant.age}</p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Hardware & Maintenance
-                </CardTitle>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button size="sm" variant="outline" className="h-8">
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      Add
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Add New Hardware</SheetTitle>
-                    </SheetHeader>
-                    <div className="py-6">
-                      <Form {...hardwareForm}>
-                        <form onSubmit={hardwareForm.handleSubmit(handleAddHardware)} className="space-y-4">
-                          <FormField
-                            control={hardwareForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Hardware Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Hardware Name" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={hardwareForm.control}
-                            name="lastMaintenance"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Last Maintenance Date</FormLabel>
-                                <FormControl>
-                                  <Input type="date" {...field} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={hardwareForm.control}
-                            name="nextMaintenance"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Next Maintenance Date</FormLabel>
-                                <FormControl>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        className={cn(
-                                          "w-full justify-start text-left font-normal",
-                                          !field.value && "text-muted-foreground"
-                                        )}
-                                      >
-                                        <CalendarClock className="mr-2 h-4 w-4" />
-                                        {field.value ? format(new Date(field.value), "PPP") : <span>Select a date</span>}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={field.value ? new Date(field.value) : undefined}
-                                        onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
-                                        initialFocus
-                                        className="p-3 pointer-events-auto"
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <Button type="submit" className="w-full">Add Hardware</Button>
-                        </form>
-                      </Form>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {enclosure.hardware.map(item => (
-                  <div key={item.id} className="flex justify-between items-center p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-full p-1.5 bg-muted">
-                        <List className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
-                          <div className="flex items-center">
-                            <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                            Last Maintenance: {formatDate(item.lastMaintenance)}
-                          </div>
-                          <div className="flex items-center">
-                            <CalendarClock className="h-3.5 w-3.5 mr-1" />
-                            Next Maintenance: {formatDate(item.nextMaintenance || item.lastMaintenance)}
-                          </div>
+                <CardDescription>
+                  Animals living in this enclosure
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {enclosure.inhabitants.map((animal) => {
+                    // Find the complete animal data to get the correct ID
+                    const animalData = ANIMALS_DATA.find(a => a.name === animal.name) || 
+                                      { id: animal.id, name: animal.name };
+                    
+                    return (
+                      <Link 
+                        key={animal.name} 
+                        to={`/animal/${animalData.id}`}
+                        className="flex items-center p-2 rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-reptile-100 flex items-center justify-center mr-3">
+                          <Turtle className="h-5 w-5 text-reptile-500" />
                         </div>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                        <div>
+                          <h4 className="font-medium">{animal.name}</h4>
+                          <p className="text-sm text-muted-foreground">{animal.species} • {animal.age}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Leaf className="h-5 w-5 mr-2 text-muted-foreground" />
+                  Environment Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Type:</span>
+                    <span>{enclosure.type}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Size:</span>
+                    <span>{enclosure.size}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Substrate:</span>
+                    <span>{enclosure.substrate}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Plants:</span>
+                    <span>{enclosure.plants.join(", ")}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview">
+            <Card>
+              <CardHeader>
+                <CardTitle>Environment Overview</CardTitle>
+                <CardDescription>
+                  Comprehensive view of the enclosure's environmental conditions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  This {enclosure.type.toLowerCase()} environment is designed to replicate the natural habitat for {enclosure.inhabitants.map(i => i.species).join(" and ")}. It maintains optimal temperature and humidity levels with automated systems.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-medium mb-2">Climate Control</h3>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <Thermometer className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>Daytime temperature: {enclosure.temperature}°F (regulated)</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <Thermometer className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>Nighttime temperature: {enclosure.temperature - 5}°F (natural drop)</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <Droplet className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>Humidity maintained at {enclosure.humidity}% with misting system</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <Sun className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>UVB lighting on 12-hour cycle with sunrise/sunset simulation</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium mb-2">Monitoring</h3>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <Monitor className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>Wireless sensors with real-time data collection</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <AlertTriangle className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>Automated alerts for environmental deviations</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-reptile-100 p-1 rounded-full mr-2 mt-0.5">
+                          <Lock className="h-3 w-3 text-reptile-600" />
+                        </span>
+                        <span>Secure, remote access to system controls</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Temperature & Humidity History</CardTitle>
+                <CardDescription>
+                  Recorded environmental data for {enclosure.name}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left pb-2">Date</th>
+                        <th className="text-left pb-2">Temperature</th>
+                        <th className="text-left pb-2">Humidity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {enclosure.history.map((record, index) => (
+                        <tr key={index} className="border-b last:border-0">
+                          <td className="py-3">{record.date}</td>
+                          <td className={`py-3 ${getTemperatureColor(record.temp)}`}>
+                            {record.temp}°F
+                          </td>
+                          <td className={`py-3 ${getHumidityColor(record.humidity)}`}>
+                            {record.humidity}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="maintenance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Maintenance Schedule</CardTitle>
+                <CardDescription>
+                  Upcoming and past maintenance activities
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center text-muted-foreground py-12">
+                  Maintenance schedule information will be available soon.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Environment Settings</CardTitle>
+                <CardDescription>
+                  Configure the enclosure environment settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center text-muted-foreground py-12">
+                  Environment control settings will be available soon.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
