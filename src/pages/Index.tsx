@@ -33,8 +33,10 @@ const Dashboard = () => {
           />
           <StatCard
             title="Active Alerts"
-            value="0"
+            value="3"
             icon={<Bell className="w-6 h-6" />}
+            isAlert={true}
+            linkTo="/alerts"
           />
           <StatCard
             title="Upcoming Tasks"
@@ -58,6 +60,6 @@ const Dashboard = () => {
       </div>
     </MainLayout>
   );
-};
+}
 
 export default Dashboard;

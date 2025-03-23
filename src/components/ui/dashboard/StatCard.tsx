@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {
@@ -11,15 +12,41 @@ interface StatCardProps {
     positive: boolean;
   };
   className?: string;
+  isAlert?: boolean;
+  linkTo?: string;
 }
 
-export function StatCard({ title, value, icon, change, className }: StatCardProps) {
+export function StatCard({ 
+  title, 
+  value, 
+  icon, 
+  change, 
+  className,
+  isAlert = false,
+  linkTo
+}: StatCardProps) {
+  const ValueDisplay = () => (
+    <p className={cn("dash-value", isAlert && linkTo && "cursor-pointer hover:text-reptile-500 transition-colors flex items-center")}>
+      {value}
+      {isAlert && Number(value) > 0 && (
+        <span className="ml-1 text-xs bg-red-500 text-white rounded-full w-2 h-2"></span>
+      )}
+    </p>
+  );
+
   return (
     <div className={cn("dash-stat", className)}>
       <div className="flex justify-between items-start">
         <div>
           <h3 className="dash-header">{title}</h3>
-          <p className="dash-value">{value}</p>
+          
+          {isAlert && linkTo && Number(value) > 0 ? (
+            <Link to={linkTo}>
+              <ValueDisplay />
+            </Link>
+          ) : (
+            <ValueDisplay />
+          )}
           
           {change && (
             <p className="mt-1 text-sm flex items-center gap-1">
