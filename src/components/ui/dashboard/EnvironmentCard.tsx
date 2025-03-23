@@ -2,9 +2,7 @@
 import React from "react";
 import { 
   Thermometer, 
-  Droplet, 
-  Sun, 
-  BarChart2 
+  Droplet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +56,7 @@ export function EnvironmentCard({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
             <Thermometer className="h-5 w-5 mb-1 text-muted-foreground" />
             <span className={cn("sensor-value", getTemperatureColor(temperature))}>
@@ -73,22 +71,6 @@ export function EnvironmentCard({
               {humidity}%
             </span>
             <span className="sensor-label">Humidity</span>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-            <Sun className="h-5 w-5 mb-1 text-muted-foreground" />
-            <span className="sensor-value text-sand-500">
-              {light} PAR
-            </span>
-            <span className="sensor-label">Light</span>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-            <BarChart2 className="h-5 w-5 mb-1 text-muted-foreground" />
-            <span className="sensor-value text-slate-500">
-              {pressure} hPa
-            </span>
-            <span className="sensor-label">Pressure</span>
           </div>
         </div>
 

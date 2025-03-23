@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { EnvironmentCard } from "./EnvironmentCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Thermometer, Droplet, Sun, BarChart2 } from "lucide-react";
+import { Thermometer, Droplet } from "lucide-react";
 
 const ENCLOSURE_DATA = [
   {
@@ -76,8 +76,6 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
               <TableHead>Enclosure Name</TableHead>
               <TableHead>Temperature</TableHead>
               <TableHead>Humidity</TableHead>
-              <TableHead>Light</TableHead>
-              <TableHead>Pressure</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -99,18 +97,6 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
                   <div className="flex items-center gap-2">
                     <Droplet className="h-4 w-4" />
                     {enclosure.humidity}%
-                  </div>
-                </TableCell>
-                <TableCell className="text-sand-500">
-                  <div className="flex items-center gap-2">
-                    <Sun className="h-4 w-4" />
-                    {enclosure.light} PAR
-                  </div>
-                </TableCell>
-                <TableCell className="text-slate-500">
-                  <div className="flex items-center gap-2">
-                    <BarChart2 className="h-4 w-4" />
-                    {enclosure.pressure} hPa
                   </div>
                 </TableCell>
                 <TableCell>
