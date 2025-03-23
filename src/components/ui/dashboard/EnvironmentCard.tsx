@@ -16,6 +16,7 @@ interface EnvironmentCardProps {
   image?: string;
   className?: string;
   onUpdateValues?: (id: number, values: { temperature: number; humidity: number }) => void;
+  onClick?: () => void;
 }
 
 export function EnvironmentCard({
@@ -27,7 +28,8 @@ export function EnvironmentCard({
   pressure,
   image,
   className,
-  onUpdateValues
+  onUpdateValues,
+  onClick
 }: EnvironmentCardProps) {
   const getTemperatureColor = (temp: number) => {
     if (temp > 90) return "text-red-500";
@@ -42,7 +44,14 @@ export function EnvironmentCard({
   };
 
   return (
-    <div className={cn("enclosure-card overflow-hidden rounded-lg border bg-card shadow-sm", className)}>
+    <div 
+      className={cn("enclosure-card overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow-md", className)}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${enclosureName}`}
+      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick()}
+    >
       {image && (
         <div className="h-40 overflow-hidden">
           <img 
@@ -76,12 +85,6 @@ export function EnvironmentCard({
             </span>
             <span className="sensor-label">Humidity</span>
           </div>
-        </div>
-
-        <div className="mt-4 flex justify-end items-center">
-          <span className="text-xs text-reptile-600 hover:text-reptile-700 font-medium">
-            View Details
-          </span>
         </div>
       </div>
     </div>

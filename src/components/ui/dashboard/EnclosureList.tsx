@@ -168,7 +168,7 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
               light={enclosure.light}
               pressure={enclosure.pressure}
               image={enclosure.image}
-              onUpdateValues={handleUpdateValues}
+              onClick={() => handleEnclosureClick(enclosure.id)}
             />
           </div>
         ))}
