@@ -1,16 +1,15 @@
-
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Thermometer, Droplet, Sun, Wind, AlertTriangle, Monitor, Users, Lock, Turtle, Leaf } from "lucide-react";
+import { ArrowLeft, Thermometer, Droplet, Sun, Wind, AlertTriangle, Monitor, Users, Lock, Turtle, Leaf, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { ANIMALS_DATA } from "@/data/animalsData";
+import { useToast } from "@/hooks/use-toast";
 
-// Sample data for enclosures
 const enclosureData = [
   {
     id: 1,
@@ -108,9 +107,44 @@ const Environment = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const [enclosures, setEnclosures] = useState(enclosureData);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   const enclosureId = parseInt(id || "0");
-  const enclosure = enclosureData.find(enc => enc.id === enclosureId);
+  const enclosureIndex = enclosures.findIndex(enc => enc.id === enclosureId);
+  const enclosure = enclosureIndex !== -1 ? enclosures[enclosureIndex] : null;
+  
+  const handlePhotoButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && enclosureIndex !== -1) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const imageUrl = event.target.result as string;
+          setImagePreview(imageUrl);
+          
+          const updatedEnclosures = [...enclosures];
+          updatedEnclosures[enclosureIndex] = {
+            ...updatedEnclosures[enclosureIndex],
+            image: imageUrl
+          };
+          setEnclosures(updatedEnclosures);
+          
+          toast({
+            title: "Photo updated",
+            description: `${enclosure?.name}'s photo has been updated successfully`,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   if (!enclosure) {
     return (
@@ -166,11 +200,24 @@ const Environment = () => {
             <Card>
               <div className="relative">
                 <img 
-                  src={enclosure.image} 
+                  src={imagePreview || enclosure.image} 
                   alt={enclosure.name} 
                   className="w-full h-[300px] object-cover rounded-t-lg"
                 />
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 flex space-x-2">
+                  <Button size="sm" variant="secondary" className="h-8" onClick={handlePhotoButtonClick}>
+                    <Camera className="w-4 h-4 mr-1" />
+                    Upload Photo
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+                <div className="absolute top-4 right-32">
                   <Badge className={`${getStatusColor(enclosure.readingStatus)} text-white`}>
                     {enclosure.readingStatus === "online" ? "Online" : 
                      enclosure.readingStatus === "warning" ? "Warning" : "Offline"}
@@ -237,7 +284,6 @@ const Environment = () => {
               <CardContent>
                 <div className="space-y-4">
                   {enclosure.inhabitants.map((animal) => {
-                    // Find the complete animal data to get the correct ID
                     const animalData = ANIMALS_DATA.find(a => a.name === animal.name) || 
                                       { id: animal.id, name: animal.name };
                     
