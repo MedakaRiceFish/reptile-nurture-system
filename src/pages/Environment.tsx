@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Clock, Activity, Pencil } from "lucide-react";
+import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Clock, Activity, Pencil, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -481,15 +480,19 @@ const Environment = () => {
             <CardContent>
               <div className="space-y-2">
                 {enclosure.inhabitants.map(inhabitant => (
-                  <div key={inhabitant.id} className="flex justify-between items-center p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors">
-                    <div>
-                      <p className="font-medium">{inhabitant.name}</p>
-                      <p className="text-sm text-muted-foreground">{inhabitant.species} • {inhabitant.age}</p>
+                  <Link 
+                    key={inhabitant.id} 
+                    to={`/inhabitant/${inhabitant.id}`}
+                    className="block"
+                  >
+                    <div className="flex justify-between items-center p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors">
+                      <div>
+                        <p className="font-medium">{inhabitant.name}</p>
+                        <p className="text-sm text-muted-foreground">{inhabitant.species} • {inhabitant.age}</p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <Button variant="ghost" size="icon">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>
