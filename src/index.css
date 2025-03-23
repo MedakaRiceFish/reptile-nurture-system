@@ -124,18 +124,6 @@
     @apply bg-white/90 dark:bg-black/80 backdrop-blur-md border border-white/20 dark:border-white/10;
   }
   
-  .dash-stat {
-    @apply glass-card p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01] min-h-[180px] flex flex-col;
-  }
-  
-  .dash-header {
-    @apply text-sm font-medium text-muted-foreground uppercase tracking-wide;
-  }
-  
-  .dash-value {
-    @apply text-3xl font-semibold tracking-tight mt-4;
-  }
-  
   .enclosure-card {
     @apply glass-card p-6 rounded-2xl transition-all duration-300;
   }
