@@ -38,8 +38,8 @@ export function StatCard({
     <div className={cn("dash-stat", className)}>
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="dash-header whitespace-normal min-h-[48px] flex items-center">
-            <span className="max-w-[120px] inline-block break-words">{title}</span>
+          <h3 className="dash-header min-h-[48px] flex items-center">
+            {title}
           </h3>
           
           {isAlert && linkTo && Number(value) > 0 ? (
