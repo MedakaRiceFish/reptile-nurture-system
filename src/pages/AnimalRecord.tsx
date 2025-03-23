@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, Edit, Search, Weight, ArrowLeft } from "lucide-react";
+import { Calendar as CalendarIcon, Edit, Search, Weight, ArrowLeft, Camera, Save, X } from "lucide-react";
 import { AnimalWeightChart } from "@/components/ui/dashboard/AnimalWeightChart";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import { WeightHistoryList } from "@/components/ui/dashboard/WeightHistoryList";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
 
 // Initial data for animal details
 const ANIMALS_DATA = [
@@ -118,10 +122,18 @@ const AnimalRecord = () => {
   const [newWeight, setNewWeight] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchingEnclosure, setIsSearchingEnclosure] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // Find the animal with the matching ID
   const animalId = parseInt(id || "0");
-  const animal = ANIMALS_DATA.find(animal => animal.id === animalId);
+  const [animalData, setAnimalData] = useState(() => 
+    ANIMALS_DATA.find(animal => animal.id === animalId)
+  );
+
+  const animal = animalData;
 
   // Handle going back
   const handleBack = () => {
@@ -130,9 +142,108 @@ const AnimalRecord = () => {
 
   // Handle adding a new weight record
   const handleAddWeight = () => {
-    // In a real app, this would update the database
-    setIsAddingWeight(false);
-    setNewWeight("");
+    if (!newWeight || isNaN(parseFloat(newWeight))) {
+      toast({
+        title: "Invalid weight",
+        description: "Please enter a valid weight value",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (animal && newWeightDate) {
+      const newRecord = {
+        date: format(newWeightDate, "yyyy-MM-dd"),
+        weight: parseFloat(newWeight)
+      };
+      
+      // In a real app, this would update the database
+      const updatedAnimal = {
+        ...animal,
+        weight: parseFloat(newWeight),
+        weightHistory: [...animal.weightHistory, newRecord].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        )
+      };
+      
+      setAnimalData(updatedAnimal);
+      
+      toast({
+        title: "Weight record added",
+        description: `New weight of ${newWeight}g recorded for ${animal.name}`,
+      });
+      
+      setIsAddingWeight(false);
+      setNewWeight("");
+    }
+  };
+
+  // Handle photo upload button click
+  const handlePhotoButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result && animal) {
+          const imageUrl = event.target.result as string;
+          setImagePreview(imageUrl);
+          
+          // In a real app, this would upload the file to a server and get a URL back
+          // For now, we'll just update the local state
+          setAnimalData({
+            ...animal,
+            image: imageUrl
+          });
+          
+          toast({
+            title: "Photo updated",
+            description: `${animal.name}'s photo has been updated successfully`,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle editing the animal details
+  const form = useForm({
+    defaultValues: {
+      name: animal?.name || "",
+      species: animal?.species || "",
+      age: animal?.age.toString() || "",
+      length: animal?.length.toString() || "",
+      feedingSchedule: animal?.feedingSchedule || "",
+      breederSource: animal?.breederSource || "",
+      description: animal?.description || ""
+    }
+  });
+
+  const handleEditSubmit = (data: any) => {
+    if (animal) {
+      const updatedAnimal = {
+        ...animal,
+        name: data.name,
+        species: data.species,
+        age: parseInt(data.age),
+        length: parseInt(data.length),
+        feedingSchedule: data.feedingSchedule,
+        breederSource: data.breederSource,
+        description: data.description
+      };
+      
+      setAnimalData(updatedAnimal);
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "Animal details updated",
+        description: `${data.name}'s details have been updated successfully`,
+      });
+    }
   };
 
   // Filter enclosures for search
@@ -182,15 +293,27 @@ const AnimalRecord = () => {
           <Card className="lg:col-span-1">
             <div className="relative">
               <img 
-                src={animal.image} 
+                src={imagePreview || animal.image} 
                 alt={animal.name} 
                 className="w-full h-[300px] object-cover rounded-t-lg"
               />
-              <div className="absolute top-4 right-4">
-                <Button size="sm" variant="secondary" className="h-8">
+              <div className="absolute top-4 right-4 flex space-x-2">
+                <Button size="sm" variant="secondary" className="h-8" onClick={handlePhotoButtonClick}>
+                  <Camera className="w-4 h-4 mr-1" />
+                  Upload
+                </Button>
+                <Button size="sm" variant="secondary" className="h-8" onClick={() => setIsEditDialogOpen(true)}>
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
                 </Button>
+                {/* Hidden file input */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
             </div>
             <CardContent className="pt-6">
@@ -244,6 +367,18 @@ const AnimalRecord = () => {
                                 onClick={() => {
                                   setIsSearchingEnclosure(false);
                                   // In a real app, this would update the animal's enclosure
+                                  if (animal) {
+                                    setAnimalData({
+                                      ...animal,
+                                      enclosure: enclosure.id,
+                                      enclosureName: enclosure.name
+                                    });
+                                    
+                                    toast({
+                                      title: "Enclosure updated",
+                                      description: `${animal.name} has been moved to ${enclosure.name}`,
+                                    });
+                                  }
                                 }}
                               >
                                 {enclosure.name}
@@ -338,6 +473,125 @@ const AnimalRecord = () => {
             <p className="text-muted-foreground">{animal.description}</p>
           </CardContent>
         </Card>
+
+        {/* Edit Animal Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Animal Details</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleEditSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="species"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Species</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Age (years)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" min="0" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="length"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Length (cm)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" min="0" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="feedingSchedule"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Feeding Schedule</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="breederSource"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Breeder Source</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <textarea
+                          className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
