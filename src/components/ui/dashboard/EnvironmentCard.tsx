@@ -5,7 +5,6 @@ import {
   Droplet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EnclosureValueEditor } from "./EnclosureValueEditor";
 
 interface EnvironmentCardProps {
   enclosureId: number;
@@ -79,14 +78,7 @@ export function EnvironmentCard({
           </div>
         </div>
 
-        <div className="mt-4 flex justify-between items-center">
-          <EnclosureValueEditor
-            enclosureId={enclosureId}
-            enclosureName={enclosureName}
-            currentTemperature={temperature}
-            currentHumidity={humidity}
-            onUpdate={onUpdateValues}
-          />
+        <div className="mt-4 flex justify-end items-center">
           <span className="text-xs text-reptile-600 hover:text-reptile-700 font-medium">
             View Details
           </span>

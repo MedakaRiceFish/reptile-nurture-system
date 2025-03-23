@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -12,8 +11,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
+import { EnclosureValueEditor } from "@/components/ui/dashboard/EnclosureValueEditor";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data for the enclosure details
 const ENCLOSURE_DATA = [
   {
     id: 1,
@@ -99,11 +99,14 @@ const Environment = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const enclosureId = Number(id);
+  const { toast } = useToast();
   
   const enclosure = ENCLOSURE_DATA.find(e => e.id === enclosureId);
   
   const [imageUrl, setImageUrl] = useState<string>(enclosure?.image || "");
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [temperature, setTemperature] = useState(enclosure?.temperature || 75);
+  const [humidity, setHumidity] = useState(enclosure?.humidity || 50);
   
   const inhabitantForm = useForm<InhabitantFormData>({
     defaultValues: {
@@ -119,6 +122,15 @@ const Environment = () => {
       lastMaintenance: new Date().toISOString().split('T')[0]
     }
   });
+  
+  const handleUpdateValues = (id: number, values: { temperature: number; humidity: number }) => {
+    setTemperature(values.temperature);
+    setHumidity(values.humidity);
+    toast({
+      title: "Environment updated",
+      description: `${enclosure?.name} temperature and humidity have been updated.`,
+    });
+  };
   
   if (!enclosure) {
     return (
@@ -254,7 +266,7 @@ const Environment = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Temperature</p>
-                      <p className="text-2xl font-semibold">{enclosure.temperature}°F</p>
+                      <p className="text-2xl font-semibold">{temperature}°F</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -266,8 +278,28 @@ const Environment = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Humidity</p>
-                      <p className="text-2xl font-semibold">{enclosure.humidity}%</p>
+                      <p className="text-2xl font-semibold">{humidity}%</p>
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="mb-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      Environment Control
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <EnclosureValueEditor
+                      enclosureId={enclosureId}
+                      enclosureName={enclosure.name}
+                      currentTemperature={temperature}
+                      currentHumidity={humidity}
+                      onUpdate={handleUpdateValues}
+                    />
                   </CardContent>
                 </Card>
               </div>
