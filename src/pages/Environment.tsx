@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Thermometer, Droplet, Sun, Wind, AlertTriangle, Monitor, Users, Lock, Turtle, Leaf, Camera } from "lucide-react";
+import { ArrowLeft, Thermometer, Droplet, Sun, Wind, AlertTriangle, Monitor, Users, Lock, Turtle, Leaf, Camera, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ANIMALS_DATA } from "@/data/animalsData";
 import { useToast } from "@/hooks/use-toast";
+import { EditEnvironmentDetailsDialog } from "@/components/ui/dashboard/EditEnvironmentDetailsDialog";
 
 const enclosureData = [
   {
@@ -112,6 +113,7 @@ const Environment = () => {
   const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
   
   const enclosureId = parseInt(id || "0");
   const enclosureIndex = enclosures.findIndex(enc => enc.id === enclosureId);
@@ -163,6 +165,20 @@ const Environment = () => {
       default:
         return "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60";
     }
+  };
+
+  const handleSaveEnvironmentDetails = (data: any) => {
+    const updatedEnclosures = [...enclosures];
+    updatedEnclosures[enclosureIndex] = {
+      ...updatedEnclosures[enclosureIndex],
+      ...data
+    };
+    setEnclosures(updatedEnclosures);
+    
+    toast({
+      title: "Environment details updated",
+      description: `${enclosure.name} details have been updated successfully`,
+    });
   };
 
   if (!enclosure) {
@@ -323,9 +339,19 @@ const Environment = () => {
             
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <Leaf className="h-5 w-5 mr-2 text-muted-foreground" />
-                  Environment Details
+                <CardTitle className="text-lg font-medium flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Leaf className="h-5 w-5 mr-2 text-muted-foreground" />
+                    Environment Details
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6" 
+                    onClick={() => setIsEditingDetails(true)}
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -509,6 +535,13 @@ const Environment = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <EditEnvironmentDetailsDialog
+        isOpen={isEditingDetails}
+        onOpenChange={setIsEditingDetails}
+        enclosure={enclosure}
+        onSave={handleSaveEnvironmentDetails}
+      />
     </MainLayout>
   );
 };
