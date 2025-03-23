@@ -13,7 +13,7 @@ const ENCLOSURE_DATA = [
     humidity: 65,
     light: 120,
     pressure: 1013,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60"
   },
   {
     id: 2,
@@ -22,7 +22,7 @@ const ENCLOSURE_DATA = [
     humidity: 35,
     light: 250,
     pressure: 1012,
-    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60"
   },
   {
     id: 3,
@@ -31,7 +31,7 @@ const ENCLOSURE_DATA = [
     humidity: 60,
     light: 80,
     pressure: 1013,
-    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60"
   },
   {
     id: 4,
@@ -40,7 +40,7 @@ const ENCLOSURE_DATA = [
     humidity: 45,
     light: 110,
     pressure: 1012,
-    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1487252665478-49b61b47f302?w=800&auto=format&fit=crop&q=60"
   },
 ];
 
