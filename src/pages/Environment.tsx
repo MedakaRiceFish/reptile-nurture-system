@@ -4,13 +4,14 @@ import { useLocation } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Pen } from "lucide-react";
+import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Pen, Clock, Activity } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Badge } from "@/components/ui/badge";
 
 // Mock data for the enclosure details
 const ENCLOSURE_DATA = [
@@ -19,6 +20,8 @@ const ENCLOSURE_DATA = [
     name: "Gargoyle Gecko Enclosure",
     temperature: 78,
     humidity: 65,
+    lastReading: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+    readingStatus: "online",
     image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Spike", species: "Gargoyle Gecko", age: "3 years" },
@@ -35,6 +38,8 @@ const ENCLOSURE_DATA = [
     name: "Bearded Dragon Habitat",
     temperature: 92,
     humidity: 35,
+    lastReading: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+    readingStatus: "online",
     image: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Rex", species: "Bearded Dragon", age: "4 years" }
@@ -49,6 +54,8 @@ const ENCLOSURE_DATA = [
     name: "Ball Python Terrarium",
     temperature: 82,
     humidity: 60,
+    lastReading: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
+    readingStatus: "warning",
     image: "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Monty", species: "Ball Python", age: "5 years" }
@@ -63,6 +70,8 @@ const ENCLOSURE_DATA = [
     name: "Leopard Gecko Home",
     temperature: 80,
     humidity: 45,
+    lastReading: new Date(Date.now() - 1000 * 60 * 60 * 24), // 24 hours ago
+    readingStatus: "offline",
     image: "https://images.unsplash.com/photo-1487252665478-49b61b47f302?w=800&auto=format&fit=crop&q=60",
     inhabitants: [
       { id: 1, name: "Spots", species: "Leopard Gecko", age: "2 years" },
@@ -159,6 +168,30 @@ const Environment = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
+  const getTimeSinceLastReading = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
+    
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-green-500 text-green-50';
+      case 'warning': return 'bg-yellow-500 text-yellow-50';
+      case 'offline': return 'bg-red-500 text-red-50';
+      default: return 'bg-gray-500 text-gray-50';
+    }
+  };
+
   return (
     <MainLayout pageTitle={enclosure.name}>
       <div className="max-w-[1600px] mx-auto animate-fade-up">
@@ -201,7 +234,17 @@ const Environment = () => {
             </div>
             
             <div className="md:w-2/3">
-              <h1 className="text-3xl font-bold tracking-tight mb-4">{enclosure.name}</h1>
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold tracking-tight">{enclosure.name}</h1>
+                <Badge className={`${getStatusColor(enclosure.readingStatus)} flex items-center gap-1.5`}>
+                  <Activity className="h-3.5 w-3.5" />
+                  {enclosure.readingStatus.charAt(0).toUpperCase() + enclosure.readingStatus.slice(1)}
+                </Badge>
+                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  Last reading: {getTimeSinceLastReading(enclosure.lastReading)}
+                </span>
+              </div>
               
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <Card>
