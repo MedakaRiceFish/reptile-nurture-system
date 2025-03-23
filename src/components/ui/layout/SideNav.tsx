@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,9 @@ import {
   Bell, 
   Settings, 
   BarChart3, 
-  Droplet
+  Droplet,
+  TreeDeciduous,
+  Turtle
 } from "lucide-react";
 
 type NavItem = {
@@ -20,19 +23,19 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    label: "Dashboard",
+    label: "Home",
     href: "/",
     icon: <Home className="w-5 h-5" />,
   },
   {
     label: "Enclosures",
     href: "/enclosures",
-    icon: <PawPrint className="w-5 h-5" />,
+    icon: <TreeDeciduous className="w-5 h-5" />,
   },
   {
     label: "Animals",
     href: "/animals",
-    icon: <PawPrint className="w-5 h-5" />,
+    icon: <Turtle className="w-5 h-5" />,
   },
   {
     label: "Data & Analytics",

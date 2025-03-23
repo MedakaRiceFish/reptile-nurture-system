@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { StatCard } from "@/components/ui/dashboard/StatCard";
@@ -10,7 +9,7 @@ import { Thermometer, Droplet, Bell, Clock } from "lucide-react";
 
 const Dashboard = () => {
   return (
-    <MainLayout pageTitle="Dashboard">
+    <MainLayout pageTitle="Home">
       <div className="max-w-[1600px] mx-auto animate-fade-up">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
