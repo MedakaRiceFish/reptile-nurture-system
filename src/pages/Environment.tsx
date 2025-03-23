@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Clock, Activity, Pencil, ArrowRight, CalendarClock } from "lucide-react";
+import { Thermometer, Droplet, User, Image, List, CalendarIcon, Plus, Settings, Clock, Activity, Pencil, ArrowRight, CalendarClock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,8 +50,8 @@ const ENCLOSURE_DATA = [
       { id: 1, name: "Rex", species: "Bearded Dragon", age: "4 years" }
     ],
     hardware: [
-      { id: 1, name: "Heat Lamp", lastMaintenance: "2023-06-05" },
-      { id: 2, name: "UVB Fixture", lastMaintenance: "2023-07-20" }
+      { id: 1, name: "Heat Lamp", lastMaintenance: "2023-06-05", nextMaintenance: "2023-12-05" },
+      { id: 2, name: "UVB Fixture", lastMaintenance: "2023-07-20", nextMaintenance: "2024-01-20" }
     ]
   },
   {
@@ -65,8 +66,8 @@ const ENCLOSURE_DATA = [
       { id: 1, name: "Monty", species: "Ball Python", age: "5 years" }
     ],
     hardware: [
-      { id: 1, name: "Heating Pad", lastMaintenance: "2023-05-25" },
-      { id: 2, name: "Thermostat", lastMaintenance: "2023-06-15" }
+      { id: 1, name: "Heating Pad", lastMaintenance: "2023-05-25", nextMaintenance: "2023-11-25" },
+      { id: 2, name: "Thermostat", lastMaintenance: "2023-06-15", nextMaintenance: "2023-12-15" }
     ]
   },
   {
@@ -82,8 +83,8 @@ const ENCLOSURE_DATA = [
       { id: 2, name: "Dots", species: "Leopard Gecko", age: "1 year" }
     ],
     hardware: [
-      { id: 1, name: "Heat Mat", lastMaintenance: "2023-07-05" },
-      { id: 2, name: "LED Light", lastMaintenance: "2023-08-10" }
+      { id: 1, name: "Heat Mat", lastMaintenance: "2023-07-05", nextMaintenance: "2024-01-05" },
+      { id: 2, name: "LED Light", lastMaintenance: "2023-08-10", nextMaintenance: "2024-02-10" }
     ]
   }
 ];
@@ -638,7 +639,7 @@ const Environment = () => {
                         <p className="font-medium">{item.name}</p>
                         <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center">
-                            <Calendar className="h-3.5 w-3.5 mr-1" />
+                            <CalendarIcon className="h-3.5 w-3.5 mr-1" />
                             Last Maintenance: {formatDate(item.lastMaintenance)}
                           </div>
                           <div className="flex items-center">
@@ -663,4 +664,3 @@ const Environment = () => {
 };
 
 export default Environment;
-
