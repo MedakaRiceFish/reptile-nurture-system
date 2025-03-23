@@ -125,7 +125,7 @@
   }
   
   .dash-stat {
-    @apply glass-card p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01] flex flex-col justify-between min-h-[180px];
+    @apply glass-card p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01] min-h-[180px] flex flex-col;
   }
   
   .dash-header {
@@ -133,7 +133,7 @@
   }
   
   .dash-value {
-    @apply text-3xl font-semibold tracking-tight;
+    @apply text-3xl font-semibold tracking-tight mt-4;
   }
   
   .enclosure-card {
