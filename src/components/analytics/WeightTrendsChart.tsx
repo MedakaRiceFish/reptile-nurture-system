@@ -127,9 +127,9 @@ export function WeightTrendsChart() {
                         <p className="font-medium">{format(parseISO(label), "MMM d, yyyy")}</p>
                         <div className="mt-2 space-y-1">
                           {payload
-                            .filter(p => p.value !== undefined && p.dataKey.startsWith("animal_"))
+                            .filter(p => p.value !== undefined && p.dataKey && typeof p.dataKey === 'string' && p.dataKey.startsWith("animal_"))
                             .map((entry, index) => {
-                              const id = entry.dataKey.split("_")[1];
+                              const id = typeof entry.dataKey === 'string' ? entry.dataKey.split("_")[1] : '';
                               const name = chartData.find(d => d.date === label)?.[`name_${id}`];
                               return (
                                 <div key={index} className="flex items-center gap-2">
