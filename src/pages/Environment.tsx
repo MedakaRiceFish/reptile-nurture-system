@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -217,12 +218,6 @@ const Environment = () => {
                     className="hidden"
                   />
                 </div>
-                <div className="absolute top-4 right-32">
-                  <Badge className={`${getStatusColor(enclosure.readingStatus)} text-white`}>
-                    {enclosure.readingStatus === "online" ? "Online" : 
-                     enclosure.readingStatus === "warning" ? "Warning" : "Offline"}
-                  </Badge>
-                </div>
               </div>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -331,6 +326,13 @@ const Environment = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Plants:</span>
                     <span>{enclosure.plants.join(", ")}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Status:</span>
+                    <Badge className={`${getStatusColor(enclosure.readingStatus)} text-white`}>
+                      {enclosure.readingStatus === "online" ? "Online" : 
+                      enclosure.readingStatus === "warning" ? "Warning" : "Offline"}
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
