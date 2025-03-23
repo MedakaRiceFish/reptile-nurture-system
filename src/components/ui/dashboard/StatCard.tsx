@@ -38,10 +38,10 @@ export function StatCard({
     <div className={cn("dash-stat", className)}>
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="dash-header min-h-[48px] flex items-center">
+          <h3 className="dash-header min-h-[48px] flex flex-col justify-center leading-tight">
             {title.split("\\").map((part, i) => (
               <React.Fragment key={i}>
-                {i > 0 && <br />}
+                {i > 0 && <span className="-mt-1"></span>}
                 {part}
               </React.Fragment>
             ))}
