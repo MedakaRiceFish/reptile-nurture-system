@@ -25,18 +25,19 @@ export function StatCard({
   isAlert = false,
   linkTo
 }: StatCardProps) {
-  // Card content to ensure consistent rendering whether it's a link or not
   const CardContent = () => (
-    <>
-      <div className="flex justify-between items-start">
+    <div className="flex flex-col h-full">
+      {/* Top section with title and icon */}
+      <div className="flex justify-between items-center mb-8">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</h3>
         <div className="p-3 bg-reptile-50 text-reptile-500 rounded-xl">
           {icon}
         </div>
       </div>
       
-      <div className="pt-8">
-        <div className="flex items-center">
+      {/* Bottom section with the value and change */}
+      <div className="mt-auto">
+        <div className="flex items-center mb-2">
           <span className="text-3xl font-semibold tracking-tight">{value}</span>
           {isAlert && Number(value) > 0 && (
             <span className="ml-2 bg-red-500 text-white rounded-full w-2 h-2 inline-block"></span>
@@ -44,7 +45,7 @@ export function StatCard({
         </div>
         
         {change && (
-          <p className="text-sm flex items-center gap-1 mt-2">
+          <p className="text-sm flex items-center gap-1">
             <span className={cn(
               change.positive ? "text-green-600" : "text-red-600"
             )}>
@@ -54,23 +55,28 @@ export function StatCard({
           </p>
         )}
       </div>
-    </>
+    </div>
   );
 
-  return (
-    <div className={cn(
-      "bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg",
-      "p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-      "h-[180px] flex flex-col",
-      className
-    )}>
-      {isAlert && linkTo && Number(value) > 0 ? (
-        <Link to={linkTo} className="flex flex-col h-full">
-          <CardContent />
-        </Link>
-      ) : (
+  const cardClasses = cn(
+    "bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg",
+    "p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+    "h-[180px] flex flex-col",
+    className
+  );
+
+  // Return either a link wrapper or just the card
+  if (isAlert && linkTo && Number(value) > 0) {
+    return (
+      <Link to={linkTo} className={cardClasses}>
         <CardContent />
-      )}
+      </Link>
+    );
+  }
+  
+  return (
+    <div className={cardClasses}>
+      <CardContent />
     </div>
   );
 }
