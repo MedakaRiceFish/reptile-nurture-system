@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Clock, Activity, Pencil, ArrowRight } from "lucide-react";
+import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Clock, Activity, Pencil, ArrowRight, CalendarClock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const ENCLOSURE_DATA = [
   {
@@ -29,9 +32,9 @@ const ENCLOSURE_DATA = [
       { id: 2, name: "Crest", species: "Gargoyle Gecko", age: "2 years" }
     ],
     hardware: [
-      { id: 1, name: "UVB Light", lastMaintenance: "2023-05-15" },
-      { id: 2, name: "Heating Pad", lastMaintenance: "2023-06-20" },
-      { id: 3, name: "Misting System", lastMaintenance: "2023-07-10" }
+      { id: 1, name: "UVB Light", lastMaintenance: "2023-05-15", nextMaintenance: "2023-11-15" },
+      { id: 2, name: "Heating Pad", lastMaintenance: "2023-06-20", nextMaintenance: "2023-12-20" },
+      { id: 3, name: "Misting System", lastMaintenance: "2023-07-10", nextMaintenance: "2024-01-10" }
     ]
   },
   {
@@ -94,6 +97,7 @@ interface InhabitantFormData {
 interface HardwareFormData {
   name: string;
   lastMaintenance: string;
+  nextMaintenance: string;
 }
 
 const Environment = () => {
@@ -129,7 +133,8 @@ const Environment = () => {
   const hardwareForm = useForm<HardwareFormData>({
     defaultValues: {
       name: "",
-      lastMaintenance: new Date().toISOString().split('T')[0]
+      lastMaintenance: new Date().toISOString().split('T')[0],
+      nextMaintenance: new Date(Date.now() + 1000 * 60 * 60 * 24 * 180).toISOString().split('T')[0]
     }
   });
   
@@ -579,6 +584,40 @@ const Environment = () => {
                               </FormItem>
                             )}
                           />
+                          <FormField
+                            control={hardwareForm.control}
+                            name="nextMaintenance"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Next Maintenance Date</FormLabel>
+                                <FormControl>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-left font-normal",
+                                          !field.value && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarClock className="mr-2 h-4 w-4" />
+                                        {field.value ? format(new Date(field.value), "PPP") : <span>Select a date</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={field.value ? new Date(field.value) : undefined}
+                                        onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                                        initialFocus
+                                        className="p-3 pointer-events-auto"
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
                           <Button type="submit" className="w-full">Add Hardware</Button>
                         </form>
                       </Form>
@@ -597,9 +636,15 @@ const Environment = () => {
                       </div>
                       <div>
                         <p className="font-medium">{item.name}</p>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5 mr-1" />
-                          Last Maintenance: {formatDate(item.lastMaintenance)}
+                        <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Calendar className="h-3.5 w-3.5 mr-1" />
+                            Last Maintenance: {formatDate(item.lastMaintenance)}
+                          </div>
+                          <div className="flex items-center">
+                            <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                            Next Maintenance: {formatDate(item.nextMaintenance || item.lastMaintenance)}
+                          </div>
                         </div>
                       </div>
                     </div>
