@@ -1,6 +1,9 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { EnvironmentCard } from "./EnvironmentCard";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Thermometer, Droplet, Sun, BarChart2 } from "lucide-react";
 
 const ENCLOSURE_DATA = [
   {
@@ -10,6 +13,7 @@ const ENCLOSURE_DATA = [
     humidity: 65,
     light: 120,
     pressure: 1013,
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=60"
   },
   {
     id: 2,
@@ -18,6 +22,7 @@ const ENCLOSURE_DATA = [
     humidity: 35,
     light: 250,
     pressure: 1012,
+    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=60"
   },
   {
     id: 3,
@@ -26,6 +31,7 @@ const ENCLOSURE_DATA = [
     humidity: 60,
     light: 80,
     pressure: 1013,
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60"
   },
   {
     id: 4,
@@ -34,29 +40,110 @@ const ENCLOSURE_DATA = [
     humidity: 45,
     light: 110,
     pressure: 1012,
+    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&auto=format&fit=crop&q=60"
   },
 ];
 
-export function EnclosureList() {
+interface EnclosureListProps {
+  viewMode?: "grid" | "list";
+}
+
+export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
+  const navigate = useNavigate();
+
+  const handleEnclosureClick = (id: number) => {
+    navigate(`/environment?enclosureId=${id}`);
+  };
+
+  const getTemperatureColor = (temp: number) => {
+    if (temp > 90) return "text-red-500";
+    if (temp < 70) return "text-blue-500";
+    return "text-reptile-500";
+  };
+
+  const getHumidityColor = (hum: number) => {
+    if (hum > 80) return "text-blue-500";
+    if (hum < 40) return "text-amber-500";
+    return "text-reptile-500";
+  };
+
+  if (viewMode === "list") {
+    return (
+      <div className="space-y-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Enclosure Name</TableHead>
+              <TableHead>Temperature</TableHead>
+              <TableHead>Humidity</TableHead>
+              <TableHead>Light</TableHead>
+              <TableHead>Pressure</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {ENCLOSURE_DATA.map((enclosure) => (
+              <TableRow 
+                key={enclosure.id} 
+                onClick={() => handleEnclosureClick(enclosure.id)}
+                className="cursor-pointer hover:bg-muted/50"
+              >
+                <TableCell className="font-medium">{enclosure.name}</TableCell>
+                <TableCell className={getTemperatureColor(enclosure.temperature)}>
+                  <div className="flex items-center gap-2">
+                    <Thermometer className="h-4 w-4" />
+                    {enclosure.temperature}°F
+                  </div>
+                </TableCell>
+                <TableCell className={getHumidityColor(enclosure.humidity)}>
+                  <div className="flex items-center gap-2">
+                    <Droplet className="h-4 w-4" />
+                    {enclosure.humidity}%
+                  </div>
+                </TableCell>
+                <TableCell className="text-sand-500">
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-4 w-4" />
+                    {enclosure.light} PAR
+                  </div>
+                </TableCell>
+                <TableCell className="text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <BarChart2 className="h-4 w-4" />
+                    {enclosure.pressure} hPa
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs px-2 py-0.5 bg-reptile-100 text-reptile-800 rounded-full">
+                    Active
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold tracking-tight">Active Enclosures</h2>
-        <button className="text-sm px-4 py-2 bg-reptile-50 text-reptile-600 rounded-lg font-medium hover:bg-reptile-100 transition-colors">
-          + Add Enclosure
-        </button>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {ENCLOSURE_DATA.map((enclosure) => (
-          <EnvironmentCard
-            key={enclosure.id}
-            enclosureName={enclosure.name}
-            temperature={enclosure.temperature}
-            humidity={enclosure.humidity}
-            light={enclosure.light}
-            pressure={enclosure.pressure}
-          />
+          <div 
+            key={enclosure.id} 
+            onClick={() => handleEnclosureClick(enclosure.id)}
+            className="cursor-pointer transition-transform hover:scale-[1.02]"
+          >
+            <EnvironmentCard
+              enclosureName={enclosure.name}
+              temperature={enclosure.temperature}
+              humidity={enclosure.humidity}
+              light={enclosure.light}
+              pressure={enclosure.pressure}
+              image={enclosure.image}
+            />
+          </div>
         ))}
       </div>
     </div>

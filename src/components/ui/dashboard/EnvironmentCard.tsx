@@ -14,6 +14,7 @@ interface EnvironmentCardProps {
   humidity: number;
   light: number;
   pressure: number;
+  image?: string;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ export function EnvironmentCard({
   humidity,
   light,
   pressure,
+  image,
   className,
 }: EnvironmentCardProps) {
   const getTemperatureColor = (temp: number) => {
@@ -38,52 +40,63 @@ export function EnvironmentCard({
   };
 
   return (
-    <div className={cn("enclosure-card", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">{enclosureName}</h3>
-        <span className="text-xs px-2 py-0.5 bg-reptile-100 text-reptile-800 rounded-full">
-          Active
-        </span>
-      </div>
+    <div className={cn("enclosure-card overflow-hidden rounded-lg border bg-card shadow-sm", className)}>
+      {image && (
+        <div className="h-40 overflow-hidden">
+          <img 
+            src={image} 
+            alt={enclosureName} 
+            className="w-full h-full object-cover" 
+          />
+        </div>
+      )}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">{enclosureName}</h3>
+          <span className="text-xs px-2 py-0.5 bg-reptile-100 text-reptile-800 rounded-full">
+            Active
+          </span>
+        </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-          <Thermometer className="h-5 w-5 mb-1 text-muted-foreground" />
-          <span className={cn("sensor-value", getTemperatureColor(temperature))}>
-            {temperature}°F
-          </span>
-          <span className="sensor-label">Temperature</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+            <Thermometer className="h-5 w-5 mb-1 text-muted-foreground" />
+            <span className={cn("sensor-value", getTemperatureColor(temperature))}>
+              {temperature}°F
+            </span>
+            <span className="sensor-label">Temperature</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+            <Droplet className="h-5 w-5 mb-1 text-muted-foreground" />
+            <span className={cn("sensor-value", getHumidityColor(humidity))}>
+              {humidity}%
+            </span>
+            <span className="sensor-label">Humidity</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+            <Sun className="h-5 w-5 mb-1 text-muted-foreground" />
+            <span className="sensor-value text-sand-500">
+              {light} PAR
+            </span>
+            <span className="sensor-label">Light</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+            <BarChart2 className="h-5 w-5 mb-1 text-muted-foreground" />
+            <span className="sensor-value text-slate-500">
+              {pressure} hPa
+            </span>
+            <span className="sensor-label">Pressure</span>
+          </div>
         </div>
-        
-        <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-          <Droplet className="h-5 w-5 mb-1 text-muted-foreground" />
-          <span className={cn("sensor-value", getHumidityColor(humidity))}>
-            {humidity}%
-          </span>
-          <span className="sensor-label">Humidity</span>
-        </div>
-        
-        <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-          <Sun className="h-5 w-5 mb-1 text-muted-foreground" />
-          <span className="sensor-value text-sand-500">
-            {light} PAR
-          </span>
-          <span className="sensor-label">Light</span>
-        </div>
-        
-        <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-          <BarChart2 className="h-5 w-5 mb-1 text-muted-foreground" />
-          <span className="sensor-value text-slate-500">
-            {pressure} hPa
-          </span>
-          <span className="sensor-label">Pressure</span>
-        </div>
-      </div>
 
-      <div className="mt-4 flex justify-end">
-        <button className="text-xs text-reptile-600 hover:text-reptile-700 font-medium">
-          View Details
-        </button>
+        <div className="mt-4 flex justify-end">
+          <button className="text-xs text-reptile-600 hover:text-reptile-700 font-medium">
+            View Details
+          </button>
+        </div>
       </div>
     </div>
   );
