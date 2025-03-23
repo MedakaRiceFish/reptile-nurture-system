@@ -26,49 +26,46 @@ export function StatCard({
   linkTo
 }: StatCardProps) {
   const ValueDisplay = () => (
-    <p className={cn(
-      "dash-value", 
+    <div className={cn(
       isAlert && linkTo && Number(value) > 0 && "cursor-pointer hover:text-reptile-500 transition-colors flex items-center"
     )}>
-      {value}
-      {isAlert && Number(value) > 0 && (
-        <span className="ml-1 text-xs bg-red-500 text-white rounded-full w-2 h-2"></span>
-      )}
-    </p>
+      <p className="dash-value">
+        {value}
+        {isAlert && Number(value) > 0 && (
+          <span className="ml-1 text-xs bg-red-500 text-white rounded-full w-2 h-2 inline-block"></span>
+        )}
+      </p>
+    </div>
   );
 
   return (
-    <div className={cn("dash-stat h-full", className)}>
-      <div className="flex justify-between items-start h-full flex-col">
-        <div className="w-full">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="dash-header">{title}</h3>
-            <div className="p-3 bg-reptile-50 text-reptile-500 rounded-xl">
-              {icon}
-            </div>
-          </div>
-          
-          <div className="mt-auto">
-            {isAlert && linkTo && Number(value) > 0 ? (
-              <Link to={linkTo}>
-                <ValueDisplay />
-              </Link>
-            ) : (
-              <ValueDisplay />
-            )}
-            
-            {change && (
-              <p className="mt-1 text-sm flex items-center gap-1">
-                <span className={cn(
-                  change.positive ? "text-green-600" : "text-red-600"
-                )}>
-                  {change.positive ? "↑" : "↓"} {change.value}
-                </span>
-                <span className="text-muted-foreground">vs. last week</span>
-              </p>
-            )}
-          </div>
+    <div className={cn("dash-stat flex flex-col", className)}>
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="dash-header">{title}</h3>
+        <div className="p-3 bg-reptile-50 text-reptile-500 rounded-xl">
+          {icon}
         </div>
+      </div>
+      
+      <div className="mt-auto">
+        {isAlert && linkTo && Number(value) > 0 ? (
+          <Link to={linkTo}>
+            <ValueDisplay />
+          </Link>
+        ) : (
+          <ValueDisplay />
+        )}
+        
+        {change && (
+          <p className="mt-1 text-sm flex items-center gap-1">
+            <span className={cn(
+              change.positive ? "text-green-600" : "text-red-600"
+            )}>
+              {change.positive ? "↑" : "↓"} {change.value}
+            </span>
+            <span className="text-muted-foreground">vs. last week</span>
+          </p>
+        )}
       </div>
     </div>
   );

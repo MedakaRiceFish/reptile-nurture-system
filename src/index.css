@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -125,7 +126,7 @@
   }
   
   .dash-stat {
-    @apply glass-card p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01] flex flex-col;
+    @apply glass-card p-6 rounded-2xl transition-all duration-300 hover:shadow-md hover:scale-[1.01] flex flex-col justify-between;
   }
   
   .dash-header {
