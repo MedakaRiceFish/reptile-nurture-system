@@ -14,13 +14,13 @@ const Dashboard = () => {
       <div className="max-w-[1600px] mx-auto animate-fade-up">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="ENCLOSURES"
+            title="TOTAL ENCLOSURES"
             value="8"
             icon={<TreeDeciduous className="w-6 h-6" />}
             linkTo="/enclosures"
           />
           <StatCard
-            title="ANIMALS"
+            title="TOTAL ANIMALS"
             value="12"
             icon={<Turtle className="w-6 h-6" />}
             linkTo="/animals"
