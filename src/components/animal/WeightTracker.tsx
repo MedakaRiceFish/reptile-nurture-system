@@ -21,7 +21,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
       return {
         currentWeight: 0,
         maxWeight: 0,
-        percentDifference: 0
+        percentChange: 0
       };
     }
 
@@ -35,17 +35,29 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     // Find maximum weight
     const maxWeight = Math.max(...animal.weightHistory.map(record => record.weight));
     
-    // Calculate percentage difference
-    const percentDifference = maxWeight > 0 
-      ? ((currentWeight - maxWeight) / maxWeight) * 100
-      : 0;
+    // Calculate percentage change from the previous weight
+    let percentChange = 0;
+    if (sortedWeights.length > 1) {
+      const previousWeight = sortedWeights[1].weight;
+      percentChange = previousWeight > 0 
+        ? ((currentWeight - previousWeight) / previousWeight) * 100
+        : 0;
+    }
     
     return {
       currentWeight,
       maxWeight,
-      percentDifference
+      percentChange
     };
   }, [animal.weightHistory]);
+
+  // Determine color based on percentage change
+  const getPercentChangeColor = (percentChange: number) => {
+    if (percentChange > 0) return 'text-green-500';
+    if (percentChange < 0 && percentChange >= -3) return 'text-yellow-500';
+    if (percentChange < -3) return 'text-red-500';
+    return '';
+  };
 
   return (
     <Card className="lg:col-span-2">
@@ -72,9 +84,9 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
           </div>
           
           <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-            <div className="text-sm text-muted-foreground mb-1">From Max</div>
-            <div className={`text-2xl font-bold ${weightStats.percentDifference < 0 ? 'text-red-500' : weightStats.percentDifference > 0 ? 'text-green-500' : ''}`}>
-              {weightStats.percentDifference.toFixed(1)}%
+            <div className="text-sm text-muted-foreground mb-1">Change Since Last</div>
+            <div className={`text-2xl font-bold ${getPercentChangeColor(weightStats.percentChange)}`}>
+              {weightStats.percentChange > 0 ? '+' : ''}{weightStats.percentChange.toFixed(1)}%
             </div>
           </div>
         </div>
