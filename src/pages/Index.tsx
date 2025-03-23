@@ -1,3 +1,4 @@
+
 import React from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { StatCard } from "@/components/ui/dashboard/StatCard";
@@ -5,7 +6,7 @@ import { EnclosureList } from "@/components/ui/dashboard/EnclosureList";
 import { SensorChart } from "@/components/ui/dashboard/SensorChart";
 import { QuickActions } from "@/components/ui/dashboard/QuickActions";
 import { UpcomingSchedule } from "@/components/ui/dashboard/UpcomingSchedule";
-import { Thermometer, Droplet, Bell, Clock } from "lucide-react";
+import { Bell, Clock, Turtle, TreeDeciduous } from "lucide-react";
 
 const Dashboard = () => {
   return (
@@ -13,22 +14,16 @@ const Dashboard = () => {
       <div className="max-w-[1600px] mx-auto animate-fade-up">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="AVERAGE TEMPERATURE"
-            value="82°F"
-            icon={<Thermometer className="w-6 h-6" />}
-            change={{
-              value: "2.5°F",
-              positive: true,
-            }}
+            title="ENCLOSURES"
+            value="8"
+            icon={<TreeDeciduous className="w-6 h-6" />}
+            linkTo="/enclosures"
           />
           <StatCard
-            title="AVERAGE HUMIDITY"
-            value="64%"
-            icon={<Droplet className="w-6 h-6" />}
-            change={{
-              value: "5%",
-              positive: false,
-            }}
+            title="ANIMALS"
+            value="12"
+            icon={<Turtle className="w-6 h-6" />}
+            linkTo="/animals"
           />
           <StatCard
             title="ACTIVE ALERTS"

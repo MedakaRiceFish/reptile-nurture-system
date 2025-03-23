@@ -68,7 +68,7 @@ export function StatCard({
     className
   );
 
-  if (isAlert && linkTo && Number(value) > 0) {
+  if (linkTo) {
     return (
       <Link to={linkTo} className={cardClasses}>
         <CardContent />
