@@ -294,7 +294,7 @@ const Environment = () => {
                               className="h-7 text-xs px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                               onClick={() => handleOpenValueDialog("temperature")}
                             >
-                              <Pen className="h-3 w-3 mr-1" />
+                              <Pen className="h-2 w-2 mr-1" />
                               Set threshold
                             </Button>
                           </DialogTrigger>
@@ -361,7 +361,7 @@ const Environment = () => {
                               className="h-7 text-xs px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => handleOpenValueDialog("humidity")}
                             >
-                              <Pen className="h-2.5 w-2.5 mr-1" />
+                              <Pen className="h-2 w-2 mr-1" />
                               Set threshold
                             </Button>
                           </DialogTrigger>
