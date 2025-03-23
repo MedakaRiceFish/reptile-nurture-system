@@ -511,9 +511,9 @@ const AnimalRecord = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Static Description */}
-              <div className="p-4 bg-muted/40 rounded-md">
+            <div className="space-y-6">
+              {/* Static Description - Added more top margin */}
+              <div className="p-4 bg-muted/40 rounded-md mt-4">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
                 <p className="text-sm">{animal.description}</p>
               </div>
