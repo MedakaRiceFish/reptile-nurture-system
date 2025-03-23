@@ -18,7 +18,6 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 
-// Initial data for animal details
 const ANIMALS_DATA = [
   {
     id: 1,
@@ -117,7 +116,7 @@ const ANIMALS_DATA = [
 const AnimalRecord = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isAddingWeight, setIsAddingWeight] = useState(false);
+  const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
   const [newWeightDate, setNewWeightDate] = useState<Date | undefined>(new Date());
   const [newWeight, setNewWeight] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -129,26 +128,21 @@ const AnimalRecord = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Find the animal with the matching ID
   const animalId = parseInt(id || "0");
   const [animalData, setAnimalData] = useState(() => 
     ANIMALS_DATA.find(animal => animal.id === animalId)
   );
 
-  // Add animal notes state
   const [animalNotes, setAnimalNotes] = useState<{date: string, note: string}[]>([
-    // Initial example note
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
   const animal = animalData;
 
-  // Handle going back
   const handleBack = () => {
     navigate("/animals");
   };
 
-  // Handle adding a new weight record
   const handleAddWeight = () => {
     if (!newWeight || isNaN(parseFloat(newWeight))) {
       toast({
@@ -165,7 +159,6 @@ const AnimalRecord = () => {
         weight: parseFloat(newWeight)
       };
       
-      // In a real app, this would update the database
       const updatedAnimal = {
         ...animal,
         weight: parseFloat(newWeight),
@@ -181,17 +174,15 @@ const AnimalRecord = () => {
         description: `New weight of ${newWeight}g recorded for ${animal.name}`,
       });
       
-      setIsAddingWeight(false);
+      setIsWeightDialogOpen(false);
       setNewWeight("");
     }
   };
 
-  // Handle photo upload button click
   const handlePhotoButtonClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -201,8 +192,6 @@ const AnimalRecord = () => {
           const imageUrl = event.target.result as string;
           setImagePreview(imageUrl);
           
-          // In a real app, this would upload the file to a server and get a URL back
-          // For now, we'll just update the local state
           setAnimalData({
             ...animal,
             image: imageUrl
@@ -218,7 +207,6 @@ const AnimalRecord = () => {
     }
   };
 
-  // Handle adding a new note
   const handleAddNote = () => {
     if (!newNote.trim()) {
       toast({
@@ -245,7 +233,6 @@ const AnimalRecord = () => {
     setNewNote("");
   };
 
-  // Handle editing the animal details
   const form = useForm({
     defaultValues: {
       name: animal?.name || "",
@@ -281,7 +268,6 @@ const AnimalRecord = () => {
     }
   };
 
-  // Filter enclosures for search
   const ENCLOSURES = [
     { id: 1, name: "Desert Terrarium" },
     { id: 2, name: "Large Rock Habitat" },
@@ -324,7 +310,6 @@ const AnimalRecord = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Main Image and Basic Info */}
           <Card className="lg:col-span-1">
             <div className="relative">
               <img 
@@ -341,7 +326,6 @@ const AnimalRecord = () => {
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
                 </Button>
-                {/* Hidden file input */}
                 <input 
                   type="file" 
                   ref={fileInputRef}
@@ -401,14 +385,12 @@ const AnimalRecord = () => {
                                 className="w-full justify-start text-left"
                                 onClick={() => {
                                   setIsSearchingEnclosure(false);
-                                  // In a real app, this would update the animal's enclosure
                                   if (animal) {
                                     setAnimalData({
                                       ...animal,
                                       enclosure: enclosure.id,
                                       enclosureName: enclosure.name
                                     });
-                                    
                                     toast({
                                       title: "Enclosure updated",
                                       description: `${animal.name} has been moved to ${enclosure.name}`,
@@ -433,53 +415,14 @@ const AnimalRecord = () => {
             </CardContent>
           </Card>
 
-          {/* Weight History and Chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-0">
               <div className="flex justify-between items-center">
                 <CardTitle>Weight Records</CardTitle>
-                <div className="flex space-x-2">
-                  {isAddingWeight ? (
-                    <>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="h-9 w-auto justify-start text-left font-normal"
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {newWeightDate ? format(newWeightDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={newWeightDate}
-                            onSelect={(date) => setNewWeightDate(date)}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <Input
-                        placeholder="Weight (g)"
-                        value={newWeight}
-                        onChange={(e) => setNewWeight(e.target.value)}
-                        className="w-24 h-9"
-                      />
-                      <Button size="sm" className="h-9" onClick={handleAddWeight}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-9" onClick={() => setIsAddingWeight(false)}>
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button size="sm" onClick={() => setIsAddingWeight(true)}>
-                      <Weight className="w-4 h-4 mr-2" />
-                      Add Weight
-                    </Button>
-                  )}
-                </div>
+                <Button size="sm" onClick={() => setIsWeightDialogOpen(true)}>
+                  <Weight className="w-4 h-4 mr-2" />
+                  Add Weight
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -499,7 +442,6 @@ const AnimalRecord = () => {
           </Card>
         </div>
 
-        {/* Description and Notes */}
         <Card>
           <CardHeader className="pb-0">
             <div className="flex justify-between items-center">
@@ -512,13 +454,10 @@ const AnimalRecord = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Static Description - Added more top margin */}
               <div className="p-4 bg-muted/40 rounded-md mt-4">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
                 <p className="text-sm">{animal.description}</p>
               </div>
-              
-              {/* Notes Log */}
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-4">Notes Log</h3>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
@@ -535,8 +474,6 @@ const AnimalRecord = () => {
                   ))}
                 </div>
               </div>
-              
-              {/* Add Note Form */}
               {isAddingNote && (
                 <div className="border border-border rounded-md p-4 mt-4">
                   <h3 className="text-sm font-medium mb-2">Add a New Note</h3>
@@ -570,7 +507,6 @@ const AnimalRecord = () => {
           </CardContent>
         </Card>
 
-        {/* Edit Animal Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
@@ -686,6 +622,52 @@ const AnimalRecord = () => {
                 </DialogFooter>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isWeightDialogOpen} onOpenChange={setIsWeightDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add Weight Record</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <FormLabel htmlFor="weight-date">Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="weight-date"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newWeightDate ? format(newWeightDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={newWeightDate}
+                      onSelect={(date) => setNewWeightDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="grid gap-2">
+                <FormLabel htmlFor="weight">Weight (g)</FormLabel>
+                <Input
+                  id="weight"
+                  placeholder="Enter weight in grams"
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsWeightDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddWeight}>Save Record</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
