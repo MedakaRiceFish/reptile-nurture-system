@@ -109,6 +109,7 @@ const Environment = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [enclosures, setEnclosures] = useState(enclosureData);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
@@ -128,6 +129,7 @@ const Environment = () => {
         if (event.target?.result) {
           const imageUrl = event.target.result as string;
           setImagePreview(imageUrl);
+          setImageError(false);
           
           const updatedEnclosures = [...enclosures];
           updatedEnclosures[enclosureIndex] = {
@@ -146,6 +148,23 @@ const Environment = () => {
     }
   };
   
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const getPlaceholderImage = () => {
+    switch(enclosure?.type) {
+      case "Arid":
+        return "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&auto=format&fit=crop&q=60";
+      case "Desert":
+        return "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&auto=format&fit=crop&q=60";
+      case "Tropical":
+        return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=60";
+      default:
+        return "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60";
+    }
+  };
+
   if (!enclosure) {
     return (
       <MainLayout pageTitle="Enclosure Not Found">
@@ -200,9 +219,10 @@ const Environment = () => {
             <Card>
               <div className="relative">
                 <img 
-                  src={imagePreview || enclosure.image} 
+                  src={imageError ? getPlaceholderImage() : (imagePreview || enclosure.image)} 
                   alt={enclosure.name} 
                   className="w-full h-[300px] object-cover rounded-t-lg"
+                  onError={handleImageError}
                 />
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <Button size="sm" variant="secondary" className="h-8" onClick={handlePhotoButtonClick}>
@@ -494,4 +514,3 @@ const Environment = () => {
 };
 
 export default Environment;
-
