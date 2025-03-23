@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { EnvironmentCard } from "./EnvironmentCard";
@@ -52,7 +51,7 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
   const navigate = useNavigate();
 
   const handleEnclosureClick = (id: number) => {
-    navigate(`/environment?enclosureId=${id}`);
+    navigate(`/enclosure/${id}`);
   };
 
   const getTemperatureColor = (temp: number) => {

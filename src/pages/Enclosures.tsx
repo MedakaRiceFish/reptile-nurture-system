@@ -15,7 +15,7 @@ const Enclosures = () => {
       <div className="max-w-[1600px] mx-auto animate-fade-up">
         <div className="glass-card p-8 rounded-2xl mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold tracking-tight">Enclosure Management</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Enclosure & Environment Management</h2>
             <div className="flex items-center gap-4">
               <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
                 <ToggleGroupItem value="grid" aria-label="Grid view">

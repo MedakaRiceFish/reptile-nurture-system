@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -29,11 +28,6 @@ const navItems: NavItem[] = [
     label: "Enclosures",
     href: "/enclosures",
     icon: <PawPrint className="w-5 h-5" />,
-  },
-  {
-    label: "Environment",
-    href: "/environment",
-    icon: <Thermometer className="w-5 h-5" />,
   },
   {
     label: "Data & Analytics",

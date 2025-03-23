@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,9 +96,9 @@ interface HardwareFormData {
 }
 
 const Environment = () => {
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const enclosureId = Number(searchParams.get("enclosureId"));
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const enclosureId = Number(id);
   
   const enclosure = ENCLOSURE_DATA.find(e => e.id === enclosureId);
   
@@ -122,14 +122,14 @@ const Environment = () => {
   
   if (!enclosure) {
     return (
-      <MainLayout pageTitle="Environment">
+      <MainLayout pageTitle="Enclosure Details">
         <div className="max-w-[1600px] mx-auto animate-fade-up">
           <div className="glass-card p-8 rounded-2xl">
             <h2 className="text-2xl font-semibold tracking-tight mb-4">Enclosure Not Found</h2>
             <p className="text-muted-foreground">
               The requested enclosure could not be found. Please return to the enclosures page.
             </p>
-            <Button className="mt-4" onClick={() => window.location.href = "/enclosures"}>
+            <Button className="mt-4" onClick={() => navigate("/enclosures")}>
               Back to Enclosures
             </Button>
           </div>
