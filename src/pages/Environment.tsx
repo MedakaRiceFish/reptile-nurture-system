@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Pen, Clock, Activity } from "lucide-react";
+import { Thermometer, Droplet, User, Image, List, Calendar, Plus, Settings, Clock, Activity } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,7 +294,6 @@ const Environment = () => {
                               className="h-7 text-xs px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                               onClick={() => handleOpenValueDialog("temperature")}
                             >
-                              <Pen className="h-2 w-2 mr-1" />
                               Set threshold
                             </Button>
                           </DialogTrigger>
@@ -361,7 +360,6 @@ const Environment = () => {
                               className="h-7 text-xs px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => handleOpenValueDialog("humidity")}
                             >
-                              <Pen className="h-2 w-2 mr-1" />
                               Set threshold
                             </Button>
                           </DialogTrigger>
