@@ -93,8 +93,8 @@ const Environment = () => {
   
   const enclosure = ENCLOSURE_DATA.find(e => e.id === enclosureId);
   
-  const [imageUrl, setImageUrl] = useState(enclosure?.image || "");
-  const [newImageUrl, setNewImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>(enclosure?.image || "");
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   
   const inhabitantForm = useForm<InhabitantFormData>({
     defaultValues: {
@@ -129,10 +129,16 @@ const Environment = () => {
     );
   }
   
-  const handleImageSubmit = () => {
-    if (newImageUrl.trim()) {
-      setImageUrl(newImageUrl);
-      setNewImageUrl("");
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImageUrl(result);
+        setIsImageDialogOpen(false);
+      };
+      reader.readAsDataURL(file);
     }
   };
   
@@ -165,7 +171,7 @@ const Environment = () => {
                   alt={enclosure.name} 
                   className="w-full h-full object-cover"
                 />
-                <Dialog>
+                <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="icon" className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm">
                       <Image className="h-4 w-4" />
@@ -177,17 +183,17 @@ const Environment = () => {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="image-url">Image URL</Label>
+                        <Label htmlFor="image-upload">Upload Image</Label>
                         <Input
-                          id="image-url"
-                          placeholder="Enter image URL"
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
                         />
                       </div>
-                      <Button onClick={handleImageSubmit} className="w-full">
-                        Update Image
-                      </Button>
+                      <p className="text-sm text-muted-foreground">
+                        Upload a photo of your enclosure. Supported formats: JPG, PNG, GIF.
+                      </p>
                     </div>
                   </DialogContent>
                 </Dialog>
