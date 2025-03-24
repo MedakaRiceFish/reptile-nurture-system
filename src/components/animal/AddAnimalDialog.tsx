@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
-import { createAnimal } from "@/services/animalService";
+import { createAnimal, AnimalInsert } from "@/services/animalService";
 
 interface AddAnimalDialogProps {
   isOpen: boolean;
@@ -39,7 +39,7 @@ export const AddAnimalDialog: React.FC<AddAnimalDialogProps> = ({
     if (!user) return;
     
     try {
-      const animal = {
+      const animal: AnimalInsert = {
         name: data.name,
         species: data.species,
         age: parseInt(data.age) || 0,
@@ -48,7 +48,9 @@ export const AddAnimalDialog: React.FC<AddAnimalDialogProps> = ({
         feeding_schedule: data.feedingSchedule || null,
         breeding_source: data.breederSource || null,
         description: data.description || null,
-        owner_id: user.id
+        owner_id: user.id,
+        enclosure_id: null,
+        image_url: null
       };
       
       const result = await createAnimal(animal);
