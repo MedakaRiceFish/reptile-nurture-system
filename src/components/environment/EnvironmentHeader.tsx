@@ -6,10 +6,16 @@ import { ArrowLeft } from "lucide-react";
 
 interface EnvironmentHeaderProps {
   enclosureName: string;
+  enclosureId?: string;  // Added this prop
+  temperature?: number;  // Added this prop
+  humidity?: number;     // Added this prop
 }
 
 export const EnvironmentHeader: React.FC<EnvironmentHeaderProps> = ({ 
-  enclosureName 
+  enclosureName,
+  enclosureId,
+  temperature,
+  humidity
 }) => {
   const navigate = useNavigate();
   

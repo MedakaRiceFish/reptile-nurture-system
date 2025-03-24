@@ -24,7 +24,8 @@ interface EnvironmentFormValues {
 }
 
 interface EditEnvironmentDetailsDialogProps {
-  isOpen: boolean;
+  isOpen?: boolean;     // Changed from open to isOpen to match existing implementation
+  open?: boolean;       // Added this as alternative
   onOpenChange: (open: boolean) => void;
   enclosure: EnvironmentDetails;
   onSave: (data: EnvironmentDetails) => void;
@@ -32,10 +33,14 @@ interface EditEnvironmentDetailsDialogProps {
 
 export const EditEnvironmentDetailsDialog: React.FC<EditEnvironmentDetailsDialogProps> = ({
   isOpen,
+  open,
   onOpenChange,
   enclosure,
   onSave
 }) => {
+  // Use either isOpen or open, defaulting to false if neither is provided
+  const dialogOpen = isOpen !== undefined ? isOpen : (open !== undefined ? open : false);
+
   const form = useForm<EnvironmentFormValues>({
     defaultValues: {
       type: enclosure?.type || "",
@@ -57,7 +62,7 @@ export const EditEnvironmentDetailsDialog: React.FC<EditEnvironmentDetailsDialog
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Environment Details</DialogTitle>

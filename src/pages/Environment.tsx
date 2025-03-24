@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -217,7 +216,7 @@ export default function Environment() {
   }
 
   if (enclosure.id === "not-found") {
-    return <EnvironmentNotFound />;
+    return <EnvironmentNotFound id={id} />;
   }
 
   return (

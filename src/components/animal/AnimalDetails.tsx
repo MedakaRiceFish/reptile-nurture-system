@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +26,20 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  type Enclosure = {
+    id: string;
+    name: string;
+  };
+
+  const [enclosures, setEnclosures] = React.useState<Enclosure[]>([
+    { id: "1", name: "Desert Terrarium" },
+    { id: "2", name: "Large Rock Habitat" },
+    { id: "3", name: "Forest Terrarium" },
+    { id: "4", name: "Small Desert Setup" },
+    { id: "5", name: "Tropical Vivarium" },
+    { id: "6", name: "Arid Environment" },
+  ]);
+
   const handlePhotoButtonClick = () => {
     fileInputRef.current?.click();
   };
@@ -35,7 +48,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
@@ -44,11 +56,9 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     };
     reader.readAsDataURL(file);
 
-    // If we have a real animal with an ID, upload to Supabase
     if (animal?.id && typeof animal.id === 'string') {
       const publicUrl = await uploadImage(file, `animals/${animal.id}`, async (url) => {
         try {
-          // Update animal with new image URL in database
           const { error } = await supabase
             .from('animals')
             .update({ image_url: url })
@@ -56,7 +66,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
             
           if (error) throw error;
           
-          // Update local state
           setAnimalData({
             ...animal,
             image_url: url
@@ -80,7 +89,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
         setImagePreview(null);
       }
     } else {
-      // Demo mode or no ID
       setAnimalData({
         ...animal,
         image: imagePreview
@@ -92,16 +100,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
       });
     }
   };
-
-  // Fetch available enclosures from Supabase if possible
-  const [enclosures, setEnclosures] = React.useState([
-    { id: 1, name: "Desert Terrarium" },
-    { id: 2, name: "Large Rock Habitat" },
-    { id: 3, name: "Forest Terrarium" },
-    { id: 4, name: "Small Desert Setup" },
-    { id: 5, name: "Tropical Vivarium" },
-    { id: 6, name: "Arid Environment" },
-  ]);
 
   React.useEffect(() => {
     const fetchEnclosures = async () => {
@@ -120,7 +118,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
       }
     };
     
-    // Only fetch if Supabase is initialized
     if (supabase) {
       fetchEnclosures();
     }
@@ -208,7 +205,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
                           onClick={async () => {
                             setIsSearchingEnclosure(false);
                             
-                            // Update animal enclosure in database if possible
                             if (animal.id && typeof animal.id === 'string') {
                               try {
                                 const { error } = await supabase
@@ -231,7 +227,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
                               }
                             }
                             
-                            // Update local state
                             setAnimalData({
                               ...animal,
                               enclosure: enclosure.id,
