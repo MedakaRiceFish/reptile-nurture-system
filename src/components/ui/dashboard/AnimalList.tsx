@@ -117,7 +117,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               species={animal.species}
               age={animal.age}
               weight={animal.weight}
-              length={parseFloat(animal.length?.toString() || "0")}
+              length={animal.length} // Pass the length directly without conversion
               image={animal.image_url || "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60"}
             />
           </div>

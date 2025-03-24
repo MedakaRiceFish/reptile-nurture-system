@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
 interface AnimalCardProps {
-  animalId: number;
+  animalId: string | number;
   animalName: string;
   species: string;
   age: number;
   weight: number;
-  length: number;
+  length: number | string;
   image?: string;
   className?: string;
   onClick?: () => void;
@@ -40,6 +40,9 @@ export function AnimalCard({
       navigate(`/animal/${animalId}`);
     }
   };
+
+  // Format length to display properly regardless of type
+  const displayLength = typeof length === 'number' ? length : parseFloat(length || '0');
 
   return (
     <div 
@@ -87,7 +90,7 @@ export function AnimalCard({
           <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
             <Ruler className="h-4 w-4 mb-1 text-muted-foreground" />
             <span className="text-sm font-medium">
-              {length} cm
+              {displayLength} cm
             </span>
             <span className="text-xs text-muted-foreground">Length</span>
           </div>
