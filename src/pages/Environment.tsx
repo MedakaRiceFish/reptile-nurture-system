@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -226,6 +227,8 @@ const Environment = () => {
               handleImageError={handleImageError}
               getTemperatureColor={getTemperatureColor}
               getHumidityColor={getHumidityColor}
+              onFileChange={handleFileChange}
+              fileInputRef={fileInputRef}
             />
           </div>
 

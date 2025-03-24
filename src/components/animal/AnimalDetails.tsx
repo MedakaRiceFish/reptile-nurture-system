@@ -92,6 +92,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           />
         </div>
       </div>
+      
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="flex justify-between items-center">

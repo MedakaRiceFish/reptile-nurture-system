@@ -14,6 +14,8 @@ interface EnvironmentImageCardProps {
   handleImageError: () => void;
   getTemperatureColor: (temp: number) => string;
   getHumidityColor: (hum: number) => string;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  fileInputRef: React.RefObject<HTMLInputElement>;
 }
 
 export const EnvironmentImageCard: React.FC<EnvironmentImageCardProps> = ({
@@ -24,15 +26,10 @@ export const EnvironmentImageCard: React.FC<EnvironmentImageCardProps> = ({
   handlePhotoButtonClick,
   handleImageError,
   getTemperatureColor,
-  getHumidityColor
+  getHumidityColor,
+  onFileChange,
+  fileInputRef
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const localHandlePhotoButtonClick = () => {
-    fileInputRef.current?.click();
-    handlePhotoButtonClick();
-  };
-  
   return (
     <Card>
       <div className="relative">
@@ -43,14 +40,14 @@ export const EnvironmentImageCard: React.FC<EnvironmentImageCardProps> = ({
           onError={handleImageError}
         />
         <div className="absolute top-4 right-4 flex space-x-2">
-          <Button size="sm" variant="secondary" className="h-8" onClick={localHandlePhotoButtonClick}>
+          <Button size="sm" variant="secondary" className="h-8" onClick={handlePhotoButtonClick}>
             <Camera className="w-4 h-4 mr-1" />
             Upload Photo
           </Button>
           <input 
             type="file" 
             ref={fileInputRef}
-            onChange={(e) => e.target.files?.[0] && handlePhotoButtonClick()}
+            onChange={onFileChange}
             accept="image/*"
             className="hidden"
           />
