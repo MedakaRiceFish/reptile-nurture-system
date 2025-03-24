@@ -2,16 +2,14 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ANIMALS_DATA } from "@/data/animalsData";
-import { AnimalDetails } from "@/components/animal/AnimalDetails";
-import { WeightTracker } from "@/components/animal/WeightTracker";
-import { NotesSection } from "@/components/animal/NotesSection";
 import { EditAnimalDialog } from "@/components/animal/EditAnimalDialog";
 import { AddWeightDialog } from "@/components/animal/AddWeightDialog";
+import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
+import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
+import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
 
 const AnimalRecord = () => {
   const { id } = useParams();
@@ -96,16 +94,7 @@ const AnimalRecord = () => {
   if (!animal) {
     return (
       <MainLayout pageTitle="Animal Not Found">
-        <div className="max-w-[1200px] mx-auto py-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Animal Not Found</h2>
-            <p className="mb-6">We couldn't find an animal with the ID {id}.</p>
-            <Button onClick={handleBack}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Animals
-            </Button>
-          </div>
-        </div>
+        <AnimalNotFound id={id} onBack={handleBack} />
       </MainLayout>
     );
   }
@@ -113,31 +102,15 @@ const AnimalRecord = () => {
   return (
     <MainLayout pageTitle={`${animal.name} - Animal Record`}>
       <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">
-        <div className="mb-6 flex items-center">
-          <Button variant="outline" onClick={handleBack} className="mr-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-3xl font-bold tracking-tight">{animal.name}</h1>
-        </div>
+        <AnimalRecordHeader animalName={animal.name} onBack={handleBack} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <AnimalDetails 
-            animal={animal} 
-            setAnimalData={setAnimalData} 
-            onEditClick={() => setIsEditDialogOpen(true)} 
-          />
-
-          <WeightTracker 
-            animal={animal} 
-            onAddWeightClick={() => setIsWeightDialogOpen(true)} 
-          />
-        </div>
-
-        <NotesSection 
-          animal={animal} 
-          animalNotes={animalNotes} 
-          setAnimalNotes={setAnimalNotes} 
+        <AnimalRecordContent 
+          animal={animal}
+          animalNotes={animalNotes}
+          setAnimalData={setAnimalData}
+          setAnimalNotes={setAnimalNotes}
+          onEditClick={() => setIsEditDialogOpen(true)}
+          onAddWeightClick={() => setIsWeightDialogOpen(true)}
         />
 
         <EditAnimalDialog 
