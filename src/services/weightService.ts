@@ -1,0 +1,46 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export type WeightRecord = {
+  id: string;
+  animal_id: string;
+  weight: number;
+  recorded_at: string;
+  owner_id: string;
+};
+
+export type WeightRecordInsert = Omit<WeightRecord, 'id'>;
+
+export const getAnimalWeightRecords = async (animalId: string): Promise<WeightRecord[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('weight_records')
+      .select('*')
+      .eq('animal_id', animalId)
+      .order('recorded_at', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error: any) {
+    toast.error(`Error fetching weight records: ${error.message}`);
+    return [];
+  }
+};
+
+export const addWeightRecord = async (record: WeightRecordInsert): Promise<WeightRecord | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('weight_records')
+      .insert(record)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    toast.success('Weight record added successfully');
+    return data;
+  } catch (error: any) {
+    toast.error(`Error adding weight record: ${error.message}`);
+    return null;
+  }
+};

@@ -1,15 +1,17 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { ANIMALS_DATA } from "@/data/animalsData";
 import { EditAnimalDialog } from "@/components/animal/EditAnimalDialog";
 import { AddWeightDialog } from "@/components/animal/AddWeightDialog";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
 import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
+import { getAnimal, updateAnimal } from "@/services/animalService";
+import { getAnimalWeightRecords, addWeightRecord } from "@/services/weightService";
+import { useAuth } from "@/context/AuthContext";
 
 const AnimalRecord = () => {
   const { id } = useParams();
@@ -17,24 +19,58 @@ const AnimalRecord = () => {
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const animalId = parseInt(id || "0");
-  const [animalData, setAnimalData] = useState(() => 
-    ANIMALS_DATA.find(animal => animal.id === animalId)
-  );
+  const [animalData, setAnimalData] = useState<any>(null);
+  const [weightRecords, setWeightRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [animalNotes, setAnimalNotes] = useState<{date: string, note: string}[]>([
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  const animal = animalData;
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id || !user) return;
+
+      try {
+        setLoading(true);
+        const animalData = await getAnimal(id);
+        
+        if (animalData) {
+          setAnimalData(animalData);
+
+          // Fetch weight records
+          const records = await getAnimalWeightRecords(id);
+          // Transform to format expected by components
+          const formattedRecords = records.map(record => ({
+            date: format(new Date(record.recorded_at), "yyyy-MM-dd"),
+            weight: record.weight
+          }));
+
+          setWeightRecords(formattedRecords);
+        }
+      } catch (error) {
+        console.error("Error fetching animal data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch animal data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, user, toast]);
 
   const handleBack = () => {
     navigate("/animals");
   };
 
-  const handleAddWeight = (data: any) => {
-    if (!data.weight || isNaN(parseFloat(data.weight))) {
+  const handleAddWeight = async (data: any) => {
+    if (!data.weight || isNaN(parseFloat(data.weight)) || !user || !animalData) {
       toast({
         title: "Invalid weight",
         description: "Please enter a valid weight value",
@@ -43,55 +79,104 @@ const AnimalRecord = () => {
       return;
     }
 
-    if (animal && data.date) {
+    try {
       const newRecord = {
-        date: format(data.date, "yyyy-MM-dd"),
-        weight: parseFloat(data.weight)
-      };
-      
-      const updatedAnimal = {
-        ...animal,
+        animal_id: animalData.id,
         weight: parseFloat(data.weight),
-        weightHistory: [...animal.weightHistory, newRecord].sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        )
+        recorded_at: format(data.date, "yyyy-MM-dd"),
+        owner_id: user.id
       };
       
-      setAnimalData(updatedAnimal);
+      // Add to database
+      const result = await addWeightRecord(newRecord);
       
+      if (result) {
+        // Update local state with the new record
+        const formattedRecord = {
+          date: format(data.date, "yyyy-MM-dd"),
+          weight: parseFloat(data.weight)
+        };
+        
+        setWeightRecords([...weightRecords, formattedRecord].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        ));
+        
+        // Update animal's current weight
+        const updatedAnimal = {
+          ...animalData,
+          weight: parseFloat(data.weight)
+        };
+        
+        await updateAnimal(animalData.id, { weight: parseFloat(data.weight) });
+        setAnimalData(updatedAnimal);
+        
+        toast({
+          title: "Weight record added",
+          description: `New weight of ${data.weight}g recorded for ${animalData.name}`,
+        });
+        
+        setIsWeightDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error adding weight record:", error);
       toast({
-        title: "Weight record added",
-        description: `New weight of ${data.weight}g recorded for ${animal.name}`,
+        title: "Error",
+        description: "Failed to add weight record",
+        variant: "destructive"
       });
-      
-      setIsWeightDialogOpen(false);
     }
   };
 
-  const handleEditSubmit = (data: any) => {
-    if (animal) {
+  const handleEditSubmit = async (data: any) => {
+    if (!animalData || !user) return;
+    
+    try {
       const updatedAnimal = {
-        ...animal,
         name: data.name,
         species: data.species,
         age: parseInt(data.age),
         length: parseInt(data.length),
-        feedingSchedule: data.feedingSchedule,
-        breederSource: data.breederSource,
+        feeding_schedule: data.feedingSchedule,
+        breeding_source: data.breederSource,
         description: data.description
       };
       
-      setAnimalData(updatedAnimal);
-      setIsEditDialogOpen(false);
+      const result = await updateAnimal(animalData.id, updatedAnimal);
       
+      if (result) {
+        setAnimalData({
+          ...animalData,
+          ...updatedAnimal
+        });
+        
+        setIsEditDialogOpen(false);
+        
+        toast({
+          title: "Animal details updated",
+          description: `${data.name}'s details have been updated successfully`,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating animal:", error);
       toast({
-        title: "Animal details updated",
-        description: `${data.name}'s details have been updated successfully`,
+        title: "Error",
+        description: "Failed to update animal details",
+        variant: "destructive"
       });
     }
   };
 
-  if (!animal) {
+  if (loading) {
+    return (
+      <MainLayout pageTitle="Loading Animal Record">
+        <div className="max-w-[1200px] mx-auto py-8 text-center">
+          <p>Loading animal data...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!animalData) {
     return (
       <MainLayout pageTitle="Animal Not Found">
         <AnimalNotFound id={id} onBack={handleBack} />
@@ -99,13 +184,19 @@ const AnimalRecord = () => {
     );
   }
 
+  // Transform the data structure for the weight history component
+  const animalWithWeightHistory = {
+    ...animalData,
+    weightHistory: weightRecords
+  };
+
   return (
-    <MainLayout pageTitle={`${animal.name} - Animal Record`}>
+    <MainLayout pageTitle={`${animalData.name} - Animal Record`}>
       <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">
-        <AnimalRecordHeader animalName={animal.name} onBack={handleBack} />
+        <AnimalRecordHeader animalName={animalData.name} onBack={handleBack} />
 
         <AnimalRecordContent 
-          animal={animal}
+          animal={animalWithWeightHistory}
           animalNotes={animalNotes}
           setAnimalData={setAnimalData}
           setAnimalNotes={setAnimalNotes}
@@ -114,7 +205,7 @@ const AnimalRecord = () => {
         />
 
         <EditAnimalDialog 
-          animal={animal} 
+          animal={animalData} 
           isOpen={isEditDialogOpen} 
           onOpenChange={setIsEditDialogOpen} 
           onSave={handleEditSubmit} 

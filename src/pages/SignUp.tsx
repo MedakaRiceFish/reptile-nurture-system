@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function SignUp() {
@@ -13,6 +14,14 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
+  const { signUp, user } = useAuth();
+
+  useEffect(() => {
+    // If user is already logged in, redirect to animals page
+    if (user) {
+      navigate("/animals");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,19 +39,9 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Sign up successful! Please check your email to confirm your account.");
-        navigate("/login");
-      }
+      await signUp(email, password);
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      // Error is handled in the signUp function
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -61,7 +60,7 @@ export default function SignUp() {
       if (error) {
         toast.error(error.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error("An unexpected error occurred");
       console.error(error);
     }

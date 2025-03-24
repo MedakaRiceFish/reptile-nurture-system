@@ -1,17 +1,25 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
+
+  useEffect(() => {
+    // If user is already logged in, redirect to animals page
+    if (user) {
+      navigate("/animals");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,19 +32,9 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        navigate("/");
-        toast.success("Logged in successfully");
-      }
+      await signIn(email, password);
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      // Error is handled in the signIn function
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -55,7 +53,7 @@ export default function Login() {
       if (error) {
         toast.error(error.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error("An unexpected error occurred");
       console.error(error);
     }

@@ -6,9 +6,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Grid2X2, LayoutList } from "lucide-react";
+import { AddAnimalDialog } from "@/components/animal/AddAnimalDialog";
 
 const Animals = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleAddSuccess = () => {
+    // Trigger a refresh of the animal list
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <MainLayout pageTitle="Animals">
@@ -25,7 +33,10 @@ const Animals = () => {
                   <LayoutList className="h-4 w-4" />
                 </ToggleGroupItem>
               </ToggleGroup>
-              <Button className="bg-reptile-500 hover:bg-reptile-600">
+              <Button 
+                className="bg-reptile-500 hover:bg-reptile-600"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
                 + Add Animal
               </Button>
             </div>
@@ -37,9 +48,15 @@ const Animals = () => {
 
         <Card>
           <CardContent className="p-6">
-            <AnimalList viewMode={viewMode} />
+            <AnimalList viewMode={viewMode} key={refreshTrigger} />
           </CardContent>
         </Card>
+
+        <AddAnimalDialog 
+          isOpen={isAddDialogOpen} 
+          onOpenChange={setIsAddDialogOpen} 
+          onSuccess={handleAddSuccess} 
+        />
       </div>
     </MainLayout>
   );
