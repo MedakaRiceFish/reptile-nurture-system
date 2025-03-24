@@ -21,6 +21,14 @@ export default function SignUp() {
     if (user) {
       navigate("/animals");
     }
+    
+    // Check if we have a hash parameter for access_token (from email confirmation or OAuth)
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      // Clear the hash to avoid redirect loops
+      window.location.hash = '';
+      toast.info("Processing your authentication...");
+    }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +63,7 @@ export default function SignUp() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/login`,
         },
       });
       

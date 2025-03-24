@@ -23,6 +23,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for redirects from OAuth or email confirmations
+    const handleHashParams = () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        // This indicates we have an OAuth or email confirmation redirect
+        // Let Supabase handle it via the auth state change
+        console.log("Auth redirect detected, waiting for auth state change");
+        
+        // Clear the hash to avoid redirect loops
+        window.location.hash = '';
+      }
+    };
+    
+    handleHashParams();
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -36,6 +51,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           navigate("/animals");
         } else if (event === 'SIGNED_OUT') {
           toast.success("Successfully signed out");
+        } else if (event === 'USER_UPDATED') {
+          toast.success("Your account has been updated");
         }
       }
     );
@@ -68,12 +85,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          // Use the current URL as the redirect URL for email confirmation
+          emailRedirectTo: `${window.location.origin}/login`,
+        }
       });
 
       if (error) throw error;
+      
+      if (data.user?.identities?.length === 0) {
+        toast.error("This email is already registered. Please log in instead.");
+        navigate("/login");
+        return;
+      }
+      
       toast.success("Signup successful! Please check your email to confirm your account.");
       navigate("/login");
     } catch (error: any) {
