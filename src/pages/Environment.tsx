@@ -1,223 +1,237 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnvironmentHeader } from "@/components/environment/EnvironmentHeader";
 import { EnvironmentImageCard } from "@/components/environment/EnvironmentImageCard";
-import { InhabitantsCard } from "@/components/environment/InhabitantsCard";
 import { EnvironmentDetailsCard } from "@/components/environment/EnvironmentDetailsCard";
+import { InhabitantsCard } from "@/components/environment/InhabitantsCard";
 import { EnvironmentTabContent } from "@/components/environment/EnvironmentTabContent";
 import { EnvironmentNotFound } from "@/components/environment/EnvironmentNotFound";
 import { EditEnvironmentDetailsDialog } from "@/components/ui/dashboard/EditEnvironmentDetailsDialog";
+import { toast } from "sonner";
+import { uploadImage } from "@/lib/supabase-storage";
+import { supabase } from "@/integrations/supabase/client";
 
-const enclosureData = [
-  {
-    id: 1,
-    name: "Desert Terrarium",
-    type: "Arid",
-    size: "36\" x 18\" x 18\"",
-    substrate: "Desert Sand Mix",
-    plants: ["Aloe Vera", "Desert Grass"],
-    temperature: 78,
-    humidity: 65,
-    lastReading: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-    readingStatus: "online",
-    image: "https://images.unsplash.com/photo-1580502778874-ad1e78d2e252?w=800&auto=format&fit=crop&q=60",
-    inhabitants: [
-      { id: 1, name: "Spike", species: "Gargoyle Gecko", age: "3 years" },
-      { id: 2, name: "Crest", species: "Gargoyle Gecko", age: "2 years" }
-    ],
-    history: [
-      { date: "2024-02-01", temp: 78, humidity: 65 },
-      { date: "2024-02-02", temp: 77, humidity: 64 },
-      { date: "2024-02-03", temp: 79, humidity: 66 },
-      { date: "2024-02-04", temp: 78, humidity: 65 },
-    ]
-  },
-  {
-    id: 2,
-    name: "Large Rock Habitat",
-    type: "Desert",
-    size: "48\" x 24\" x 24\"",
-    substrate: "Reptile Carpet with Slate Tiles",
-    plants: ["Desert Succulent", "Air Plant"],
-    temperature: 92,
-    humidity: 35,
-    lastReading: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-    readingStatus: "online",
-    image: "https://images.unsplash.com/photo-1534415378365-b8dd2e261c6d?w=800&auto=format&fit=crop&q=60",
-    inhabitants: [
-      { id: 2, name: "Rex", species: "Bearded Dragon", age: "4 years" }
-    ],
-    history: [
-      { date: "2024-02-01", temp: 91, humidity: 35 },
-      { date: "2024-02-02", temp: 92, humidity: 34 },
-      { date: "2024-02-03", temp: 93, humidity: 33 },
-      { date: "2024-02-04", temp: 92, humidity: 35 },
-    ]
-  },
-  {
-    id: 3,
-    name: "Forest Terrarium",
-    type: "Tropical",
-    size: "36\" x 18\" x 36\"",
-    substrate: "Coconut Fiber Mix",
-    plants: ["Pothos", "Fern", "Moss"],
-    temperature: 82,
-    humidity: 60,
-    lastReading: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-    readingStatus: "warning",
-    image: "https://images.unsplash.com/photo-1558958806-d5088c734714?w=800&auto=format&fit=crop&q=60",
-    inhabitants: [
-      { id: 3, name: "Monty", species: "Ball Python", age: "5 years" }
-    ],
-    history: [
-      { date: "2024-02-01", temp: 82, humidity: 60 },
-      { date: "2024-02-02", temp: 81, humidity: 62 },
-      { date: "2024-02-03", temp: 83, humidity: 61 },
-      { date: "2024-02-04", temp: 82, humidity: 60 },
-    ]
-  },
-  {
-    id: 4,
-    name: "Small Desert Setup",
-    type: "Arid",
-    size: "24\" x 18\" x 12\"",
-    substrate: "Fine Desert Sand",
-    plants: ["Small Cactus"],
-    temperature: 80,
-    humidity: 45,
-    lastReading: new Date(Date.now() - 1000 * 60 * 60 * 24), // 24 hours ago
-    readingStatus: "offline",
-    image: "https://images.unsplash.com/photo-1617775047746-5b89a320f916?w=800&auto=format&fit=crop&q=60",
-    inhabitants: [
-      { id: 4, name: "Spots", species: "Leopard Gecko", age: "2 years" },
-      { id: 2, name: "Dots", species: "Leopard Gecko", age: "1 year" }
-    ],
-    history: [
-      { date: "2024-02-01", temp: 81, humidity: 44 },
-      { date: "2024-02-02", temp: 80, humidity: 45 },
-      { date: "2024-02-03", temp: 82, humidity: 43 },
-      { date: "2024-02-04", temp: 80, humidity: 45 },
-    ]
-  },
-];
-
-const Environment = () => {
-  const { id } = useParams();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [enclosures, setEnclosures] = useState(enclosureData);
+export default function Environment() {
+  const { id } = useParams<{ id: string }>();
+  const [enclosure, setEnclosure] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-  const [isEditingDetails, setIsEditingDetails] = useState(false);
-  
-  const enclosureId = parseInt(id || "0");
-  const enclosureIndex = enclosures.findIndex(enc => enc.id === enclosureId);
-  const enclosure = enclosureIndex !== -1 ? enclosures[enclosureIndex] : null;
-  
+
+  // Fetch enclosure data
+  useEffect(() => {
+    const fetchEnclosure = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('enclosures')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (error) throw error;
+        
+        setEnclosure(data);
+      } catch (error: any) {
+        console.error('Error fetching enclosure:', error);
+        toast.error(`Failed to load enclosure: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchEnclosure();
+  }, [id]);
+
+  // If no ID is provided or loading fails, show placeholder data
+  useEffect(() => {
+    if (!id || (!enclosure && !isLoading)) {
+      setEnclosure({
+        id: "not-found",
+        name: "Desert Terrarium",
+        type: "Desert",
+        size: "24\" x 18\" x 18\"",
+        substrate: "Sand and clay mix",
+        plants: ["Aloe vera", "Haworthia"],
+        temperature: 85,
+        humidity: 40,
+        light_cycle: "12/12",
+        ventilation: "Medium",
+        image: "https://images.unsplash.com/photo-1585858229735-7be23558d95e?q=80&w=2070&auto=format&fit=crop",
+        last_reading: new Date().toISOString(),
+        reading_status: "online",
+      });
+    }
+  }, [id, enclosure, isLoading]);
+
+  const getPlaceholderImage = () => {
+    return "https://images.unsplash.com/photo-1585858229735-7be23558d95e?q=80&w=2070&auto=format&fit=crop";
+  };
+
   const handlePhotoButtonClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && enclosureIndex !== -1) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          const imageUrl = event.target.result as string;
-          setImagePreview(imageUrl);
-          setImageError(false);
+    if (!file) return;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImagePreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to Supabase
+    if (enclosure.id && enclosure.id !== "not-found") {
+      const publicUrl = await uploadImage(file, `enclosures/${enclosure.id}`, async (url) => {
+        try {
+          // Update enclosure with new image URL
+          const { error } = await supabase
+            .from('enclosures')
+            .update({ image_url: url })
+            .eq('id', enclosure.id);
+            
+          if (error) throw error;
           
-          const updatedEnclosures = [...enclosures];
-          updatedEnclosures[enclosureIndex] = {
-            ...updatedEnclosures[enclosureIndex],
-            image: imageUrl
-          };
-          setEnclosures(updatedEnclosures);
-          
-          toast({
-            title: "Photo updated",
-            description: `${enclosure?.name}'s photo has been updated successfully`,
+          // Update local state
+          setEnclosure({
+            ...enclosure,
+            image_url: url
           });
+          
+          toast.success("Enclosure image updated successfully!");
+        } catch (error: any) {
+          console.error('Error updating enclosure image URL:', error);
+          toast.error(`Failed to update enclosure: ${error.message}`);
         }
-      };
-      reader.readAsDataURL(file);
+      });
+      
+      if (!publicUrl) {
+        setImagePreview(null);
+      }
+    } else {
+      toast.error("Cannot upload image for this enclosure. Please save the enclosure first.");
+      setImagePreview(null);
     }
   };
-  
+
   const handleImageError = () => {
     setImageError(true);
-  };
-
-  const getPlaceholderImage = () => {
-    switch(enclosure?.type) {
-      case "Arid":
-        return "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&auto=format&fit=crop&q=60";
-      case "Desert":
-        return "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&auto=format&fit=crop&q=60";
-      case "Tropical":
-        return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=60";
-      default:
-        return "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60";
-    }
-  };
-
-  const handleSaveEnvironmentDetails = (data: any) => {
-    const updatedEnclosures = [...enclosures];
-    updatedEnclosures[enclosureIndex] = {
-      ...updatedEnclosures[enclosureIndex],
-      ...data
-    };
-    setEnclosures(updatedEnclosures);
-    
-    toast({
-      title: "Environment details updated",
-      description: `${enclosure?.name} details have been updated successfully`,
-    });
-  };
-
-  if (!enclosure) {
-    return (
-      <MainLayout pageTitle="Enclosure Not Found">
-        <EnvironmentNotFound id={id} />
-      </MainLayout>
-    );
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "online": return "bg-green-500";
-      case "warning": return "bg-yellow-500";
-      case "offline": return "bg-red-500";
-      default: return "bg-gray-500";
-    }
   };
 
   const getTemperatureColor = (temp: number) => {
     if (temp > 90) return "text-red-500";
     if (temp < 70) return "text-blue-500";
-    return "text-green-500";
+    return "text-reptile-500";
   };
 
   const getHumidityColor = (hum: number) => {
     if (hum > 80) return "text-blue-500";
-    if (hum < 40) return "text-yellow-500";
-    return "text-green-500";
+    if (hum < 40) return "text-amber-500";
+    return "text-reptile-500";
   };
 
-  return (
-    <MainLayout pageTitle={`${enclosure.name} - Environment`}>
-      <div className="max-w-[1200px] mx-auto py-6">
-        <EnvironmentHeader enclosureName={enclosure.name} />
+  const getStatusColor = (status: string) => {
+    if (status === "online") return "bg-green-500";
+    if (status === "warning") return "bg-amber-500";
+    return "bg-red-500";
+  };
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
+  const handleDetailsUpdate = async (data: any) => {
+    if (enclosure.id && enclosure.id !== "not-found") {
+      try {
+        // Prepare the data for update
+        const updateData = {
+          type: data.type,
+          size: data.size,
+          substrate: data.substrate,
+          plants: data.plants,
+          updated_at: new Date().toISOString(),
+        };
+        
+        // Update in Supabase
+        const { error } = await supabase
+          .from('enclosures')
+          .update(updateData)
+          .eq('id', enclosure.id);
+          
+        if (error) throw error;
+        
+        // Update local state
+        setEnclosure({
+          ...enclosure,
+          ...updateData
+        });
+        
+        toast.success("Enclosure details updated successfully!");
+      } catch (error: any) {
+        console.error('Error updating enclosure details:', error);
+        toast.error(`Failed to update enclosure: ${error.message}`);
+      }
+    } else {
+      // For demo/placeholder data
+      setEnclosure({
+        ...enclosure,
+        type: data.type,
+        size: data.size,
+        substrate: data.substrate,
+        plants: data.plants,
+      });
+      
+      toast.success("Enclosure details updated!");
+    }
+    
+    setIsEditDialogOpen(false);
+  };
+
+  const inhabitants = enclosure ? [
+    { id: 1, name: "Spike", species: "Gargoyle Gecko", age: "3 years" },
+    { id: 2, name: "Leo", species: "Leopard Gecko", age: "2 years" },
+  ] : [];
+
+  if (!enclosure) {
+    return (
+      <MainLayout pageTitle="Enclosure">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="animate-pulse">
+            <div className="h-12 bg-muted rounded-lg mb-4 w-1/2"></div>
+            <div className="h-80 bg-muted rounded-lg mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="h-60 bg-muted rounded-lg"></div>
+              <div className="h-60 bg-muted rounded-lg"></div>
+              <div className="h-60 bg-muted rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (enclosure.id === "not-found") {
+    return <EnvironmentNotFound />;
+  }
+
+  return (
+    <MainLayout pageTitle={enclosure.name}>
+      <div className="max-w-[1400px] mx-auto animate-fade-up">
+        <EnvironmentHeader
+          enclosureName={enclosure.name}
+          enclosureId={enclosure.id}
+          temperature={enclosure.temperature}
+          humidity={enclosure.humidity}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="md:col-span-2">
             <EnvironmentImageCard 
               enclosure={enclosure}
               imagePreview={imagePreview}
@@ -232,41 +246,42 @@ const Environment = () => {
             />
           </div>
 
-          <div>
-            <InhabitantsCard inhabitants={enclosure.inhabitants} />
-            
+          <div className="md:col-span-1">
             <EnvironmentDetailsCard 
               enclosure={enclosure}
               getStatusColor={getStatusColor}
-              onEditClick={() => setIsEditingDetails(true)}
+              onEditClick={() => setIsEditDialogOpen(true)}
             />
+            <div className="mt-6">
+              <InhabitantsCard inhabitants={inhabitants} />
+            </div>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+        <Tabs defaultValue="temperature" className="mb-8">
+          <TabsList>
+            <TabsTrigger value="temperature">Temperature</TabsTrigger>
+            <TabsTrigger value="humidity">Humidity</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
-          
-          <EnvironmentTabContent 
-            enclosure={enclosure}
-            getTemperatureColor={getTemperatureColor}
-            getHumidityColor={getHumidityColor}
-          />
+          <TabsContent value="temperature">
+            <EnvironmentTabContent type="temperature" enclosureId={enclosure.id} />
+          </TabsContent>
+          <TabsContent value="humidity">
+            <EnvironmentTabContent type="humidity" enclosureId={enclosure.id} />
+          </TabsContent>
+          <TabsContent value="maintenance">
+            <EnvironmentTabContent type="maintenance" enclosureId={enclosure.id} />
+          </TabsContent>
         </Tabs>
       </div>
-      
+
       <EditEnvironmentDetailsDialog
-        isOpen={isEditingDetails}
-        onOpenChange={setIsEditingDetails}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
         enclosure={enclosure}
-        onSave={handleSaveEnvironmentDetails}
+        onSave={handleDetailsUpdate}
       />
     </MainLayout>
   );
-};
-
-export default Environment;
+}

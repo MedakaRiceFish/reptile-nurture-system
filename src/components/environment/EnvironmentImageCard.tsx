@@ -34,7 +34,7 @@ export const EnvironmentImageCard: React.FC<EnvironmentImageCardProps> = ({
     <Card>
       <div className="relative">
         <img 
-          src={imageError ? getPlaceholderImage() : (imagePreview || enclosure.image)} 
+          src={imageError ? getPlaceholderImage() : (imagePreview || enclosure.image_url || enclosure.image)} 
           alt={enclosure.name} 
           className="w-full h-[300px] object-cover rounded-t-lg"
           onError={handleImageError}
@@ -71,23 +71,23 @@ export const EnvironmentImageCard: React.FC<EnvironmentImageCardProps> = ({
           
           <EnvironmentMetricCard 
             icon={<Sun className="h-6 w-6 mb-2 text-muted-foreground" />}
-            value="12/12"
+            value={enclosure.light_cycle || "12/12"}
             label="Light Cycle"
           />
           
           <EnvironmentMetricCard 
             icon={<Wind className="h-6 w-6 mb-2 text-muted-foreground" />}
-            value="Low"
+            value={enclosure.ventilation || "Low"}
             label="Ventilation"
           />
         </div>
         
         <div className="text-sm text-muted-foreground">
-          Last reading: {format(enclosure.lastReading, "PPp")}
-          {enclosure.readingStatus !== "online" && (
+          Last reading: {format(new Date(enclosure.last_reading || enclosure.lastReading), "PPp")}
+          {enclosure.reading_status !== "online" && (
             <span className="flex items-center mt-2 text-amber-500">
               <AlertTriangle className="h-4 w-4 mr-1" />
-              {enclosure.readingStatus === "warning" 
+              {enclosure.reading_status === "warning" 
                 ? "Sensor readings delayed. Check connection." 
                 : "Sensors offline. Maintenance required."}
             </span>

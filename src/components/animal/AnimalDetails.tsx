@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Camera, Edit, Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { uploadImage } from "@/lib/supabase-storage";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AnimalDetailsProps {
   animal: any;
@@ -29,40 +31,102 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result && animal) {
-          const imageUrl = event.target.result as string;
-          setImagePreview(imageUrl);
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setImagePreview(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // If we have a real animal with an ID, upload to Supabase
+    if (animal?.id && typeof animal.id === 'string') {
+      const publicUrl = await uploadImage(file, `animals/${animal.id}`, async (url) => {
+        try {
+          // Update animal with new image URL in database
+          const { error } = await supabase
+            .from('animals')
+            .update({ image_url: url })
+            .eq('id', animal.id);
+            
+          if (error) throw error;
           
+          // Update local state
           setAnimalData({
             ...animal,
-            image: imageUrl
+            image_url: url
           });
           
           toast({
             title: "Photo updated",
             description: `${animal.name}'s photo has been updated successfully`,
           });
+        } catch (error: any) {
+          console.error('Error updating animal image URL:', error);
+          toast({
+            title: "Upload failed",
+            description: error.message,
+            variant: "destructive"
+          });
         }
-      };
-      reader.readAsDataURL(file);
+      });
+      
+      if (!publicUrl) {
+        setImagePreview(null);
+      }
+    } else {
+      // Demo mode or no ID
+      setAnimalData({
+        ...animal,
+        image: imagePreview
+      });
+      
+      toast({
+        title: "Photo updated",
+        description: `${animal.name}'s photo has been updated successfully`,
+      });
     }
   };
 
-  const ENCLOSURES = [
+  // Fetch available enclosures from Supabase if possible
+  const [enclosures, setEnclosures] = React.useState([
     { id: 1, name: "Desert Terrarium" },
     { id: 2, name: "Large Rock Habitat" },
     { id: 3, name: "Forest Terrarium" },
     { id: 4, name: "Small Desert Setup" },
     { id: 5, name: "Tropical Vivarium" },
     { id: 6, name: "Arid Environment" },
-  ];
+  ]);
 
-  const filteredEnclosures = ENCLOSURES.filter(enclosure => 
+  React.useEffect(() => {
+    const fetchEnclosures = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('enclosures')
+          .select('id, name');
+          
+        if (error) throw error;
+        
+        if (data) {
+          setEnclosures(data);
+        }
+      } catch (error) {
+        console.error('Error fetching enclosures:', error);
+      }
+    };
+    
+    // Only fetch if Supabase is initialized
+    if (supabase) {
+      fetchEnclosures();
+    }
+  }, []);
+
+  const filteredEnclosures = enclosures.filter(enclosure => 
     enclosure.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -70,7 +134,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     <Card className="lg:col-span-1">
       <div className="relative">
         <img 
-          src={imagePreview || animal.image} 
+          src={imagePreview || animal.image_url || animal.image} 
           alt={animal.name} 
           className="w-full h-[300px] object-cover rounded-t-lg"
         />
@@ -113,7 +177,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Feeding Schedule:</span>
-            <span className="font-medium">{animal.feedingSchedule}</span>
+            <span className="font-medium">{animal.feeding_schedule || animal.feedingSchedule}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Enclosure:</span>
@@ -141,19 +205,43 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
                           key={enclosure.id}
                           variant="ghost"
                           className="w-full justify-start text-left"
-                          onClick={() => {
+                          onClick={async () => {
                             setIsSearchingEnclosure(false);
-                            if (animal) {
-                              setAnimalData({
-                                ...animal,
-                                enclosure: enclosure.id,
-                                enclosureName: enclosure.name
-                              });
-                              toast({
-                                title: "Enclosure updated",
-                                description: `${animal.name} has been moved to ${enclosure.name}`,
-                              });
+                            
+                            // Update animal enclosure in database if possible
+                            if (animal.id && typeof animal.id === 'string') {
+                              try {
+                                const { error } = await supabase
+                                  .from('animals')
+                                  .update({ 
+                                    enclosure_id: enclosure.id,
+                                    updated_at: new Date().toISOString()
+                                  })
+                                  .eq('id', animal.id);
+                                  
+                                if (error) throw error;
+                              } catch (error: any) {
+                                console.error('Error updating animal enclosure:', error);
+                                toast({
+                                  title: "Update failed",
+                                  description: error.message,
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
                             }
+                            
+                            // Update local state
+                            setAnimalData({
+                              ...animal,
+                              enclosure: enclosure.id,
+                              enclosureName: enclosure.name
+                            });
+                            
+                            toast({
+                              title: "Enclosure updated",
+                              description: `${animal.name} has been moved to ${enclosure.name}`,
+                            });
                           }}
                         >
                           {enclosure.name}
@@ -167,7 +255,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Breeder Source:</span>
-            <span className="font-medium">{animal.breederSource || "Unknown"}</span>
+            <span className="font-medium">{animal.breeding_source || animal.breederSource || "Unknown"}</span>
           </div>
         </div>
       </CardContent>

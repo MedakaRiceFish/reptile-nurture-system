@@ -9,7 +9,173 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      animals: {
+        Row: {
+          age: number | null
+          breeding_source: string | null
+          created_at: string
+          description: string | null
+          enclosure_id: string | null
+          feeding_schedule: string | null
+          id: string
+          image_url: string | null
+          length: number | null
+          name: string
+          owner_id: string
+          species: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          age?: number | null
+          breeding_source?: string | null
+          created_at?: string
+          description?: string | null
+          enclosure_id?: string | null
+          feeding_schedule?: string | null
+          id?: string
+          image_url?: string | null
+          length?: number | null
+          name: string
+          owner_id: string
+          species: string
+          updated_at?: string
+          weight: number
+        }
+        Update: {
+          age?: number | null
+          breeding_source?: string | null
+          created_at?: string
+          description?: string | null
+          enclosure_id?: string | null
+          feeding_schedule?: string | null
+          id?: string
+          image_url?: string | null
+          length?: number | null
+          name?: string
+          owner_id?: string
+          species?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      enclosures: {
+        Row: {
+          created_at: string
+          humidity: number | null
+          id: string
+          image_url: string | null
+          last_reading: string
+          light_cycle: string | null
+          name: string
+          owner_id: string
+          plants: string[] | null
+          reading_status: string | null
+          size: string | null
+          substrate: string | null
+          temperature: number | null
+          type: string | null
+          updated_at: string
+          ventilation: string | null
+        }
+        Insert: {
+          created_at?: string
+          humidity?: number | null
+          id?: string
+          image_url?: string | null
+          last_reading?: string
+          light_cycle?: string | null
+          name: string
+          owner_id: string
+          plants?: string[] | null
+          reading_status?: string | null
+          size?: string | null
+          substrate?: string | null
+          temperature?: number | null
+          type?: string | null
+          updated_at?: string
+          ventilation?: string | null
+        }
+        Update: {
+          created_at?: string
+          humidity?: number | null
+          id?: string
+          image_url?: string | null
+          last_reading?: string
+          light_cycle?: string | null
+          name?: string
+          owner_id?: string
+          plants?: string[] | null
+          reading_status?: string | null
+          size?: string | null
+          substrate?: string | null
+          temperature?: number | null
+          type?: string | null
+          updated_at?: string
+          ventilation?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      weight_records: {
+        Row: {
+          animal_id: string
+          id: string
+          owner_id: string
+          recorded_at: string
+          weight: number
+        }
+        Insert: {
+          animal_id: string
+          id?: string
+          owner_id: string
+          recorded_at?: string
+          weight: number
+        }
+        Update: {
+          animal_id?: string
+          id?: string
+          owner_id?: string
+          recorded_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_records_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
