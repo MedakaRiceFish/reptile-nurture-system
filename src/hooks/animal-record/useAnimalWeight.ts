@@ -125,7 +125,11 @@ export const useAnimalWeight = (
       
       if (success) {
         console.log("Successfully deleted weight record ID:", id);
-        console.log("Updated deletedRecordIds after deletion:", Array.from(deletedRecordIds));
+        
+        // Extra logging to ensure the state update worked
+        setTimeout(() => {
+          console.log("Current deletedRecordIds after deletion:", Array.from(deletedRecordIds));
+        }, 0);
         
         // Notify user of success
         toast({

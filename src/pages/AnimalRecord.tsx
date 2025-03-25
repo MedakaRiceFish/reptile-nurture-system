@@ -30,7 +30,6 @@ const AnimalRecord = () => {
     handleBack,
     handleAddWeight,
     handleDeleteWeight,
-    handleEditSubmit,
     deletedRecordIds
   } = useAnimalRecord();
 
@@ -40,11 +39,20 @@ const AnimalRecord = () => {
       try {
         const storageKey = `animal_${id}_deleted_records`;
         const storedDeletedIds = localStorage.getItem(storageKey);
-        const parsed = storedDeletedIds ? JSON.parse(storedDeletedIds) : [];
-        console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, parsed);
         
-        if (parsed.length > 0) {
-          console.log(`Found ${parsed.length} deleted records in localStorage for animal ${id}`);
+        if (storedDeletedIds) {
+          try {
+            const parsed = JSON.parse(storedDeletedIds);
+            console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, parsed);
+            
+            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+              console.log(`Found ${parsed.length} deleted records in localStorage for animal ${id}`);
+            }
+          } catch (err) {
+            console.error("Error parsing deletedRecordIds from localStorage:", err);
+          }
+        } else {
+          console.log(`[AnimalRecord] No deletedRecordIds found in localStorage for animal ${id}`);
         }
       } catch (error) {
         console.error("Error reading localStorage:", error);

@@ -19,17 +19,27 @@ export const useAnimalData = (
   const isMountedRef = useRef(true);
   const prevDeletedIdsRef = useRef<string[]>([]);
 
-  // Function to filter out deleted records - ensure it's comprehensive
+  // Function to filter out deleted records - ensure it's comprehensive and working
   const filterDeletedRecords = useCallback((records: WeightRecord[]) => {
-    if (!records) return [];
+    if (!records || !Array.isArray(records)) {
+      console.error("Invalid records passed to filterDeletedRecords:", records);
+      return [];
+    }
+    
+    // Log all the record IDs we're checking against
+    console.log("Filtering with deletedRecordIds:", Array.from(deletedRecordIds));
     
     // Make sure we're properly checking for null/undefined records
     const validRecords = records.filter(record => record && record.id);
     
     // Now filter out records with IDs in deletedRecordIds
-    const filteredRecords = validRecords.filter(record => 
-      !deletedRecordIds.has(record.id!)
-    );
+    const filteredRecords = validRecords.filter(record => {
+      const isDeleted = record.id && deletedRecordIds.has(record.id);
+      if (isDeleted) {
+        console.log(`Filtering out deleted record:`, record);
+      }
+      return !isDeleted;
+    });
     
     console.log(`Filtered ${records.length - filteredRecords.length} deleted records out of ${records.length} total records`);
     return filteredRecords;
@@ -228,7 +238,7 @@ export const useAnimalData = (
         setWeightRecords(filteredRecords);
       }
     }
-  }, [deletedRecordIds, filterDeletedRecords, weightRecords.length]);
+  }, [deletedRecordIds, filterDeletedRecords, weightRecords]);
 
   return {
     animalData,

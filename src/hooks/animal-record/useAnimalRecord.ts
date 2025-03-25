@@ -71,8 +71,11 @@ export const useAnimalRecord = () => {
 
   // Persist to localStorage whenever deletedRecordIds changes
   useEffect(() => {
+    if (deletedRecordIds.size > 0) {
+      console.log(`Persisting ${deletedRecordIds.size} deletedRecordIds to localStorage`);
+    }
     persistDeletedRecordsToLocalStorage();
-  }, [persistDeletedRecordsToLocalStorage]);
+  }, [persistDeletedRecordsToLocalStorage, deletedRecordIds]);
 
   // Get animal data functionality with deletedRecordIds
   const {
