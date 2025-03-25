@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -84,7 +85,11 @@ export function AddEnclosureDialog({
       
       form.reset();
       onOpenChange(false);
-      if (onSuccess) onSuccess();
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
       
     } catch (error: any) {
       console.error("Error creating enclosure:", error);
@@ -103,6 +108,9 @@ export function AddEnclosureDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Enclosure</DialogTitle>
+          <DialogDescription>
+            Create a new enclosure for your animals with environmental settings.
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>

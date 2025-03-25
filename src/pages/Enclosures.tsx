@@ -11,6 +11,12 @@ import { Grid2X2, LayoutList, Plus } from "lucide-react";
 const Enclosures = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleAddSuccess = () => {
+    // Increment refresh trigger to force EnclosureList to re-render
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <MainLayout pageTitle="Enclosures">
@@ -42,13 +48,14 @@ const Enclosures = () => {
 
         <Card>
           <CardContent className="p-6">
-            <EnclosureList viewMode={viewMode} />
+            <EnclosureList key={refreshTrigger} viewMode={viewMode} />
           </CardContent>
         </Card>
         
         <AddEnclosureDialog 
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
+          onSuccess={handleAddSuccess}
         />
       </div>
     </MainLayout>

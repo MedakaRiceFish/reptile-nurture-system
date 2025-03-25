@@ -17,70 +17,70 @@ import {
 export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [enclosures, setEnclosures] = useState<Enclosure[]>(INITIAL_ENCLOSURE_DATA);
+  const [enclosures, setEnclosures] = useState<Enclosure[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchEnclosures = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('enclosures')
-          .select('*')
-          .order('name', { ascending: true });
-          
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          // Map database data to the format expected by the component
-          const mappedData = data.map(enclosure => ({
-            id: enclosure.id,
-            name: enclosure.name,
-            temperature: enclosure.temperature || 75,
-            humidity: enclosure.humidity || 50,
-            light: 120, // Default values for fields not in DB
-            pressure: 1013,
-            image: enclosure.image_url || getRandomPlaceholderImage(),
-            readingStatus: enclosure.reading_status || "Active"
-          }));
-          setEnclosures(mappedData);
-        } else {
-          setEnclosures([]);
-        }
-      } catch (error: any) {
-        console.error('Error fetching enclosures:', error);
-        toast({
-          title: "Failed to load enclosures",
-          description: error.message,
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchEnclosures = async () => {
+    if (!user) return;
     
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('enclosures')
+        .select('*')
+        .order('name', { ascending: true });
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Map database data to the format expected by the component
+        const mappedData = data.map(enclosure => ({
+          id: enclosure.id,
+          name: enclosure.name,
+          temperature: enclosure.temperature || 75,
+          humidity: enclosure.humidity || 50,
+          light: 120, // Default values for fields not in DB
+          pressure: 1013,
+          image: enclosure.image_url || getRandomPlaceholderImage(),
+          readingStatus: enclosure.reading_status || "Active"
+        }));
+        setEnclosures(mappedData);
+      } else {
+        setEnclosures([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching enclosures:', error);
+      toast({
+        title: "Failed to load enclosures",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchEnclosures();
     
     // Set up real-time subscription for enclosure changes
     const channel = supabase
-      .channel('public:enclosures')
+      .channel('enclosures-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'enclosures' 
-      }, () => {
-        // Refetch enclosures when there's a change
-        fetchEnclosures();
+      }, (payload) => {
+        console.log('Enclosure change detected:', payload);
+        fetchEnclosures(); // Refetch all enclosures when there's a change
       })
       .subscribe();
       
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, toast]);
+  }, [user]);
 
   const handleEnclosureClick = (id: string | number) => {
     navigate(`/enclosure/${id}`);

@@ -15,55 +15,57 @@ const Dashboard = () => {
   const [enclosureCount, setEnclosureCount] = useState<number>(0);
   const [animalCount, setAnimalCount] = useState<number>(0);
 
-  useEffect(() => {
-    const fetchCounts = async () => {
-      if (!user) return;
+  const fetchCounts = async () => {
+    if (!user) return;
 
-      try {
-        // Get enclosure count
-        const { count: enclosuresCount, error: enclosuresError } = await supabase
-          .from('enclosures')
-          .select('*', { count: 'exact', head: true });
-          
-        if (!enclosuresError && enclosuresCount !== null) {
-          setEnclosureCount(enclosuresCount);
-        }
+    try {
+      // Get enclosure count
+      const { count: enclosuresCount, error: enclosuresError } = await supabase
+        .from('enclosures')
+        .select('*', { count: 'exact', head: true });
         
-        // Get animal count
-        const { count: animalsCount, error: animalsError } = await supabase
-          .from('animals')
-          .select('*', { count: 'exact', head: true });
-          
-        if (!animalsError && animalsCount !== null) {
-          setAnimalCount(animalsCount);
-        }
-      } catch (error) {
-        console.error('Error fetching counts:', error);
+      if (!enclosuresError && enclosuresCount !== null) {
+        setEnclosureCount(enclosuresCount);
       }
-    };
+      
+      // Get animal count
+      const { count: animalsCount, error: animalsError } = await supabase
+        .from('animals')
+        .select('*', { count: 'exact', head: true });
+        
+      if (!animalsError && animalsCount !== null) {
+        setAnimalCount(animalsCount);
+      }
+    } catch (error) {
+      console.error('Error fetching counts:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchCounts();
     
     // Set up subscription for enclosures changes
     const enclosureChannel = supabase
-      .channel('enclosure-changes')
+      .channel('enclosure-count-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'enclosures' 
       }, () => {
+        console.log('Enclosure change detected, updating count');
         fetchCounts();
       })
       .subscribe();
       
     // Set up subscription for animals changes
     const animalChannel = supabase
-      .channel('animal-changes')
+      .channel('animal-count-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'animals' 
       }, () => {
+        console.log('Animal change detected, updating count');
         fetchCounts();
       })
       .subscribe();
