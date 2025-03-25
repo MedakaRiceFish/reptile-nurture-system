@@ -12,6 +12,7 @@ import { EditEnvironmentDetailsDialog } from "@/components/ui/dashboard/EditEnvi
 import { toast } from "sonner";
 import { uploadImage } from "@/lib/supabase-storage";
 import { supabase } from "@/integrations/supabase/client";
+import { INITIAL_ENCLOSURE_DATA } from "@/utils/enclosureHelpers";
 
 export default function Environment() {
   const { id } = useParams<{ id: string }>();
@@ -22,10 +23,32 @@ export default function Environment() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch enclosure data
   useEffect(() => {
+    if (id && id.startsWith("sample-")) {
+      const sampleEnclosure = INITIAL_ENCLOSURE_DATA.find(e => e.id === id);
+      if (sampleEnclosure) {
+        setEnclosure({
+          id: sampleEnclosure.id,
+          name: sampleEnclosure.name,
+          type: "Desert",
+          size: "24\" x 18\" x 18\"",
+          substrate: "Sand and clay mix",
+          plants: ["Aloe vera", "Haworthia"],
+          temperature: sampleEnclosure.temperature,
+          humidity: sampleEnclosure.humidity,
+          light_cycle: "12/12",
+          ventilation: "Medium",
+          image_url: sampleEnclosure.image,
+          last_reading: new Date().toISOString(),
+          reading_status: sampleEnclosure.readingStatus.toLowerCase(),
+        });
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const fetchEnclosure = async () => {
-      if (!id) return;
+      if (!id || id.startsWith("sample-")) return;
       setIsLoading(true);
       
       try {
@@ -49,7 +72,6 @@ export default function Environment() {
     fetchEnclosure();
   }, [id]);
 
-  // If no ID is provided or loading fails, show placeholder data
   useEffect(() => {
     if (!id || (!enclosure && !isLoading)) {
       setEnclosure({
@@ -63,7 +85,7 @@ export default function Environment() {
         humidity: 40,
         light_cycle: "12/12",
         ventilation: "Medium",
-        image: "https://images.unsplash.com/photo-1585858229735-7be23558d95e?q=80&w=2070&auto=format&fit=crop",
+        image_url: "https://images.unsplash.com/photo-1585858229735-7be23558d95e?q=80&w=2070&auto=format&fit=crop",
         last_reading: new Date().toISOString(),
         reading_status: "online",
       });
@@ -82,18 +104,15 @@ export default function Environment() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show preview
     const reader = new FileReader();
     reader.onload = (event) => {
       setImagePreview(event.target?.result as string);
     };
     reader.readAsDataURL(file);
 
-    // Upload to Supabase
-    if (enclosure.id && enclosure.id !== "not-found") {
+    if (enclosure.id && enclosure.id !== "not-found" && !String(enclosure.id).startsWith("sample-")) {
       const publicUrl = await uploadImage(file, `enclosures/${enclosure.id}`, async (url) => {
         try {
-          // Update enclosure with new image URL
           const { error } = await supabase
             .from('enclosures')
             .update({ image_url: url })
@@ -101,7 +120,6 @@ export default function Environment() {
             
           if (error) throw error;
           
-          // Update local state
           setEnclosure({
             ...enclosure,
             image_url: url
@@ -146,9 +164,8 @@ export default function Environment() {
   };
 
   const handleDetailsUpdate = async (data: any) => {
-    if (enclosure.id && enclosure.id !== "not-found") {
+    if (enclosure.id && enclosure.id !== "not-found" && !String(enclosure.id).startsWith("sample-")) {
       try {
-        // Prepare the data for update
         const updateData = {
           type: data.type,
           size: data.size,
@@ -157,7 +174,6 @@ export default function Environment() {
           updated_at: new Date().toISOString(),
         };
         
-        // Update in Supabase
         const { error } = await supabase
           .from('enclosures')
           .update(updateData)
@@ -165,7 +181,6 @@ export default function Environment() {
           
         if (error) throw error;
         
-        // Update local state
         setEnclosure({
           ...enclosure,
           ...updateData
@@ -177,7 +192,6 @@ export default function Environment() {
         toast.error(`Failed to update enclosure: ${error.message}`);
       }
     } else {
-      // For demo/placeholder data
       setEnclosure({
         ...enclosure,
         type: data.type,
