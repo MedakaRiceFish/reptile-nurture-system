@@ -1,12 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
-import { Thermometer, Droplet, Sun, HardDrive, Wrench, AlertTriangle } from "lucide-react";
+import { Thermometer, Droplet, Sun, HardDrive, Wrench, AlertTriangle, PlusCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { AddDeviceDialog } from "./AddDeviceDialog";
+import { toast } from "sonner";
 
 interface EnvironmentTabContentProps {
   type?: string;
@@ -16,6 +17,14 @@ interface EnvironmentTabContentProps {
   getHumidityColor?: (hum: number) => string;
 }
 
+interface HardwareItem {
+  id: number;
+  name: string;
+  type: string;
+  lastMaintenance: Date;
+  nextMaintenance: Date;
+}
+
 export const EnvironmentTabContent: React.FC<EnvironmentTabContentProps> = ({
   type,
   enclosure,
@@ -23,8 +32,8 @@ export const EnvironmentTabContent: React.FC<EnvironmentTabContentProps> = ({
   getTemperatureColor,
   getHumidityColor
 }) => {
-  // Sample hardware data for demonstration
-  const hardwareItems = [
+  // State for hardware items
+  const [hardwareItems, setHardwareItems] = useState<HardwareItem[]>([
     {
       id: 1,
       name: "Temperature Sensor",
@@ -46,7 +55,46 @@ export const EnvironmentTabContent: React.FC<EnvironmentTabContentProps> = ({
       lastMaintenance: new Date(2024, 0, 20),
       nextMaintenance: new Date(2024, 6, 20),
     }
-  ];
+  ]);
+
+  // State for add device dialog
+  const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
+
+  // Function to handle adding a new device
+  const handleAddDevice = (data: any) => {
+    const newDevice: HardwareItem = {
+      id: Date.now(), // Simple ID generation
+      name: data.name,
+      type: data.type,
+      lastMaintenance: data.lastMaintenance,
+      nextMaintenance: data.nextMaintenance,
+    };
+
+    setHardwareItems([...hardwareItems, newDevice]);
+    setIsAddDeviceDialogOpen(false);
+    toast.success(`${data.name} added successfully`);
+  };
+
+  // Function to handle device maintenance
+  const handleMaintenance = (id: number) => {
+    const today = new Date();
+    const sixMonthsLater = new Date();
+    sixMonthsLater.setMonth(today.getMonth() + 6);
+
+    setHardwareItems(prevItems => 
+      prevItems.map(item => 
+        item.id === id 
+          ? { 
+              ...item, 
+              lastMaintenance: today,
+              nextMaintenance: sixMonthsLater 
+            } 
+          : item
+      )
+    );
+    
+    toast.success("Maintenance recorded");
+  };
 
   // For components that aren't fully implemented yet, return simple placeholders
   if (type === "temperature") {
@@ -94,7 +142,10 @@ export const EnvironmentTabContent: React.FC<EnvironmentTabContentProps> = ({
               <CardTitle>Hardware Management</CardTitle>
               <CardDescription>Track and maintain devices in this enclosure</CardDescription>
             </div>
-            <Button className="bg-reptile-500 hover:bg-reptile-600">
+            <Button 
+              className="bg-reptile-500 hover:bg-reptile-600"
+              onClick={() => setIsAddDeviceDialogOpen(true)}
+            >
               <PlusCircle className="h-4 w-4 mr-2" /> Add Device
             </Button>
           </CardHeader>
@@ -121,7 +172,11 @@ export const EnvironmentTabContent: React.FC<EnvironmentTabContentProps> = ({
                       <TableCell>{format(item.lastMaintenance, "MMM d, yyyy")}</TableCell>
                       <TableCell>{format(item.nextMaintenance, "MMM d, yyyy")}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleMaintenance(item.id)}
+                        >
                           <Wrench className="h-4 w-4 mr-1" /> Maintain
                         </Button>
                       </TableCell>
@@ -138,6 +193,13 @@ export const EnvironmentTabContent: React.FC<EnvironmentTabContentProps> = ({
             )}
           </CardContent>
         </Card>
+
+        {/* Add Device Dialog */}
+        <AddDeviceDialog 
+          open={isAddDeviceDialogOpen}
+          onOpenChange={setIsAddDeviceDialogOpen}
+          onSave={handleAddDevice}
+        />
       </TabsContent>
     );
   }
