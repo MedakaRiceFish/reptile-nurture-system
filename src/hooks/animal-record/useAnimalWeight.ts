@@ -16,10 +16,7 @@ export const useAnimalWeight = (
 ) => {
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
 
-  // Memoize the entire weightRecords value to prevent unnecessary re-renders
-  const memoizedWeightRecords = useMemo(() => weightRecords, [weightRecords]);
-
-  // Use the extracted hooks for add and delete operations with memoized dependencies
+  // Use the extracted hooks for add and delete operations
   const { handleAddWeight } = useWeightRecordManager(
     animalId,
     userId,
@@ -35,9 +32,9 @@ export const useAnimalWeight = (
     setDeletedRecordIds
   );
 
+  // Return stable objects to prevent unnecessary re-renders
   return {
-    weightRecords: memoizedWeightRecords,
-    setWeightRecords,
+    weightRecords,
     isWeightDialogOpen,
     setIsWeightDialogOpen,
     handleAddWeight,

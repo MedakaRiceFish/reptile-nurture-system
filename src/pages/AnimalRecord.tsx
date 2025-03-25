@@ -1,5 +1,5 @@
 
-import React, { useMemo, Suspense, lazy, useEffect } from "react";
+import React, { useMemo, Suspense, lazy, useEffect, useState, useRef } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
@@ -14,6 +14,9 @@ const AddWeightDialog = lazy(() => import("@/components/animal/AddWeightDialog")
 const AnimalRecord = () => {
   // Track render start time
   const renderStartTime = performance.now();
+  
+  // Use a stable ref to maintain instance identity across renders
+  const contentRef = useRef(null);
   
   const {
     id,
@@ -34,45 +37,6 @@ const AnimalRecord = () => {
     deletedRecordIds
   } = useAnimalRecord();
 
-  // Log important state changes for debugging
-  useEffect(() => {
-    if (id) {
-      try {
-        const storageKey = `animal_${id}_deleted_records`;
-        const storedDeletedIds = localStorage.getItem(storageKey);
-        
-        if (storedDeletedIds) {
-          try {
-            const parsed = JSON.parse(storedDeletedIds);
-            console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, parsed);
-            
-            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-              console.log(`Found ${parsed.length} deleted records in localStorage for animal ${id}`);
-            }
-          } catch (err) {
-            console.error("Error parsing deletedRecordIds from localStorage:", err);
-          }
-        } else {
-          console.log(`[AnimalRecord] No deletedRecordIds found in localStorage for animal ${id}`);
-        }
-      } catch (error) {
-        console.error("Error reading localStorage:", error);
-      }
-    }
-  }, [id]);
-
-  // Log the current state of weight records and deleted IDs for debugging
-  useEffect(() => {
-    if (weightRecords && weightRecords.length > 0) {
-      console.log(`AnimalRecord received ${weightRecords.length} weight records:`, 
-        weightRecords.map(r => ({ id: r.id, date: r.date, weight: r.weight })));
-    }
-    
-    if (deletedRecordIds && deletedRecordIds.size > 0) {
-      console.log(`Current deletedRecordIds in state:`, Array.from(deletedRecordIds));
-    }
-  }, [weightRecords, deletedRecordIds]);
-
   // Memoize the animal with weight history
   const animalWithWeightHistory = useMemo(() => {
     if (!animalData) return null;
@@ -83,11 +47,23 @@ const AnimalRecord = () => {
     };
   }, [animalData, weightRecords]);
 
+  // Memoize stable identity for callbacks to prevent prop changes
+  const stableCallbacks = useMemo(() => ({
+    onEditClick: () => setIsEditDialogOpen(true),
+    onAddWeightClick: () => setIsWeightDialogOpen(true),
+    onDeleteWeight: handleDeleteWeight,
+  }), [setIsEditDialogOpen, setIsWeightDialogOpen, handleDeleteWeight]);
+
+  // Only re-create the animal key when the ID changes
+  const animalKey = useMemo(() => animalData?.id || 'loading', [animalData?.id]);
+
   // Log render completion time in development
-  if (process.env.NODE_ENV === 'development') {
-    const renderTime = performance.now() - renderStartTime;
-    console.log(`AnimalRecord component render time: ${renderTime.toFixed(2)}ms`);
-  }
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const renderTime = performance.now() - renderStartTime;
+      console.log(`AnimalRecord component render time: ${renderTime.toFixed(2)}ms`);
+    }
+  }, [renderStartTime]);
 
   // Render loading state
   if (loading) {
@@ -119,21 +95,23 @@ const AnimalRecord = () => {
     );
   }
 
-  // Main render
+  // Main render - use stable references to prevent unnecessary re-renders
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>
       <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">
         <AnimalRecordHeader animalName={animalData.name} onBack={handleBack} />
-
-        <AnimalRecordContent 
-          animal={animalWithWeightHistory}
-          animalNotes={animalNotes}
-          setAnimalData={setAnimalData}
-          setAnimalNotes={setAnimalNotes}
-          onEditClick={() => setIsEditDialogOpen(true)}
-          onAddWeightClick={() => setIsWeightDialogOpen(true)}
-          onDeleteWeight={handleDeleteWeight}
-        />
+        
+        <div key={animalKey} ref={contentRef}>
+          <AnimalRecordContent 
+            animal={animalWithWeightHistory}
+            animalNotes={animalNotes}
+            setAnimalData={setAnimalData}
+            setAnimalNotes={setAnimalNotes}
+            onEditClick={stableCallbacks.onEditClick}
+            onAddWeightClick={stableCallbacks.onAddWeightClick}
+            onDeleteWeight={stableCallbacks.onDeleteWeight}
+          />
+        </div>
 
         {/* Only render dialogs when they're open to reduce initial load time */}
         <Suspense fallback={null}>
@@ -159,4 +137,4 @@ const AnimalRecord = () => {
   );
 };
 
-export default AnimalRecord;
+export default React.memo(AnimalRecord);

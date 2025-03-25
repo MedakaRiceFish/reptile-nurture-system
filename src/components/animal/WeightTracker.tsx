@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect, useState, useCallback } from "react";
+import React, { useMemo, useEffect, useState, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +18,7 @@ interface WeightTrackerProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-const WeightTracker = React.memo(({
+const WeightTracker = ({
   animal,
   onAddWeightClick,
   onDeleteWeight
@@ -47,18 +47,12 @@ const WeightTracker = React.memo(({
     return animal.weightHistory || [];
   }, [animal.weightHistory]);
 
-  // Memoize the add weight click handler
-  const handleAddWeight = useCallback(() => {
-    onAddWeightClick();
-  }, [onAddWeightClick]);
-  
-  // Memoize the delete weight handler
-  const handleDeleteWeight = useCallback((id: string) => {
-    if (onDeleteWeight) {
-      onDeleteWeight(id);
-    }
-  }, [onDeleteWeight]);
-  
+  // Generate a stable key based on animal ID to force container remounting when animal changes
+  const containerKey = useMemo(() => 
+    `weight-tracker-${animal.id || 'new'}`, 
+    [animal.id]
+  );
+
   // Memoize weight stats calculation
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -132,27 +126,25 @@ const WeightTracker = React.memo(({
           <TabsTrigger value="list">List</TabsTrigger>
         </TabsList>
         <TabsContent value="chart" className="pt-2">
-          <AnimalWeightChart weightHistory={weightHistory} />
+          <AnimalWeightChart weightHistory={weightHistory} key={`chart-${containerKey}`} />
         </TabsContent>
         <TabsContent value="list">
           <WeightHistoryList 
             weightHistory={weightHistory}
-            onDeleteWeight={handleDeleteWeight}
+            onDeleteWeight={onDeleteWeight}
+            key={`list-${containerKey}`}
           />
         </TabsContent>
       </Tabs>
     );
-  }, [activeTab, hasWeightHistory, weightHistory, setActiveTab, handleDeleteWeight]);
-
-  // Use a key to force re-mount only when the animal ID changes
-  const componentKey = useMemo(() => `weight-tracker-${animal.id || 'new'}`, [animal.id]);
+  }, [activeTab, hasWeightHistory, weightHistory, containerKey, onDeleteWeight]);
 
   return (
-    <Card className="lg:col-span-2" key={componentKey}>
+    <Card className="lg:col-span-2" key={containerKey}>
       <CardHeader className="pb-0">
         <div className="flex justify-between items-center">
           <CardTitle>Weight Records</CardTitle>
-          <Button size="sm" onClick={handleAddWeight}>
+          <Button size="sm" onClick={onAddWeightClick}>
             <Weight className="w-4 h-4 mr-2" />
             Add Weight
           </Button>
@@ -183,8 +175,6 @@ const WeightTracker = React.memo(({
       </CardContent>
     </Card>
   );
-});
+};
 
-WeightTracker.displayName = "WeightTracker";
-
-export { WeightTracker };
+export default memo(WeightTracker);

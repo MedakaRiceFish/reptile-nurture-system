@@ -19,40 +19,50 @@ export const useWeightRecordDeleter = (
     
     // Skip if already in progress or already deleted
     if (pendingDeletions.current.has(id) || deletedRecordIds.has(id)) {
+      console.log(`Skipping deletion for already-deleted or in-progress record: ${id}`);
       return;
     }
     
     // Mark as in progress
     pendingDeletions.current.add(id);
     
-    // Create new Sets to avoid reference issues
-    const newDeletedIds = new Set(deletedRecordIds);
-    newDeletedIds.add(id);
-    
-    // Update UI first (optimistic update) - use functional update to ensure we're working with latest state
-    setWeightRecords(prevRecords => {
-      // Create a new array (don't mutate the original)
-      return prevRecords.filter(record => record.id !== id);
-    });
-    
-    // Update deletedRecordIds separately to avoid batching issues
-    setDeletedRecordIds(newDeletedIds);
-    
-    // Then perform the API call
-    deleteWeightRecord(id)
-      .then(success => {
-        if (!success) {
-          console.error("Failed to delete weight record:", id);
-          // Don't roll back the UI - we'll let the persistence layer handle reconciliation
-        }
-      })
-      .catch((error) => {
-        console.error("Error deleting weight record:", error);
-      })
-      .finally(() => {
-        // Clear from pending set
-        pendingDeletions.current.delete(id);
-      });
+    try {
+      // Create new Sets to avoid reference issues
+      const newDeletedIds = new Set(deletedRecordIds);
+      newDeletedIds.add(id);
+      
+      // Create a stable function reference for the optimistic update
+      const filterDeletedRecord = (records: WeightRecord[]) => 
+        records.filter(record => record.id !== id);
+      
+      // Update UI first (optimistic update) - use functional update
+      setWeightRecords(filterDeletedRecord);
+      
+      // Update deletedRecordIds separately
+      setDeletedRecordIds(newDeletedIds);
+      
+      // Then perform the API call
+      deleteWeightRecord(id)
+        .then(success => {
+          if (success) {
+            console.log("Weight record deleted successfully");
+          } else {
+            console.error("Failed to delete weight record:", id);
+            // Don't roll back the UI - we'll let the persistence layer handle reconciliation
+          }
+        })
+        .catch((error) => {
+          console.error("Error deleting weight record:", error);
+        })
+        .finally(() => {
+          // Clear from pending set
+          pendingDeletions.current.delete(id);
+        });
+    } catch (error) {
+      // Error handling
+      console.error("Error in delete weight operation:", error);
+      pendingDeletions.current.delete(id);
+    }
   }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords]);
 
   return { handleDeleteWeight };

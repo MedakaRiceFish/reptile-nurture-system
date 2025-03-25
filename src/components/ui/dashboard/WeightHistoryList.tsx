@@ -71,26 +71,45 @@ const WeightHistoryRow = memo(({
 
 WeightHistoryRow.displayName = "WeightHistoryRow";
 
-// Use React.memo to prevent unnecessary re-renders
+// Create a specialized empty state component
+const EmptyWeightHistory = memo(() => (
+  <div className="text-center py-8 text-muted-foreground">
+    <p>No weight history available.</p>
+    <p className="mt-2">Add a weight record to start tracking.</p>
+  </div>
+));
+
+EmptyWeightHistory.displayName = "EmptyWeightHistory";
+
+// Final optimized component
 export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>No weight history available.</p>
-        <p className="mt-2">Add a weight record to start tracking.</p>
-      </div>
-    );
+    return <EmptyWeightHistory />;
   }
 
   // Memoize the sorted history
   const sortedHistory = useMemo(() => {
-    if (!weightHistory || !Array.isArray(weightHistory)) return [];
-    
     return [...weightHistory].sort((a, b) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
   }, [weightHistory]);
+
+  // Create memoized row data to prevent re-calculation
+  const rowData = useMemo(() => {
+    return sortedHistory.map((record, index) => {
+      if (!record || !record.id) return null;
+      
+      // Get the next record for change calculation
+      const nextRecord = sortedHistory[index + 1];
+      
+      return {
+        key: record.id,
+        record,
+        prevWeight: nextRecord?.weight
+      };
+    }).filter(Boolean); // Remove any null values
+  }, [sortedHistory]);
 
   return (
     <div className="max-h-[350px] overflow-auto relative">
@@ -104,22 +123,14 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedHistory.map((record, index) => {
-            // Skip records without IDs for safety
-            if (!record || !record.id) return null;
-            
-            // Get the next record for change calculation
-            const nextRecord = sortedHistory[index + 1];
-            
-            return (
-              <WeightHistoryRow
-                key={record.id}
-                record={record}
-                prevWeight={nextRecord?.weight}
-                onDelete={onDeleteWeight}
-              />
-            );
-          })}
+          {rowData.map(item => (
+            <WeightHistoryRow
+              key={item.key}
+              record={item.record}
+              prevWeight={item.prevWeight}
+              onDelete={onDeleteWeight}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>

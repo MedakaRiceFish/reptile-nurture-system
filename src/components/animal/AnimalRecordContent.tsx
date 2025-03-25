@@ -33,8 +33,7 @@ interface AnimalRecordContentProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-// Use memo to prevent unnecessary re-renders
-const AnimalRecordContent = memo(({
+const AnimalRecordContent = ({
   animal,
   animalNotes,
   setAnimalData,
@@ -42,22 +41,10 @@ const AnimalRecordContent = memo(({
   onEditClick,
   onAddWeightClick,
   onDeleteWeight
-}: AnimalRecordContentProps) => {
-  // Memoize the delete weight handler
-  const handleDeleteWeight = useCallback((id: string) => {
-    if (onDeleteWeight) {
-      onDeleteWeight(id);
-    }
-  }, [onDeleteWeight]);
-
-  // Generate a unique key based on animal ID and data version
-  const contentKey = useMemo(() => 
-    `animal-content-${animal.id}-${animal.weightHistory?.length || 0}`, 
-    [animal.id, animal.weightHistory?.length]
-  );
-
+}: AnimalRecordContentProps) => {  
+  // Clean content structure to prevent unnecessary DOM recreation
   return (
-    <div key={contentKey}>
+    <div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <AnimalDetails 
           animal={animal} 
@@ -68,7 +55,7 @@ const AnimalRecordContent = memo(({
         <WeightTracker 
           animal={animal} 
           onAddWeightClick={onAddWeightClick} 
-          onDeleteWeight={handleDeleteWeight}
+          onDeleteWeight={onDeleteWeight}
         />
       </div>
 
@@ -79,8 +66,7 @@ const AnimalRecordContent = memo(({
       />
     </div>
   );
-});
+};
 
-AnimalRecordContent.displayName = "AnimalRecordContent";
-
-export { AnimalRecordContent };
+export const MemoizedAnimalRecordContent = memo(AnimalRecordContent);
+export { MemoizedAnimalRecordContent as AnimalRecordContent };
