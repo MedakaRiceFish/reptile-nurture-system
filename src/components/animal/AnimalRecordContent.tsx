@@ -1,7 +1,7 @@
 
 import React, { memo, useMemo, useCallback } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
-import WeightTracker from "@/components/animal/WeightTracker";
+import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
 import { WeightRecord } from "@/hooks/animal-record/types";
 

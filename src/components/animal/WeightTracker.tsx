@@ -18,7 +18,7 @@ interface WeightTrackerProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-const WeightTracker = ({
+const WeightTrackerComponent = ({
   animal,
   onAddWeightClick,
   onDeleteWeight
@@ -177,4 +177,9 @@ const WeightTracker = ({
   );
 };
 
-export default memo(WeightTracker);
+// Create a memoized version of the component
+const WeightTracker = memo(WeightTrackerComponent);
+
+// Export both as named and default export for flexibility
+export { WeightTracker };
+export default WeightTracker;
