@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { HardDrive, Wrench, PlusCircle } from "lucide-react";
-import { AddDeviceDialog } from "../AddDeviceDialog";
+import { AddDeviceDialog } from "../device/AddDeviceDialog";
 import { toast } from "sonner";
 import { HardwareItem } from "@/types/hardware";
 
