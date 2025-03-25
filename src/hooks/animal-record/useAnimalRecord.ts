@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useAnimalData } from "./useAnimalData";
 import { useAnimalWeight } from "./useAnimalWeight";
 import { useAnimalEdit } from "./useAnimalEdit";
-import { AnimalNote } from "./types";
+import { AnimalNote, WeightRecord } from "./types";
 
 // Create a storage key for deleted records that's unique per animal
 const getDeletedRecordsStorageKey = (animalId: string) => 
@@ -57,7 +57,8 @@ export const useAnimalRecord = () => {
     setAnimalData,
     weightRecords,
     setWeightRecords,
-    loading
+    loading,
+    refetchWeightRecords
   } = useAnimalData(id, user?.id, deletedRecordIds);
 
   // Then get animal weight functionality with the ability to update deletedRecordIds
@@ -66,7 +67,16 @@ export const useAnimalRecord = () => {
     setIsWeightDialogOpen,
     handleAddWeight,
     handleDeleteWeight
-  } = useAnimalWeight(id, user?.id, setAnimalData, weightRecords, setWeightRecords, deletedRecordIds, setDeletedRecordIds);
+  } = useAnimalWeight(
+    id, 
+    user?.id, 
+    setAnimalData, 
+    weightRecords, 
+    setWeightRecords, 
+    deletedRecordIds, 
+    setDeletedRecordIds,
+    refetchWeightRecords
+  );
 
   // Get animal edit functionality
   const {

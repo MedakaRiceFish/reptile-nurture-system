@@ -19,6 +19,13 @@ export const useAnimalData = (
   const isMountedRef = useRef(true);
   const prevDeletedIdsRef = useRef<string[]>([]);
 
+  // Function to filter out deleted records
+  const filterDeletedRecords = useCallback((records: WeightRecord[]) => {
+    return records.filter(record => 
+      !record.id || !deletedRecordIds.has(record.id)
+    );
+  }, [deletedRecordIds]);
+
   // Memoize the data fetching function with useCallback
   const fetchData = useCallback(async () => {
     if (!animalId || !userId || !isMountedRef.current) {
@@ -44,10 +51,8 @@ export const useAnimalData = (
         console.log("Fetched weight records:", weightRecordsResult);
         console.log("deletedRecordIds size:", deletedRecordIds.size);
         
-        // Filter out deleted records once instead of on every render
-        const filteredRecords = weightRecordsResult.filter(record => 
-          !record.id || !deletedRecordIds.has(record.id)
-        );
+        // Filter out deleted records
+        const filteredRecords = filterDeletedRecords(weightRecordsResult);
         
         console.log("Filtered weight records (after removing deleted):", filteredRecords);
         
@@ -108,7 +113,39 @@ export const useAnimalData = (
         setLoading(false);
       }
     }
-  }, [animalId, userId, deletedRecordIds, toast]);
+  }, [animalId, userId, deletedRecordIds, toast, filterDeletedRecords]);
+
+  // Function to refetch just weight records
+  const refetchWeightRecords = useCallback(async () => {
+    if (!animalId || !userId || !isMountedRef.current) return;
+    
+    try {
+      const weightRecordsResult = await getAnimalWeightRecords(animalId);
+      
+      if (!isMountedRef.current) return;
+      
+      // Filter out deleted records
+      const filteredRecords = filterDeletedRecords(weightRecordsResult);
+      console.log("Refetched and filtered weight records:", filteredRecords);
+      
+      setWeightRecords(filteredRecords);
+      
+      // Update animal's current weight if we have records
+      if (filteredRecords.length > 0 && animalData) {
+        const sortedRecords = [...filteredRecords].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        const currentWeight = sortedRecords[0].weight;
+        setAnimalData(prevData => prevData ? {...prevData, weight: currentWeight} : null);
+      }
+      
+      return filteredRecords;
+    } catch (error) {
+      console.error("Error refetching weight records:", error);
+      return null;
+    }
+  }, [animalId, userId, animalData, filterDeletedRecords, deletedRecordIds]);
 
   // Check if the deletedRecordIds set has changed by comparing the serialized arrays
   const haveDeletedIdsChanged = useCallback(() => {
@@ -132,9 +169,9 @@ export const useAnimalData = (
 
   useEffect(() => {
     const shouldFetchData = !initialDataFetchedRef.current || 
-                           !animalData || 
-                           animalData.id !== animalId || 
-                           haveDeletedIdsChanged();
+                          !animalData || 
+                          animalData.id !== animalId || 
+                          haveDeletedIdsChanged();
     
     if (shouldFetchData) {
       console.log("Fetching data because:", {
@@ -160,21 +197,22 @@ export const useAnimalData = (
     };
   }, [animalId, userId, deletedRecordIds, fetchData, animalData, haveDeletedIdsChanged]);
 
-  // Filter weight records client-side if deletedRecordIds changes
+  // Filter weight records client-side if deletedRecordIds changes without requiring a full refetch
   useEffect(() => {
     if (weightRecords.length > 0 && deletedRecordIds.size > 0) {
       console.log("Filtering weight records based on deletedRecordIds");
       setWeightRecords(prevRecords => 
-        prevRecords.filter(record => !record.id || !deletedRecordIds.has(record.id))
+        filterDeletedRecords(prevRecords)
       );
     }
-  }, [deletedRecordIds]);
+  }, [deletedRecordIds, filterDeletedRecords]);
 
   return {
     animalData,
     setAnimalData,
     weightRecords,
     setWeightRecords,
-    loading
+    loading,
+    refetchWeightRecords
   };
 };

@@ -37,7 +37,7 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<Formatte
       weight: record.weight
     }));
     
-    console.log("Formatted weight records:", formattedRecords);
+    console.log("Fetched weight records:", formattedRecords);
     return formattedRecords;
   } catch (error: any) {
     console.error("Error fetching weight records:", error);
