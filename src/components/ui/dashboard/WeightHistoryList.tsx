@@ -33,7 +33,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
   const sortedHistory = [...weightHistory].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
-
+  
   console.log("Sorted weight history:", sortedHistory);
 
   return (
@@ -82,7 +82,11 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => onDeleteWeight(record.id!)}
+                      onClick={() => {
+                        if (record.id) {
+                          onDeleteWeight(record.id);
+                        }
+                      }}
                       title="Delete record"
                     >
                       <X className="h-4 w-4" />
