@@ -11,6 +11,59 @@ interface WeightHistoryListProps {
   onDeleteWeight?: (id: string) => void;
 }
 
+// Memoize the weight history row to prevent re-rendering all rows
+const WeightHistoryRow = memo(({ 
+  record, 
+  prevWeight, 
+  onDelete 
+}: { 
+  record: WeightRecord; 
+  prevWeight?: number; 
+  onDelete?: (id: string) => void;
+}) => {
+  // Calculate weight change
+  const change = prevWeight ? record.weight - prevWeight : 0;
+  
+  // Format date
+  let formattedDate;
+  try {
+    formattedDate = format(parseISO(record.date), "MMM d, yyyy");
+  } catch (e) {
+    formattedDate = record.date;
+  }
+
+  return (
+    <TableRow>
+      <TableCell>{formattedDate}</TableCell>
+      <TableCell className="font-medium">{record.weight}</TableCell>
+      <TableCell>
+        {prevWeight && (
+          <span className={`${change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+            {change > 0 ? '+' : ''}{change} g
+          </span>
+        )}
+      </TableCell>
+      {onDelete && (
+        <TableCell>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => record.id && onDelete(record.id)}
+            aria-label="Delete weight record"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Delete</span>
+          </Button>
+        </TableCell>
+      )}
+    </TableRow>
+  );
+});
+
+WeightHistoryRow.displayName = "WeightHistoryRow";
+
 // Use React.memo to prevent unnecessary re-renders
 export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
   // If no history, show a clear message
@@ -30,22 +83,6 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
     });
   }, [weightHistory]);
 
-  // Create a formatting function that handles errors gracefully
-  const formatDate = (dateString: string) => {
-    try {
-      return format(parseISO(dateString), "MMM d, yyyy");
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  // Memoize the delete handler to prevent recreation on rerenders
-  const handleDelete = (id: string) => {
-    if (onDeleteWeight && id) {
-      onDeleteWeight(id);
-    }
-  };
-
   return (
     <div className="max-h-[350px] overflow-auto relative">
       <Table>
@@ -62,42 +99,16 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
             // Skip records without IDs for safety
             if (!record.id) return null;
             
-            // Calculate weight change
+            // Get the next record for change calculation
             const nextRecord = sortedHistory[index + 1];
-            const change = nextRecord 
-              ? record.weight - nextRecord.weight 
-              : 0;
-            
-            // Format date
-            const formattedDate = formatDate(record.date);
             
             return (
-              <TableRow key={record.id}>
-                <TableCell>{formattedDate}</TableCell>
-                <TableCell className="font-medium">{record.weight}</TableCell>
-                <TableCell>
-                  {index < sortedHistory.length - 1 && (
-                    <span className={`${change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                      {change > 0 ? '+' : ''}{change} g
-                    </span>
-                  )}
-                </TableCell>
-                {onDeleteWeight && (
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => handleDelete(record.id as string)}
-                      aria-label="Delete weight record"
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </TableCell>
-                )}
-              </TableRow>
+              <WeightHistoryRow
+                key={record.id}
+                record={record}
+                prevWeight={nextRecord?.weight}
+                onDelete={onDeleteWeight}
+              />
             );
           })}
         </TableBody>

@@ -3,9 +3,28 @@ import React, { memo } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
 import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
+import { WeightRecord } from "@/hooks/animal-record/types";
 
 interface AnimalRecordContentProps {
-  animal: any;
+  animal: {
+    id: string;
+    name: string;
+    species: string;
+    age: number;
+    weight: number;
+    length: number | null;
+    enclosure_id: string;
+    image_url?: string;
+    image?: string;
+    description?: string;
+    feeding_schedule?: string;
+    feedingSchedule?: string;
+    breeding_source?: string;
+    breederSource?: string;
+    enclosureName?: string;
+    enclosure?: string;
+    weightHistory?: WeightRecord[];
+  };
   animalNotes: {date: string, note: string}[];
   setAnimalData: React.Dispatch<React.SetStateAction<any>>;
   setAnimalNotes: React.Dispatch<React.SetStateAction<{date: string, note: string}[]>>;
@@ -23,7 +42,7 @@ export const AnimalRecordContent = memo(({
   onEditClick,
   onAddWeightClick,
   onDeleteWeight
-}) => {
+}: AnimalRecordContentProps) => {
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

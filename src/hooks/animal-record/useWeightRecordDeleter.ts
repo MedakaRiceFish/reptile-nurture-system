@@ -8,8 +8,7 @@ export const useWeightRecordDeleter = (
   animalId: string | undefined,
   setWeightRecords: React.Dispatch<React.SetStateAction<WeightRecord[]>>,
   deletedRecordIds: Set<string>,
-  setDeletedRecordIds: React.Dispatch<React.SetStateAction<Set<string>>>,
-  refetchWeightRecords: () => Promise<WeightRecord[] | null>
+  setDeletedRecordIds: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
   // Use a ref to track in-progress deletions to prevent duplicate calls
   const pendingDeletions = useRef(new Set<string>());
@@ -30,46 +29,26 @@ export const useWeightRecordDeleter = (
     const newDeletedIds = new Set(deletedRecordIds);
     newDeletedIds.add(id);
     
-    // Update UI first (optimistic update) - use functional update
+    // Update UI first (optimistic update) - use functional update to ensure we're working with latest state
     setWeightRecords(prevRecords => prevRecords.filter(record => record.id !== id));
     setDeletedRecordIds(newDeletedIds);
     
-    // Then perform the API call in the background
+    // Then perform the API call
     deleteWeightRecord(id)
       .then(success => {
-        if (success) {
-          toast.success("Weight record deleted", {
-            duration: 2000,
-            position: "bottom-right",
-          });
-        } else {
-          // Rollback if failed
-          handleDeleteFailure(id);
+        if (!success) {
+          console.error("Failed to delete weight record:", id);
+          // Don't roll back the UI - we'll let the persistence layer handle reconciliation
         }
       })
-      .catch(() => {
-        handleDeleteFailure(id);
+      .catch((error) => {
+        console.error("Error deleting weight record:", error);
       })
       .finally(() => {
         // Clear from pending set
         pendingDeletions.current.delete(id);
       });
-  }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords, refetchWeightRecords]);
-
-  // Helper for handling deletion failures
-  const handleDeleteFailure = useCallback((id: string) => {
-    // Rollback deleted IDs
-    setDeletedRecordIds(prev => {
-      const updated = new Set(prev);
-      updated.delete(id);
-      return updated;
-    });
-    
-    // Refetch to restore correct data
-    refetchWeightRecords();
-    
-    toast.error("Failed to delete weight record");
-  }, [setDeletedRecordIds, refetchWeightRecords]);
+  }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords]);
 
   return { handleDeleteWeight };
 };

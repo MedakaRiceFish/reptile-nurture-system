@@ -1,4 +1,3 @@
-
 import React, { useMemo, Suspense, lazy, useEffect } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
@@ -76,8 +75,6 @@ const AnimalRecord = () => {
   // Memoize the animal with weight history
   const animalWithWeightHistory = useMemo(() => {
     if (!animalData) return null;
-    
-    console.log(`Creating animalWithWeightHistory with ${weightRecords.length} weight records`);
     
     return {
       ...animalData,

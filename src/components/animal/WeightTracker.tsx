@@ -6,24 +6,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Weight } from "lucide-react";
 import { AnimalWeightChart } from "@/components/ui/dashboard/AnimalWeightChart";
 import { WeightHistoryList } from "@/components/ui/dashboard/WeightHistoryList";
-
-interface WeightRecord {
-  date: string;
-  weight: number;
-  id?: string;
-}
+import { WeightRecord } from "@/hooks/animal-record/types";
 
 interface WeightTrackerProps {
-  animal: any;
+  animal: {
+    id?: string;
+    weight?: number;
+    weightHistory?: WeightRecord[];
+  };
   onAddWeightClick: () => void;
   onDeleteWeight?: (id: string) => void;
 }
 
-export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
+export const WeightTracker = React.memo(({
   animal,
   onAddWeightClick,
   onDeleteWeight
-}) => {
+}: WeightTrackerProps) => {
   // Use state to maintain tab selection with localStorage for persistence
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -43,12 +42,10 @@ export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
     }
   }, [activeTab]);
   
-  // Stable handler for deletion to prevent excessive re-renders
-  const handleDeleteWeight = useCallback((id: string) => {
-    if (onDeleteWeight) {
-      onDeleteWeight(id);
-    }
-  }, [onDeleteWeight]);
+  // Extract the weight history or use an empty array
+  const weightHistory = useMemo(() => {
+    return animal.weightHistory || [];
+  }, [animal.weightHistory]);
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -59,19 +56,19 @@ export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
     };
     
     // If no weight history, use the current animal weight as both current and max
-    if (!animal.weightHistory || animal.weightHistory.length === 0) {
+    if (!weightHistory || weightHistory.length === 0) {
       return defaultStats;
     }
     
     // Sort by date (newest first) to get current weight
-    const sortedWeights = [...animal.weightHistory].sort(
+    const sortedWeights = [...weightHistory].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
     const currentWeight = sortedWeights[0].weight;
     
     // Find maximum weight
-    const maxWeight = Math.max(...animal.weightHistory.map((record: WeightRecord) => record.weight));
+    const maxWeight = Math.max(...weightHistory.map((record: WeightRecord) => record.weight));
     
     // Calculate percentage change from the previous weight
     let percentChange = 0;
@@ -87,7 +84,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
       maxWeight,
       percentChange
     };
-  }, [animal.weightHistory, animal.weight]);
+  }, [weightHistory, animal.weight]);
 
   // Determine color based on percentage change
   const getPercentChangeColor = (percentChange: number) => {
@@ -98,7 +95,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
   };
 
   // Check if there's weight history AND it has at least one record
-  const hasWeightHistory = animal.weightHistory && animal.weightHistory.length > 0;
+  const hasWeightHistory = weightHistory.length > 0;
 
   return (
     <Card className="lg:col-span-2">
@@ -148,12 +145,12 @@ export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
               <TabsTrigger value="list">List</TabsTrigger>
             </TabsList>
             <TabsContent value="chart" className="pt-2">
-              <AnimalWeightChart weightHistory={animal.weightHistory} />
+              <AnimalWeightChart weightHistory={weightHistory} />
             </TabsContent>
             <TabsContent value="list">
               <WeightHistoryList 
-                weightHistory={animal.weightHistory}
-                onDeleteWeight={handleDeleteWeight}
+                weightHistory={weightHistory}
+                onDeleteWeight={onDeleteWeight}
               />
             </TabsContent>
           </Tabs>
