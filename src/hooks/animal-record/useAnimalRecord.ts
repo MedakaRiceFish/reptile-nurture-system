@@ -18,16 +18,23 @@ export const useAnimalRecord = () => {
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  // Get animal weight functionality
+  // First get animal data functionality
   const {
+    animalData,
+    setAnimalData,
     weightRecords,
     setWeightRecords,
+    loading
+  } = useAnimalData(id, user?.id, new Set<string>());
+
+  // Then get animal weight functionality with setAnimalData now available
+  const {
     deletedRecordIds,
     isWeightDialogOpen,
     setIsWeightDialogOpen,
     handleAddWeight,
     handleDeleteWeight
-  } = useAnimalWeight(id, user?.id, setAnimalData);
+  } = useAnimalWeight(id, user?.id, setAnimalData, weightRecords, setWeightRecords);
 
   // Get animal edit functionality
   const {
@@ -35,13 +42,6 @@ export const useAnimalRecord = () => {
     setIsEditDialogOpen,
     handleEditSubmit
   } = useAnimalEdit(setAnimalData);
-
-  // Get animal data functionality
-  const {
-    animalData,
-    setAnimalData,
-    loading
-  } = useAnimalData(id, user?.id, deletedRecordIds);
 
   const handleBack = () => {
     navigate("/animals");

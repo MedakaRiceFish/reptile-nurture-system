@@ -13,8 +13,9 @@ export const useAnimalWeight = (
   animalId: string | undefined,
   userId: string | undefined,
   setAnimalData: React.Dispatch<React.SetStateAction<any>>,
+  weightRecords: WeightRecord[],
+  setWeightRecords: React.Dispatch<React.SetStateAction<WeightRecord[]>>
 ) => {
-  const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
   const [deletedRecordIds, setDeletedRecordIds] = useState<Set<string>>(new Set());
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
   const { toast } = useToast();
