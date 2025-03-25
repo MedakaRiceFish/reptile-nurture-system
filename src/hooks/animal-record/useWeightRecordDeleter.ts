@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { deleteWeightRecord } from "@/services/weightService";

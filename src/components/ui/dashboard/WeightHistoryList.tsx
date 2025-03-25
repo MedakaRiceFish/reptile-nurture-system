@@ -23,11 +23,6 @@ const WeightHistoryRow = memo(({
 }) => {
   const rowId = useRef(Math.random().toString(36).substring(7));
   
-  useEffect(() => {
-    console.log(`[DEBUG-Render] WeightHistoryRow ${rowId.current} mounted for record: ${record.id}`);
-    return () => console.log(`[DEBUG-Render] WeightHistoryRow ${rowId.current} unmounting for record: ${record.id}`);
-  }, [record.id]);
-  
   // Calculate weight change
   const change = prevWeight ? record.weight - prevWeight : 0;
   
@@ -40,17 +35,19 @@ const WeightHistoryRow = memo(({
   }
 
   // Memoize the delete handler to prevent recreating it on every render
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    // IMPORTANT: Stop propagation to prevent the event from bubbling up
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log(`[DEBUG-Action] Delete button clicked for record: ${record.id}`);
     if (record.id && onDelete) {
       onDelete(record.id);
     }
   }, [record.id, onDelete]);
 
-  console.log(`[DEBUG-Render] WeightHistoryRow ${rowId.current} rendering for record: ${record.id}`);
-  
   return (
-    <TableRow>
+    <TableRow key={record.id}>
       <TableCell>{formattedDate}</TableCell>
       <TableCell className="font-medium">{record.weight}</TableCell>
       <TableCell>
@@ -95,37 +92,21 @@ EmptyWeightHistory.displayName = "EmptyWeightHistory";
 const WeightHistoryListComponent = ({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
   const componentId = useRef(Math.random().toString(36).substring(7));
   
-  useEffect(() => {
-    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} mounted with ${weightHistory.length} records`);
-    return () => console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} unmounting`);
-  }, [weightHistory.length]);
-  
-  // Log when props change
-  useEffect(() => {
-    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} received weightHistory update:`, {
-      count: weightHistory.length,
-      recordIds: weightHistory.slice(0, 2).map(r => r.id).join(', ') + (weightHistory.length > 2 ? '...' : '')
-    });
-  }, [weightHistory]);
-
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
-    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} rendering empty state`);
     return <EmptyWeightHistory />;
   }
 
   // Memoize the sorted history
   const sortedHistory = useMemo(() => {
-    const sorted = [...weightHistory].sort((a, b) => {
+    return [...weightHistory].sort((a, b) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
-    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} memoized sortedHistory with ${sorted.length} records`);
-    return sorted;
   }, [weightHistory]);
 
   // Create memoized row data to prevent re-calculation
   const rowData = useMemo(() => {
-    const data = sortedHistory.map((record, index) => {
+    return sortedHistory.map((record, index) => {
       if (!record || !record.id) return null;
       
       // Get the next record for change calculation
@@ -137,18 +118,13 @@ const WeightHistoryListComponent = ({ weightHistory, onDeleteWeight }: WeightHis
         prevWeight: nextRecord?.weight
       };
     }).filter(Boolean); // Remove any null values
-    
-    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} memoized rowData with ${data.length} rows`);
-    return data;
   }, [sortedHistory]);
 
-  // Wrap the delete handler with logging
+  // Wrap the delete handler with event management
   const handleDeleteWithLogging = useCallback((id: string) => {
     console.log(`[DEBUG-Action] WeightHistoryList ${componentId.current} delete handler called for record: ${id}`);
     onDeleteWeight?.(id);
   }, [onDeleteWeight]);
-
-  console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} rendering with ${rowData.length} rows`);
   
   return (
     <div className="max-h-[350px] overflow-auto relative">

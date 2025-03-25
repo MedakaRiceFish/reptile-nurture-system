@@ -1,5 +1,5 @@
 
-import React, { memo, useEffect, useRef } from "react";
+import React, { memo, useCallback } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
 import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
@@ -42,42 +42,15 @@ const AnimalRecordContent = memo(({
   onEditClick,
   onAddWeightClick,
   onDeleteWeight
-}: AnimalRecordContentProps) => {  
-  // Add instance ID for tracking renders
-  const instanceId = useRef(Math.random().toString(36).substring(7));
-  
-  useEffect(() => {
-    console.log(`[DEBUG-Render] AnimalRecordContent mounted with ID: ${instanceId.current}`);
-    console.log(`[DEBUG-Render] Animal data received:`, {
-      id: animal.id,
-      name: animal.name,
-      weightHistoryCount: animal.weightHistory?.length || 0,
-      callbacksProvided: {
-        onEditClick: !!onEditClick,
-        onAddWeightClick: !!onAddWeightClick,
-        onDeleteWeight: !!onDeleteWeight
-      }
-    });
-    
-    return () => {
-      console.log(`[DEBUG-Render] AnimalRecordContent with ID ${instanceId.current} unmounting`);
-    };
-  }, []);
-  
-  // Log whenever animal or weightHistory changes
-  useEffect(() => {
-    console.log(`[DEBUG-Render] AnimalRecordContent ${instanceId.current} received animal data update:`, {
-      animalId: animal.id,
-      weightHistoryCount: animal.weightHistory?.length || 0
-    });
-  }, [animal]);
-
-  // Log whenever callbacks change
-  useEffect(() => {
-    console.log(`[DEBUG-Render] AnimalRecordContent ${instanceId.current} callbacks updated`);
-  }, [onEditClick, onAddWeightClick, onDeleteWeight]);
-  
-  console.log(`[DEBUG-Render] AnimalRecordContent ${instanceId.current} rendering`);
+}: AnimalRecordContentProps) => {
+  // Wrap the deletion handler to ensure consistent handling
+  const handleWeightDelete = useCallback((id: string) => {
+    console.log(`[AnimalRecordContent] Delegating weight deletion for record: ${id}`);
+    // This wrapping ensures we can provide consistent deletion behavior and logging
+    if (onDeleteWeight) {
+      onDeleteWeight(id);
+    }
+  }, [onDeleteWeight]);
   
   return (
     <div className="transition-all duration-200">
@@ -91,7 +64,7 @@ const AnimalRecordContent = memo(({
         <WeightTracker 
           animal={animal} 
           onAddWeightClick={onAddWeightClick} 
-          onDeleteWeight={onDeleteWeight}
+          onDeleteWeight={handleWeightDelete}
         />
       </div>
 
