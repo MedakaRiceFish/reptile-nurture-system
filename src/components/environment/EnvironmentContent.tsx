@@ -68,7 +68,7 @@ export const EnvironmentContent: React.FC<EnvironmentContentProps> = ({
         <TabsList>
           <TabsTrigger value="temperature">Temperature</TabsTrigger>
           <TabsTrigger value="humidity">Humidity</TabsTrigger>
-          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="hardware">Hardware</TabsTrigger>
         </TabsList>
         <TabsContent value="temperature">
           <EnvironmentTabContent type="temperature" enclosureId={enclosure.id} />
@@ -76,8 +76,8 @@ export const EnvironmentContent: React.FC<EnvironmentContentProps> = ({
         <TabsContent value="humidity">
           <EnvironmentTabContent type="humidity" enclosureId={enclosure.id} />
         </TabsContent>
-        <TabsContent value="maintenance">
-          <EnvironmentTabContent type="maintenance" enclosureId={enclosure.id} />
+        <TabsContent value="hardware">
+          <EnvironmentTabContent type="hardware" enclosureId={enclosure.id} />
         </TabsContent>
       </Tabs>
     </>
