@@ -16,9 +16,9 @@ export default function Login() {
   const { signIn, user } = useAuth();
 
   useEffect(() => {
-    // If user is already logged in, redirect to animals page
+    // If user is already logged in, redirect to home page
     if (user) {
-      navigate("/animals");
+      navigate("/");
     }
     
     // Check if we have a hash parameter for access_token (from email confirmation or OAuth)
