@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,7 +53,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
   }, [animal, setAnimalData]);
 
   // Get the current weight from weight history if available
-  const currentWeight = useMemo(() => {
+  const currentWeight = React.useMemo(() => {
     if (animal.weightHistory && animal.weightHistory.length > 0) {
       // Sort weight records by date (newest first)
       const sortedRecords = [...animal.weightHistory].sort(
@@ -179,8 +178,3 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     </Card>
   );
 };
-
-// Fix TypeScript error
-function useMemo<T>(factory: () => T, deps: React.DependencyList): T {
-  return React.useMemo(factory, deps);
-}
