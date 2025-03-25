@@ -7,7 +7,7 @@ export const getTasks = async () => {
     .from('tasks')
     .select('*')
     .order('due_date', { ascending: true })
-    .order('due_time', { ascending: true, nullsLast: true });
+    .order('due_time', { ascending: true, nullsFirst: true });
 
   if (error) {
     console.error('Error fetching tasks:', error);
@@ -23,7 +23,7 @@ export const getUpcomingTasks = async (limit = 5) => {
     .select('*')
     .eq('status', 'pending')
     .order('due_date', { ascending: true })
-    .order('due_time', { ascending: true, nullsLast: true })
+    .order('due_time', { ascending: true, nullsFirst: true })
     .limit(limit);
 
   if (error) {
@@ -35,9 +35,21 @@ export const getUpcomingTasks = async (limit = 5) => {
 };
 
 export const createTask = async (taskData: TaskFormValues) => {
+  // Get the current user id
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  
+  const taskWithOwner = {
+    ...taskData,
+    owner_id: user.id
+  };
+  
   const { data, error } = await supabase
     .from('tasks')
-    .insert([taskData])
+    .insert(taskWithOwner)
     .select()
     .single();
 
