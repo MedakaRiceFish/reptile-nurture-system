@@ -22,7 +22,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   onAddWeightClick,
 }) => {
   console.log("WeightTracker animal:", animal); // Debug log
-  console.log("Weight history:", animal.weightHistory); // Debug log
+  console.log("Weight history array:", animal.weightHistory); // Debug log
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -34,11 +34,11 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     
     // If no weight history, use the current animal weight as both current and max
     if (!animal.weightHistory || animal.weightHistory.length === 0) {
-      console.log("No weight history found"); // Debug log
+      console.log("No weight history found, using animal.weight:", animal.weight); 
       return defaultStats;
     }
 
-    console.log("Weight history found:", animal.weightHistory.length, "records"); // Debug log
+    console.log("Weight history found:", animal.weightHistory.length, "records"); 
     
     // Sort by date (newest first) to get current weight
     const sortedWeights = [...animal.weightHistory].sort(

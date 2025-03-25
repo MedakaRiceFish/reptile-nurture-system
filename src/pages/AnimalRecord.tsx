@@ -36,13 +36,52 @@ const AnimalRecord = () => {
 
       try {
         setLoading(true);
+        console.log("Fetching animal data for ID:", id);
         const animalData = await getAnimal(id);
         
         if (animalData) {
           // Fetch weight records
+          console.log("Fetching weight records for animal ID:", id);
           const records = await getAnimalWeightRecords(id);
           console.log("Raw records from service:", records);
+          
+          // If we have weight records, update the state
           setWeightRecords(records);
+          
+          // If no weight records but the animal has a weight, create a weight record for today
+          if (records.length === 0 && animalData.weight) {
+            console.log("No weight records but animal has weight:", animalData.weight);
+            console.log("Creating initial weight record from animal weight");
+            
+            // Only add the weight record if we're not in the middle of adding it
+            // (to prevent duplicate records when useEffect runs multiple times)
+            const today = format(new Date(), "yyyy-MM-dd");
+            
+            try {
+              const newRecord = {
+                animal_id: animalData.id,
+                weight: animalData.weight,
+                recorded_at: today,
+                owner_id: user.id
+              };
+              
+              const result = await addWeightRecord(newRecord);
+              
+              if (result) {
+                console.log("Initial weight record created:", result);
+                
+                // Add the new record to our state
+                const formattedRecord = {
+                  date: today,
+                  weight: animalData.weight
+                };
+                
+                setWeightRecords([formattedRecord]);
+              }
+            } catch (error) {
+              console.error("Error creating initial weight record:", error);
+            }
+          }
           
           // Make sure the animalData has the latest weight value from records
           if (records.length > 0) {
@@ -92,10 +131,19 @@ const AnimalRecord = () => {
     }
 
     try {
+      const weightValue = parseFloat(data.weight);
+      const recordDate = format(data.date, "yyyy-MM-dd");
+      
+      console.log("Adding new weight record:", {
+        animalId: animalData.id,
+        weight: weightValue,
+        date: recordDate
+      });
+      
       const newRecord = {
         animal_id: animalData.id,
-        weight: parseFloat(data.weight),
-        recorded_at: format(data.date, "yyyy-MM-dd"),
+        weight: weightValue,
+        recorded_at: recordDate,
         owner_id: user.id
       };
       
@@ -103,25 +151,31 @@ const AnimalRecord = () => {
       
       if (result) {
         const formattedRecord = {
-          date: format(data.date, "yyyy-MM-dd"),
-          weight: parseFloat(data.weight)
+          date: recordDate,
+          weight: weightValue
         };
         
-        setWeightRecords([...weightRecords, formattedRecord].sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        ));
+        console.log("Added new weight record:", formattedRecord);
         
+        // Update weightRecords state
+        setWeightRecords(prevRecords => {
+          const newRecords = [...prevRecords, formattedRecord];
+          console.log("Updated weight records state:", newRecords);
+          return newRecords;
+        });
+        
+        // Update animal data with new weight
         const updatedAnimal = {
           ...animalData,
-          weight: parseFloat(data.weight)
+          weight: weightValue
         };
         
-        await updateAnimal(animalData.id, { weight: parseFloat(data.weight) });
+        await updateAnimal(animalData.id, { weight: weightValue });
         setAnimalData(updatedAnimal);
         
         toast({
           title: "Weight record added",
-          description: `New weight of ${data.weight}g recorded for ${animalData.name}`,
+          description: `New weight of ${weightValue}g recorded for ${animalData.name}`,
         });
         
         setIsWeightDialogOpen(false);
@@ -219,6 +273,7 @@ const AnimalRecord = () => {
   };
 
   console.log("Animal with weight history:", animalWithWeightHistory);
+  console.log("Weight records before passing to components:", weightRecords);
 
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>

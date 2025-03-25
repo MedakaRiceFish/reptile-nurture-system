@@ -27,6 +27,20 @@ interface AnimalWeightChartProps {
 }
 
 export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
+  console.log("AnimalWeightChart received weightHistory:", weightHistory);
+  
+  // If no history, show a message
+  if (!weightHistory || weightHistory.length === 0) {
+    return (
+      <Card className="p-6 h-[400px] flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <p>No weight history available.</p>
+          <p className="mt-2">Add a weight record to see a chart.</p>
+        </div>
+      </Card>
+    );
+  }
+
   const chartConfig = {
     weight: {
       label: "Weight (g)",
@@ -34,10 +48,12 @@ export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
     },
   };
 
-  console.log("Weight history for chart:", weightHistory);
-
-  // Format the data for the chart
-  const chartData = weightHistory.map(record => {
+  // Format the data for the chart - sort by date (oldest first)
+  const sortedData = [...weightHistory].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
+  const chartData = sortedData.map(record => {
     // Ensure the date is properly parsed
     let formattedDate;
     try {

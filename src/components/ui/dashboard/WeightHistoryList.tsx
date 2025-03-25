@@ -13,6 +13,18 @@ interface WeightHistoryListProps {
 }
 
 export function WeightHistoryList({ weightHistory }: WeightHistoryListProps) {
+  console.log("WeightHistoryList received weightHistory:", weightHistory);
+
+  // If no history, show a clear message
+  if (!weightHistory || weightHistory.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>No weight history available.</p>
+        <p className="mt-2">Add a weight record to start tracking.</p>
+      </div>
+    );
+  }
+
   // Sort the weight history by date (newest first)
   const sortedHistory = [...weightHistory].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
