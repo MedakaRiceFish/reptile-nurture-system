@@ -31,16 +31,21 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
 
   // Handle delete click with proper event handling
   const handleDeleteClick = useCallback((
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
     id: string
   ) => {
-    // Stop event propagation to prevent tab switching or parent reflows
+    // Prevent default button behavior
     event.preventDefault();
+    
+    // Stop event propagation to prevent any parent handlers from firing
     event.stopPropagation();
     
+    // Use setTimeout to break out of the current event cycle
+    // This helps prevent unwanted page refreshes or state updates
     if (onDeleteWeight && id) {
-      // Call the delete handler synchronously
-      onDeleteWeight(id);
+      setTimeout(() => {
+        onDeleteWeight(id);
+      }, 0);
     }
   }, [onDeleteWeight]);
 
@@ -106,11 +111,12 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           e.stopPropagation();
-                          onDeleteWeight(record.id!);
+                          handleDeleteClick(e, record.id!);
                         }
                       }}
+                      aria-label={`Delete weight record from ${formattedDate}`}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 pointer-events-none" />
                       <span className="sr-only">Delete record</span>
                     </Button>
                   </TableCell>
