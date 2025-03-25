@@ -18,7 +18,7 @@ interface WeightTrackerProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-export const WeightTracker = React.memo(({
+const WeightTracker = React.memo(({
   animal,
   onAddWeightClick,
   onDeleteWeight
@@ -144,8 +144,11 @@ export const WeightTracker = React.memo(({
     );
   }, [activeTab, hasWeightHistory, weightHistory, setActiveTab, handleDeleteWeight]);
 
+  // Use a key to force re-mount only when the animal ID changes
+  const componentKey = useMemo(() => `weight-tracker-${animal.id || 'new'}`, [animal.id]);
+
   return (
-    <Card className="lg:col-span-2">
+    <Card className="lg:col-span-2" key={componentKey}>
       <CardHeader className="pb-0">
         <div className="flex justify-between items-center">
           <CardTitle>Weight Records</CardTitle>
@@ -183,3 +186,5 @@ export const WeightTracker = React.memo(({
 });
 
 WeightTracker.displayName = "WeightTracker";
+
+export { WeightTracker };

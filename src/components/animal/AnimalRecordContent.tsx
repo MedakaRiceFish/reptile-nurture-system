@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useCallback } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
 import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
@@ -34,7 +34,7 @@ interface AnimalRecordContentProps {
 }
 
 // Use memo to prevent unnecessary re-renders
-export const AnimalRecordContent = memo(({
+const AnimalRecordContent = memo(({
   animal,
   animalNotes,
   setAnimalData,
@@ -44,12 +44,20 @@ export const AnimalRecordContent = memo(({
   onDeleteWeight
 }: AnimalRecordContentProps) => {
   // Memoize the delete weight handler
-  const handleDeleteWeight = useMemo(() => {
-    return onDeleteWeight;
+  const handleDeleteWeight = useCallback((id: string) => {
+    if (onDeleteWeight) {
+      onDeleteWeight(id);
+    }
   }, [onDeleteWeight]);
 
+  // Generate a unique key based on animal ID and data version
+  const contentKey = useMemo(() => 
+    `animal-content-${animal.id}-${animal.weightHistory?.length || 0}`, 
+    [animal.id, animal.weightHistory?.length]
+  );
+
   return (
-    <>
+    <div key={contentKey}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <AnimalDetails 
           animal={animal} 
@@ -69,8 +77,10 @@ export const AnimalRecordContent = memo(({
         animalNotes={animalNotes} 
         setAnimalNotes={setAnimalNotes} 
       />
-    </>
+    </div>
   );
 });
 
 AnimalRecordContent.displayName = "AnimalRecordContent";
+
+export { AnimalRecordContent };

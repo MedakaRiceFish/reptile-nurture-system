@@ -30,7 +30,12 @@ export const useWeightRecordDeleter = (
     newDeletedIds.add(id);
     
     // Update UI first (optimistic update) - use functional update to ensure we're working with latest state
-    setWeightRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+    setWeightRecords(prevRecords => {
+      // Create a new array (don't mutate the original)
+      return prevRecords.filter(record => record.id !== id);
+    });
+    
+    // Update deletedRecordIds separately to avoid batching issues
     setDeletedRecordIds(newDeletedIds);
     
     // Then perform the API call

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useWeightRecordManager } from "./useWeightRecordManager";
 import { useWeightRecordDeleter } from "./useWeightRecordDeleter";
 import { WeightRecord } from "./types";
@@ -16,7 +16,10 @@ export const useAnimalWeight = (
 ) => {
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
 
-  // Use the extracted hooks for add and delete operations
+  // Memoize the entire weightRecords value to prevent unnecessary re-renders
+  const memoizedWeightRecords = useMemo(() => weightRecords, [weightRecords]);
+
+  // Use the extracted hooks for add and delete operations with memoized dependencies
   const { handleAddWeight } = useWeightRecordManager(
     animalId,
     userId,
@@ -33,7 +36,7 @@ export const useAnimalWeight = (
   );
 
   return {
-    weightRecords,
+    weightRecords: memoizedWeightRecords,
     setWeightRecords,
     isWeightDialogOpen,
     setIsWeightDialogOpen,
