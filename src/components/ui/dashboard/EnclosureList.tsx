@@ -26,6 +26,7 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
       if (!user) return;
       
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from('enclosures')
           .select('*')
@@ -46,6 +47,8 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
             readingStatus: enclosure.reading_status || "Active"
           }));
           setEnclosures(mappedData);
+        } else {
+          setEnclosures([]);
         }
       } catch (error: any) {
         console.error('Error fetching enclosures:', error);
@@ -60,6 +63,23 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
     };
     
     fetchEnclosures();
+    
+    // Set up real-time subscription for enclosure changes
+    const channel = supabase
+      .channel('public:enclosures')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'enclosures' 
+      }, () => {
+        // Refetch enclosures when there's a change
+        fetchEnclosures();
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, toast]);
 
   const handleEnclosureClick = (id: string | number) => {
@@ -89,6 +109,14 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
             <div key={index} className="h-64 bg-muted rounded-lg animate-pulse"></div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (enclosures.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground mb-4">No enclosures found. Add your first enclosure to get started!</p>
       </div>
     );
   }

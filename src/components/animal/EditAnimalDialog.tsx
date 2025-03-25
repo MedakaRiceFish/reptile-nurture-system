@@ -47,9 +47,13 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
           .select('id, name')
           .order('name', { ascending: true });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching enclosures:', error);
+          throw error;
+        }
         
         if (data) {
+          console.log('Fetched enclosures:', data);
           setEnclosures(data);
         }
       } catch (error) {
@@ -184,11 +188,17 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
-                          {enclosures.map((enclosure) => (
-                            <SelectItem key={enclosure.id} value={enclosure.id}>
-                              {enclosure.name}
+                          {enclosures.length > 0 ? (
+                            enclosures.map((enclosure) => (
+                              <SelectItem key={enclosure.id} value={enclosure.id}>
+                                {enclosure.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem disabled value="loading">
+                              {loading ? "Loading enclosures..." : "No enclosures available"}
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                     </FormControl>
