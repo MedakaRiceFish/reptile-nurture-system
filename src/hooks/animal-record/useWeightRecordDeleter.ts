@@ -27,7 +27,7 @@ export const useWeightRecordDeleter = (
       return newSet;
     });
     
-    // Then do the actual API call in the background without waiting
+    // Then do the actual API call 
     deleteWeightRecord(id).then(success => {
       if (success) {
         console.log("Successfully deleted weight record ID:", id);
