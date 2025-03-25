@@ -6,7 +6,7 @@ import { AddWeightDialog } from "@/components/animal/AddWeightDialog";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
 import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
-import { useAnimalRecord } from "@/hooks/useAnimalRecord";
+import { useAnimalRecord } from "@/hooks/animal-record/useAnimalRecord";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const AnimalRecord = () => {
