@@ -40,17 +40,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
         if (event === 'SIGNED_IN') {
           toast.success("Successfully signed in");
-          navigate("/"); // Changed from "/animals" to "/" to redirect to home page
+          navigate("/");
         } else if (event === 'SIGNED_OUT') {
           toast.success("Successfully signed out");
+          navigate("/login");
         } else if (event === 'USER_UPDATED') {
           toast.success("Your account has been updated");
         }
@@ -58,14 +60,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session check:", session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const signIn = async (email: string, password: string) => {
@@ -112,11 +124,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Make sure we have a valid session before signing out
+      if (!session) {
+        console.log("No active session found, redirecting to login");
+        setUser(null);
+        setSession(null);
+        navigate("/login");
+        return;
+      }
+      
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error signing out:", error);
+        throw error;
+      }
+      
+      // Force clear the session state immediately
+      setUser(null);
+      setSession(null);
+      
       // Navigation happens in the auth state change listener
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Sign out error:", error);
+      toast.error(error.message || "Failed to sign out");
+      
+      // Even if there's an error, force navigation to login
+      navigate("/login");
     }
   };
 

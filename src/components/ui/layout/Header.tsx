@@ -7,6 +7,8 @@ import { SideNav } from "./SideNav";
 import { useAuth } from "@/context/AuthContext";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface HeaderProps {
   pageTitle?: string;
@@ -17,6 +19,7 @@ export function Header({ pageTitle }: HeaderProps) {
   const { renderLatency, pageLoadTime } = usePerformanceMonitor();
   const [displayRenderLatency, setDisplayRenderLatency] = useState<number | null>(null);
   const [displayPageLoadTime, setDisplayPageLoadTime] = useState<number | null>(null);
+  const navigate = useNavigate();
   
   // Update the displayed metrics when they change
   useEffect(() => {
@@ -30,6 +33,16 @@ export function Header({ pageTitle }: HeaderProps) {
 
   // Only show metrics to admin users or in development
   const isAdmin = user?.email?.includes('admin') || process.env.NODE_ENV === 'development';
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out. Redirecting to login...");
+      navigate("/login");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b h-14 px-4 md:px-6 flex items-center justify-between">
@@ -72,7 +85,7 @@ export function Header({ pageTitle }: HeaderProps) {
         </Button>
         
         {user && (
-          <Button variant="ghost" size="icon" onClick={() => signOut()}>
+          <Button variant="ghost" size="icon" onClick={handleSignOut}>
             <LogOut className="h-5 w-5" />
             <span className="sr-only">Sign out</span>
           </Button>
