@@ -18,10 +18,12 @@ export const useAnimalData = (
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!animalId || !userId) return;
+      if (!animalId || !userId) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        setLoading(true);
         console.log("Fetching animal data for ID:", animalId);
         const animalData = await getAnimal(animalId);
         
@@ -89,6 +91,8 @@ export const useAnimalData = (
       }
     };
 
+    // Set loading to true before fetching data
+    setLoading(true);
     fetchData();
   }, [animalId, userId, deletedRecordIds, toast]);
 

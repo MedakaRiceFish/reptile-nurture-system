@@ -7,6 +7,7 @@ import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
 import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
 import { useAnimalRecord } from "@/hooks/useAnimalRecord";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AnimalRecord = () => {
   const {
@@ -30,8 +31,18 @@ const AnimalRecord = () => {
   if (loading) {
     return (
       <MainLayout pageTitle="Loading Animal Record">
-        <div className="max-w-[1200px] mx-auto py-8 text-center">
-          <p>Loading animal data...</p>
+        <div className="max-w-[1200px] mx-auto py-8">
+          <div className="flex items-center mb-6">
+            <Skeleton className="h-10 w-24 mr-4" />
+            <Skeleton className="h-10 w-64" />
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <Skeleton className="h-[500px] w-full" />
+            <Skeleton className="h-[500px] w-full lg:col-span-2" />
+          </div>
+          
+          <Skeleton className="h-[300px] w-full" />
         </div>
       </MainLayout>
     );
