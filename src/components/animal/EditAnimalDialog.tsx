@@ -1,13 +1,7 @@
 
-import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { X, Save } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EditAnimalForm } from "./EditAnimalForm";
 
 interface EditAnimalDialogProps {
   animal: any;
@@ -22,219 +16,18 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
   onOpenChange,
   onSave,
 }) => {
-  const [enclosures, setEnclosures] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const form = useForm({
-    defaultValues: {
-      name: animal?.name || "",
-      species: animal?.species || "",
-      age: animal?.age?.toString() || "",
-      length: animal?.length?.toString() || "",
-      feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
-      breederSource: animal?.breeding_source || animal?.breederSource || "",
-      description: animal?.description || "",
-      enclosure_id: animal?.enclosure_id || "none" // Changed default value to "none"
-    }
-  });
-
-  useEffect(() => {
-    const fetchEnclosures = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('enclosures')
-          .select('id, name')
-          .order('name', { ascending: true });
-          
-        if (error) {
-          console.error('Error fetching enclosures:', error);
-          throw error;
-        }
-        
-        if (data) {
-          console.log('Fetched enclosures:', data);
-          setEnclosures(data);
-        }
-      } catch (error) {
-        console.error('Error fetching enclosures:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (isOpen) {
-      fetchEnclosures();
-    }
-  }, [isOpen]);
-
-  // Update form values when animal changes
-  useEffect(() => {
-    if (animal && isOpen) {
-      form.reset({
-        name: animal?.name || "",
-        species: animal?.species || "",
-        age: animal?.age?.toString() || "",
-        length: animal?.length?.toString() || "",
-        feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
-        breederSource: animal?.breeding_source || animal?.breederSource || "",
-        description: animal?.description || "",
-        enclosure_id: animal?.enclosure_id || "none" // Changed default value to "none"
-      });
-    }
-  }, [animal, form, isOpen]);
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Animal Details</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="species"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Species</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Age (years)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" min="0" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="length"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Length (cm)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" min="0" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="feedingSchedule"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Feeding Schedule</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="breederSource"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Breeder Source</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="enclosure_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Enclosure</FormLabel>
-                    <FormControl>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an enclosure" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {enclosures.length > 0 ? (
-                            enclosures.map((enclosure) => (
-                              <SelectItem key={enclosure.id} value={enclosure.id}>
-                                {enclosure.name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem disabled value="loading">
-                              {loading ? "Loading enclosures..." : "No enclosures available"}
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <textarea
-                      className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <EditAnimalForm 
+          animal={animal}
+          onOpenChange={onOpenChange}
+          onSave={onSave}
+          isOpen={isOpen}
+        />
       </DialogContent>
     </Dialog>
   );
