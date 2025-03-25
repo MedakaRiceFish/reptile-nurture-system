@@ -30,6 +30,7 @@ const AnimalRecord = () => {
     handleBack,
     handleAddWeight,
     handleDeleteWeight,
+    handleEditSubmit,
     deletedRecordIds
   } = useAnimalRecord();
 
