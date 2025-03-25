@@ -67,7 +67,7 @@ const WeightStats = ({ weightHistory, currentWeight }: WeightStatsProps) => {
       </div>
       
       <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
-        <div className="text-sm text-muted-foreground">Max Weight</div>
+        <div className="text-sm text-muted-foreground">Max<br />Weight</div>
         <div className="text-2xl font-bold">{weightStats.maxWeight} g</div>
       </div>
       
