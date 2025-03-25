@@ -1,5 +1,5 @@
 
-import React, { useMemo, Suspense, lazy, useEffect, useState, useRef } from "react";
+import React, { useMemo, Suspense, lazy, useEffect, useState, useRef, useCallback } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
@@ -33,8 +33,7 @@ const AnimalRecord = () => {
     handleBack,
     handleAddWeight,
     handleDeleteWeight,
-    handleEditSubmit,
-    deletedRecordIds
+    handleEditSubmit
   } = useAnimalRecord();
 
   // Memoize the animal with weight history
@@ -98,20 +97,22 @@ const AnimalRecord = () => {
   // Main render - use stable references to prevent unnecessary re-renders
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>
-      <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">
+      <div className="max-w-[1200px] mx-auto py-6 animate-in fade-in-50 duration-300">
         <AnimalRecordHeader animalName={animalData.name} onBack={handleBack} />
         
-        <div key={animalKey} ref={contentRef}>
-          <AnimalRecordContent 
-            animal={animalWithWeightHistory}
-            animalNotes={animalNotes}
-            setAnimalData={setAnimalData}
-            setAnimalNotes={setAnimalNotes}
-            onEditClick={stableCallbacks.onEditClick}
-            onAddWeightClick={stableCallbacks.onAddWeightClick}
-            onDeleteWeight={stableCallbacks.onDeleteWeight}
-          />
-        </div>
+        {animalWithWeightHistory && (
+          <div key={animalKey} ref={contentRef}>
+            <AnimalRecordContent 
+              animal={animalWithWeightHistory}
+              animalNotes={animalNotes}
+              setAnimalData={setAnimalData}
+              setAnimalNotes={setAnimalNotes}
+              onEditClick={stableCallbacks.onEditClick}
+              onAddWeightClick={stableCallbacks.onAddWeightClick}
+              onDeleteWeight={stableCallbacks.onDeleteWeight}
+            />
+          </div>
+        )}
 
         {/* Only render dialogs when they're open to reduce initial load time */}
         <Suspense fallback={null}>

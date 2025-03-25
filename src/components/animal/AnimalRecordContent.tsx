@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, useCallback } from "react";
+import React, { memo } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
 import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
@@ -42,9 +42,8 @@ const AnimalRecordContent = ({
   onAddWeightClick,
   onDeleteWeight
 }: AnimalRecordContentProps) => {  
-  // Clean content structure to prevent unnecessary DOM recreation
   return (
-    <div>
+    <div className="transition-all duration-200">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <AnimalDetails 
           animal={animal} 

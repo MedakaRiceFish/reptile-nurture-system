@@ -27,28 +27,20 @@ export const useWeightRecordDeleter = (
     pendingDeletions.current.add(id);
     
     try {
-      // Create new Sets to avoid reference issues
-      const newDeletedIds = new Set(deletedRecordIds);
-      newDeletedIds.add(id);
-      
-      // Create a stable function reference for the optimistic update
-      const filterDeletedRecord = (records: WeightRecord[]) => 
-        records.filter(record => record.id !== id);
-      
-      // Update UI first (optimistic update) - use functional update
-      setWeightRecords(filterDeletedRecord);
-      
-      // Update deletedRecordIds separately
-      setDeletedRecordIds(newDeletedIds);
+      // Optimistic UI update as a single operation
+      setWeightRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+      setDeletedRecordIds(prevIds => {
+        const newIds = new Set(prevIds);
+        newIds.add(id);
+        return newIds;
+      });
       
       // Then perform the API call
       deleteWeightRecord(id)
         .then(success => {
-          if (success) {
-            console.log("Weight record deleted successfully");
-          } else {
+          if (!success) {
             console.error("Failed to delete weight record:", id);
-            // Don't roll back the UI - we'll let the persistence layer handle reconciliation
+            // We're not rolling back UI - persistence layer will handle reconciliation
           }
         })
         .catch((error) => {
