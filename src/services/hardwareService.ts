@@ -32,6 +32,13 @@ export const fetchHardwareDevices = async (enclosureId: string) => {
 // Add a new hardware device
 export const addHardwareDevice = async (device: Omit<HardwareItem, 'id'>) => {
   try {
+    // First, get the current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
     const { data, error } = await supabase
       .from('hardware_devices')
       .insert({
@@ -40,6 +47,7 @@ export const addHardwareDevice = async (device: Omit<HardwareItem, 'id'>) => {
         type: device.type,
         last_maintenance: device.lastMaintenance.toISOString(),
         next_maintenance: device.nextMaintenance.toISOString(),
+        owner_id: user.id // Add the user ID from the authenticated session
       })
       .select()
       .single();
