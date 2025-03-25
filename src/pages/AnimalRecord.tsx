@@ -11,6 +11,7 @@ import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
 import { getAnimal, updateAnimal } from "@/services/animalService";
 import { getAnimalWeightRecords, addWeightRecord } from "@/services/weightService";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const AnimalRecord = () => {
   const { id } = useParams();
@@ -111,7 +112,7 @@ const AnimalRecord = () => {
         
         setIsWeightDialogOpen(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding weight record:", error);
       toast({
         title: "Error",
@@ -133,7 +134,7 @@ const AnimalRecord = () => {
         feeding_schedule: data.feedingSchedule,
         breeding_source: data.breederSource,
         description: data.description,
-        enclosure_id: data.enclosure_id || null
+        enclosure_id: data.enclosure_id === "none" ? null : data.enclosure_id
       };
       
       const result = await updateAnimal(animalData.id, updatedAnimal);
@@ -141,7 +142,7 @@ const AnimalRecord = () => {
       if (result) {
         let enclosureName = "";
         
-        if (data.enclosure_id) {
+        if (data.enclosure_id && data.enclosure_id !== "none") {
           try {
             const { data: enclosureData } = await supabase
               .from('enclosures')
@@ -170,7 +171,7 @@ const AnimalRecord = () => {
           description: `${data.name}'s details have been updated successfully`,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating animal:", error);
       toast({
         title: "Error",

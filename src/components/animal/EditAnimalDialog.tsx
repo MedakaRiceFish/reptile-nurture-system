@@ -34,7 +34,7 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
       feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
       breederSource: animal?.breeding_source || animal?.breederSource || "",
       description: animal?.description || "",
-      enclosure_id: animal?.enclosure_id || ""
+      enclosure_id: animal?.enclosure_id || "none" // Changed default value to "none"
     }
   });
 
@@ -75,7 +75,7 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
         feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
         breederSource: animal?.breeding_source || animal?.breederSource || "",
         description: animal?.description || "",
-        enclosure_id: animal?.enclosure_id || ""
+        enclosure_id: animal?.enclosure_id || "none" // Changed default value to "none"
       });
     }
   }, [animal, form, isOpen]);
@@ -183,7 +183,7 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
                           <SelectValue placeholder="Select an enclosure" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {enclosures.map((enclosure) => (
                             <SelectItem key={enclosure.id} value={enclosure.id}>
                               {enclosure.name}
