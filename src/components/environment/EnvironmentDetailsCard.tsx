@@ -45,19 +45,19 @@ export const EnvironmentDetailsCard: React.FC<EnvironmentDetailsCardProps> = ({
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Type:</span>
-            <span>{enclosure.type}</span>
+            <span>{enclosure.type || "Not specified"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Size:</span>
-            <span>{enclosure.size}</span>
+            <span>{enclosure.size || "Not specified"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Substrate:</span>
-            <span>{enclosure.substrate}</span>
+            <span>{enclosure.substrate || "Not specified"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Plants:</span>
-            <span>{enclosure.plants.join(", ")}</span>
+            <span>{enclosure.plants && Array.isArray(enclosure.plants) ? enclosure.plants.join(", ") : "None"}</span>
           </div>
         </div>
       </CardContent>
