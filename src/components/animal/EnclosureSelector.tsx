@@ -14,20 +14,25 @@ export const EnclosureSelector: React.FC<EnclosureSelectorProps> = ({
 
   // Navigate to enclosure page when name is clicked
   const handleEnclosureClick = () => {
-    if (animal.enclosure) {
-      navigate(`/enclosure/${animal.enclosure}`);
+    // Check for both enclosure and enclosure_id (snake_case from DB)
+    const enclosureId = animal.enclosure || animal.enclosure_id;
+    if (enclosureId) {
+      navigate(`/enclosure/${enclosureId}`);
     }
   };
 
+  // Determine if there's an enclosure assigned and what name to display
+  const hasEnclosure = animal.enclosureName || animal.enclosure_name;
+
   return (
     <div className="flex items-center">
-      {animal.enclosureName ? (
+      {hasEnclosure ? (
         <Button 
           variant="link" 
           className="p-0 h-auto font-medium text-reptile-600"
           onClick={handleEnclosureClick}
         >
-          {animal.enclosureName}
+          {animal.enclosureName || animal.enclosure_name}
         </Button>
       ) : (
         <span className="text-muted-foreground">None assigned</span>

@@ -21,15 +21,36 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
   onEditClick,
 }) => {
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
-  const [enclosures, setEnclosures] = React.useState<{ id: string; name: string }[]>([
-    { id: "1", name: "Desert Terrarium" },
-    { id: "2", name: "Large Rock Habitat" },
-    { id: "3", name: "Forest Terrarium" },
-    { id: "4", name: "Small Desert Setup" },
-    { id: "5", name: "Tropical Vivarium" },
-    { id: "6", name: "Arid Environment" },
-  ]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // If animal has enclosure_id but no enclosureName, fetch the enclosure name
+    const fetchEnclosureName = async () => {
+      if (animal?.enclosure_id && !animal.enclosureName) {
+        try {
+          const { data, error } = await supabase
+            .from('enclosures')
+            .select('name')
+            .eq('id', animal.enclosure_id)
+            .single();
+            
+          if (error) throw error;
+          
+          if (data) {
+            setAnimalData({
+              ...animal,
+              enclosureName: data.name,
+              enclosure: animal.enclosure_id // ensure both properties exist
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching enclosure name:', error);
+        }
+      }
+    };
+    
+    fetchEnclosureName();
+  }, [animal, setAnimalData]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,28 +108,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
       });
     }
   };
-
-  React.useEffect(() => {
-    const fetchEnclosures = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('enclosures')
-          .select('id, name');
-          
-        if (error) throw error;
-        
-        if (data) {
-          setEnclosures(data);
-        }
-      } catch (error) {
-        console.error('Error fetching enclosures:', error);
-      }
-    };
-    
-    if (supabase) {
-      fetchEnclosures();
-    }
-  }, []);
 
   return (
     <Card className="lg:col-span-1">

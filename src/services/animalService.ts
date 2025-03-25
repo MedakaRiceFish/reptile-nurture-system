@@ -39,14 +39,33 @@ export const getAnimals = async (): Promise<Animal[]> => {
 
 export const getAnimal = async (id: string): Promise<Animal | null> => {
   try {
-    const { data, error } = await supabase
+    // First get the animal data
+    const { data: animalData, error: animalError } = await supabase
       .from('animals')
       .select('*')
       .eq('id', id)
       .maybeSingle();
     
-    if (error) throw error;
-    return data;
+    if (animalError) throw animalError;
+    
+    // If animal has enclosure_id, get the enclosure name
+    if (animalData && animalData.enclosure_id) {
+      const { data: enclosureData, error: enclosureError } = await supabase
+        .from('enclosures')
+        .select('name')
+        .eq('id', animalData.enclosure_id)
+        .maybeSingle();
+      
+      if (!enclosureError && enclosureData) {
+        return {
+          ...animalData,
+          enclosureName: enclosureData.name,
+          enclosure: animalData.enclosure_id // Add this alias for compatibility
+        };
+      }
+    }
+    
+    return animalData;
   } catch (error: any) {
     toast.error(`Error fetching animal: ${error.message}`);
     return null;
