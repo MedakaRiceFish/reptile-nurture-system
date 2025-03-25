@@ -49,6 +49,8 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<Formatte
 // Add a weight record
 export const addWeightRecord = async (record: WeightRecord): Promise<FormattedWeightRecord | null> => {
   try {
+    console.log("Adding weight record:", record);
+    
     const { data, error } = await supabase
       .from('weight_records')
       .insert(record)
@@ -64,6 +66,7 @@ export const addWeightRecord = async (record: WeightRecord): Promise<FormattedWe
       weight: data.weight
     };
     
+    console.log("Successfully added weight record:", formattedRecord);
     return formattedRecord;
   } catch (error: any) {
     console.error("Error adding weight record:", error);

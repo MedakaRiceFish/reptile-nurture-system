@@ -75,6 +75,7 @@ export const useAnimalData = (
             addWeightRecord(newRecord).then(result => {
               if (result && isMountedRef.current) {
                 setWeightRecords([result]);
+                console.log("Created initial weight record:", result);
               }
             });
           } catch (error) {
@@ -117,12 +118,16 @@ export const useAnimalData = (
 
   // Function to refetch just weight records
   const refetchWeightRecords = useCallback(async () => {
-    if (!animalId || !userId || !isMountedRef.current) return;
+    if (!animalId || !userId || !isMountedRef.current) return null;
     
     try {
+      console.log("Refetching weight records for animal ID:", animalId);
+      
       const weightRecordsResult = await getAnimalWeightRecords(animalId);
       
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return null;
+      
+      console.log("Refetched weight records:", weightRecordsResult);
       
       // Filter out deleted records
       const filteredRecords = filterDeletedRecords(weightRecordsResult);

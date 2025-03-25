@@ -54,8 +54,19 @@ export const useAnimalWeight = (
       if (result) {
         console.log("Added new weight record:", result);
         
-        // Refetch all weight records to ensure we have the latest data
-        await refetchWeightRecords();
+        // Immediately update the weightRecords state with the new record
+        setWeightRecords(prevRecords => {
+          // Create a new array with the new record
+          const updatedRecords = [...prevRecords, result];
+          console.log("Updated weight records after addition:", updatedRecords);
+          return updatedRecords;
+        });
+        
+        // Then refetch to ensure we have the latest data
+        const updatedRecords = await refetchWeightRecords();
+        if (!updatedRecords) {
+          console.log("Failed to refetch weight records after adding, using optimistic update");
+        }
         
         // Update the animal's weight if this is the newest record
         const isNewestRecord = !weightRecords.some(record => 

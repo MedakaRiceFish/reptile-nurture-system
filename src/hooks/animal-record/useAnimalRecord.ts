@@ -29,7 +29,10 @@ export const useAnimalRecord = () => {
     try {
       const storedDeletedIds = localStorage.getItem(getDeletedRecordsStorageKey(id));
       if (storedDeletedIds) {
+        console.log(`Retrieved deleted records from localStorage for animal ${id}:`, storedDeletedIds);
         return new Set<string>(JSON.parse(storedDeletedIds));
+      } else {
+        console.log(`No deleted records found in localStorage for animal ${id}`);
       }
     } catch (error) {
       console.error("Error retrieving deleted records from localStorage:", error);
@@ -40,12 +43,15 @@ export const useAnimalRecord = () => {
 
   // Save deletedRecordIds to localStorage whenever it changes
   useEffect(() => {
-    if (!id || deletedRecordIds.size === 0) return;
+    if (!id) return;
     
     try {
       const deletedIdsArray = Array.from(deletedRecordIds);
-      localStorage.setItem(getDeletedRecordsStorageKey(id), JSON.stringify(deletedIdsArray));
-      console.log("Saved deletedRecordIds to localStorage:", deletedIdsArray);
+      
+      if (deletedIdsArray.length > 0) {
+        localStorage.setItem(getDeletedRecordsStorageKey(id), JSON.stringify(deletedIdsArray));
+        console.log(`Saved ${deletedIdsArray.length} deletedRecordIds to localStorage for animal ${id}:`, deletedIdsArray);
+      }
     } catch (error) {
       console.error("Error saving deleted records to localStorage:", error);
     }
