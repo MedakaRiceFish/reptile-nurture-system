@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -10,7 +9,12 @@ import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
 import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
 import { getAnimal, updateAnimal } from "@/services/animalService";
-import { getAnimalWeightRecords, addWeightRecord, getLatestWeightRecord } from "@/services/weightService";
+import { 
+  getAnimalWeightRecords, 
+  addWeightRecord, 
+  getLatestWeightRecord, 
+  deleteWeightRecord 
+} from "@/services/weightService";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,7 +34,6 @@ const AnimalRecord = () => {
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  // Function to fetch and update weight records
   const fetchWeightRecords = async () => {
     if (!id) return;
     
@@ -41,9 +44,7 @@ const AnimalRecord = () => {
       
       setWeightRecords(records);
       
-      // Update animal's current weight if we have weight records
       if (records.length > 0 && animalData) {
-        // Sort by date (newest first)
         const sortedRecords = [...records].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -51,13 +52,11 @@ const AnimalRecord = () => {
         const latestWeight = sortedRecords[0].weight;
         console.log("Setting latest weight from records:", latestWeight);
         
-        // Update animal data with the latest weight
         setAnimalData(prev => ({
           ...prev,
           weight: latestWeight
         }));
         
-        // Also update the weight in the database
         await updateAnimal(id, { weight: latestWeight });
       }
     } catch (error) {
@@ -75,21 +74,16 @@ const AnimalRecord = () => {
         const animalData = await getAnimal(id);
         
         if (animalData) {
-          // Fetch weight records
           console.log("Fetching weight records for animal ID:", id);
           const records = await getAnimalWeightRecords(id);
           console.log("Raw records from service:", records);
           
-          // If we have weight records, update the state
           setWeightRecords(records);
           
-          // If no weight records but the animal has a weight, create a weight record for today
           if (records.length === 0 && animalData.weight) {
             console.log("No weight records but animal has weight:", animalData.weight);
             console.log("Creating initial weight record from animal weight");
             
-            // Only add the weight record if we're not in the middle of adding it
-            // (to prevent duplicate records when useEffect runs multiple times)
             const today = format(new Date(), "yyyy-MM-dd");
             
             try {
@@ -105,7 +99,6 @@ const AnimalRecord = () => {
               if (result) {
                 console.log("Initial weight record created:", result);
                 
-                // Add the new record to our state
                 const formattedRecord = {
                   date: today,
                   weight: animalData.weight
@@ -118,14 +111,11 @@ const AnimalRecord = () => {
             }
           }
           
-          // Make sure the animalData has the latest weight value from records
           if (records.length > 0) {
-            // Sort by date, newest first
             const sortedRecords = [...records].sort(
               (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
             );
             
-            // Use most recent weight for the animal's current weight
             const currentWeight = sortedRecords[0].weight;
             animalData.weight = currentWeight;
           }
@@ -192,14 +182,12 @@ const AnimalRecord = () => {
         
         console.log("Added new weight record:", formattedRecord);
         
-        // Update weightRecords state
         setWeightRecords(prevRecords => {
           const newRecords = [...prevRecords, formattedRecord];
           console.log("Updated weight records state:", newRecords);
           return newRecords;
         });
         
-        // Update animal data with new weight
         const updatedAnimal = {
           ...animalData,
           weight: weightValue
@@ -208,7 +196,6 @@ const AnimalRecord = () => {
         await updateAnimal(animalData.id, { weight: weightValue });
         setAnimalData(updatedAnimal);
         
-        // Force refresh the weight records to ensure everything is up to date
         await fetchWeightRecords();
         
         toast({
@@ -223,6 +210,44 @@ const AnimalRecord = () => {
       toast({
         title: "Error",
         description: "Failed to add weight record",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteWeight = async (id: string) => {
+    if (!animalData) return;
+    
+    try {
+      console.log("Deleting weight record with ID:", id);
+      const success = await deleteWeightRecord(id);
+      
+      if (success) {
+        setWeightRecords(prevRecords => 
+          prevRecords.filter(record => record.id !== id)
+        );
+        
+        const latestRecord = await getLatestWeightRecord(animalData.id);
+        
+        const updatedWeight = latestRecord ? latestRecord.weight : 0;
+        
+        setAnimalData(prev => ({
+          ...prev,
+          weight: updatedWeight
+        }));
+        
+        await updateAnimal(animalData.id, { weight: updatedWeight });
+        
+        toast({
+          title: "Weight record deleted",
+          description: "The weight record has been successfully deleted"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error deleting weight record:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete weight record",
         variant: "destructive"
       });
     }
@@ -325,6 +350,7 @@ const AnimalRecord = () => {
           setAnimalNotes={setAnimalNotes}
           onEditClick={() => setIsEditDialogOpen(true)}
           onAddWeightClick={() => setIsWeightDialogOpen(true)}
+          onDeleteWeight={handleDeleteWeight}
         />
 
         <EditAnimalDialog 

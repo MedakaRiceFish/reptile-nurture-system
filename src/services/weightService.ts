@@ -12,7 +12,7 @@ export type WeightRecord = {
 
 export type WeightRecordInsert = Omit<WeightRecord, 'id'>;
 
-export const getAnimalWeightRecords = async (animalId: string): Promise<{date: string, weight: number}[]> => {
+export const getAnimalWeightRecords = async (animalId: string): Promise<{date: string, weight: number, id?: string}[]> => {
   try {
     console.log("Fetching weight records for animal ID:", animalId);
     
@@ -40,7 +40,8 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<{date: s
       
       return {
         date: dateString,
-        weight: Number(record.weight)
+        weight: Number(record.weight),
+        id: record.id
       };
     });
     
@@ -138,5 +139,27 @@ export const getLatestWeightRecord = async (animalId: string): Promise<{date: st
   } catch (error: any) {
     console.error("Error fetching latest weight record:", error);
     return null;
+  }
+};
+
+// Add a function to delete a weight record
+export const deleteWeightRecord = async (id: string): Promise<boolean> => {
+  try {
+    console.log("Deleting weight record with ID:", id);
+    
+    const { error } = await supabase
+      .from('weight_records')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    console.log('Weight record deleted successfully');
+    toast.success('Weight record deleted');
+    return true;
+  } catch (error: any) {
+    console.error("Error deleting weight record:", error);
+    toast.error(`Error deleting weight record: ${error.message}`);
+    return false;
   }
 };

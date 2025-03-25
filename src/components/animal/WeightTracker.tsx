@@ -10,16 +10,19 @@ import { WeightHistoryList } from "@/components/ui/dashboard/WeightHistoryList";
 interface WeightRecord {
   date: string;
   weight: number;
+  id?: string;
 }
 
 interface WeightTrackerProps {
   animal: any;
   onAddWeightClick: () => void;
+  onDeleteWeight?: (id: string) => void;
 }
 
 export const WeightTracker: React.FC<WeightTrackerProps> = ({
   animal,
   onAddWeightClick,
+  onDeleteWeight
 }) => {
   console.log("WeightTracker animal:", animal); // Debug log
   console.log("Weight history array:", animal.weightHistory); // Debug log
@@ -132,11 +135,14 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
               <AnimalWeightChart weightHistory={animal.weightHistory} />
             </TabsContent>
             <TabsContent value="list">
-              <WeightHistoryList weightHistory={animal.weightHistory} />
+              <WeightHistoryList 
+                weightHistory={animal.weightHistory} 
+                onDeleteWeight={onDeleteWeight} 
+              />
             </TabsContent>
           </Tabs>
         )}
       </CardContent>
     </Card>
   );
-};
+}

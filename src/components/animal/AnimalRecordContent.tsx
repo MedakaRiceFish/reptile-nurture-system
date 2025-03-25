@@ -11,6 +11,7 @@ interface AnimalRecordContentProps {
   setAnimalNotes: React.Dispatch<React.SetStateAction<{date: string, note: string}[]>>;
   onEditClick: () => void;
   onAddWeightClick: () => void;
+  onDeleteWeight?: (id: string) => void;
 }
 
 export const AnimalRecordContent: React.FC<AnimalRecordContentProps> = ({
@@ -19,7 +20,8 @@ export const AnimalRecordContent: React.FC<AnimalRecordContentProps> = ({
   setAnimalData,
   setAnimalNotes,
   onEditClick,
-  onAddWeightClick
+  onAddWeightClick,
+  onDeleteWeight
 }) => {
   return (
     <>
@@ -33,6 +35,7 @@ export const AnimalRecordContent: React.FC<AnimalRecordContentProps> = ({
         <WeightTracker 
           animal={animal} 
           onAddWeightClick={onAddWeightClick} 
+          onDeleteWeight={onDeleteWeight}
         />
       </div>
 

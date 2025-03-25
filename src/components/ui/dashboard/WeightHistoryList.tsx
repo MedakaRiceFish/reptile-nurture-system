@@ -2,17 +2,21 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface WeightRecord {
   date: string;
   weight: number;
+  id?: string;
 }
 
 interface WeightHistoryListProps {
   weightHistory: WeightRecord[];
+  onDeleteWeight?: (id: string) => void;
 }
 
-export function WeightHistoryList({ weightHistory }: WeightHistoryListProps) {
+export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHistoryListProps) {
   console.log("WeightHistoryList received weightHistory:", weightHistory);
 
   // If no history, show a clear message
@@ -40,6 +44,7 @@ export function WeightHistoryList({ weightHistory }: WeightHistoryListProps) {
             <TableHead>Date</TableHead>
             <TableHead>Weight (g)</TableHead>
             <TableHead>Change</TableHead>
+            {onDeleteWeight && <TableHead className="w-[50px]"></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -71,6 +76,19 @@ export function WeightHistoryList({ weightHistory }: WeightHistoryListProps) {
                     </span>
                   )}
                 </TableCell>
+                {onDeleteWeight && record.id && (
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => onDeleteWeight(record.id!)}
+                      title="Delete record"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
