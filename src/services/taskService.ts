@@ -34,6 +34,21 @@ export const getUpcomingTasks = async (limit = 5) => {
   return data as Task[];
 };
 
+export const getTaskById = async (taskId: string) => {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', taskId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching task:', error);
+    throw error;
+  }
+
+  return data as Task;
+};
+
 export const createTask = async (taskData: TaskFormValues) => {
   // Get the current user id
   const { data: { user } } = await supabase.auth.getUser();
@@ -77,6 +92,21 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
   return data as Task;
 };
 
+export const updateTasksStatus = async (taskIds: string[], status: Task['status']) => {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ status, updated_at: new Date().toISOString() })
+    .in('id', taskIds)
+    .select();
+
+  if (error) {
+    console.error('Error updating tasks status:', error);
+    throw error;
+  }
+
+  return data as Task[];
+};
+
 export const deleteTask = async (taskId: string) => {
   const { error } = await supabase
     .from('tasks')
@@ -85,6 +115,20 @@ export const deleteTask = async (taskId: string) => {
 
   if (error) {
     console.error('Error deleting task:', error);
+    throw error;
+  }
+
+  return true;
+};
+
+export const deleteTasks = async (taskIds: string[]) => {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .in('id', taskIds);
+
+  if (error) {
+    console.error('Error deleting tasks:', error);
     throw error;
   }
 

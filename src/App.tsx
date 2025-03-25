@@ -15,7 +15,8 @@ import Environment from "./pages/Environment";
 import Animals from "./pages/Animals";
 import AnimalRecord from "./pages/AnimalRecord";
 import Analytics from "./pages/Analytics";
-import Schedule from "./pages/Schedule";
+import Tasks from "./pages/Tasks";
+import TaskDetail from "./pages/TaskDetail";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -38,7 +39,8 @@ const App = () => (
             <Route path="/animals" element={<ProtectedRoute><Animals /></ProtectedRoute>} />
             <Route path="/animal/:id" element={<ProtectedRoute><AnimalRecord /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-            <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+            <Route path="/tasks/:taskId" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />

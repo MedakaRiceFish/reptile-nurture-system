@@ -8,6 +8,7 @@ import { AddTaskDialog } from "@/components/task/AddTaskDialog";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskFormValues } from "@/types/task";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface TaskItemProps {
   id: string;
@@ -19,6 +20,8 @@ interface TaskItemProps {
 }
 
 function TaskItem({ id, title, dueDate, dueTime, type, onComplete }: TaskItemProps) {
+  const navigate = useNavigate();
+  
   const getIcon = () => {
     switch (type) {
       case "feeding":
@@ -65,8 +68,21 @@ function TaskItem({ id, title, dueDate, dueTime, type, onComplete }: TaskItemPro
     }
   };
 
+  const handleTaskClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent completing the task when clicking the main area
+    navigate(`/tasks/${id}`);
+  };
+
+  const handleCompleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking complete
+    onComplete(id);
+  };
+
   return (
-    <div className="flex items-center p-3 hover:bg-muted/50 rounded-lg transition-colors">
+    <div 
+      className="flex items-center p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
+      onClick={handleTaskClick}
+    >
       <div className={`${getColor()} p-2 rounded-lg mr-3`}>
         {getIcon()}
       </div>
@@ -81,7 +97,7 @@ function TaskItem({ id, title, dueDate, dueTime, type, onComplete }: TaskItemPro
       </div>
       <button 
         className="text-xs text-reptile-500 hover:text-reptile-600 font-medium ml-2"
-        onClick={() => onComplete(id)}
+        onClick={handleCompleteClick}
       >
         Complete
       </button>

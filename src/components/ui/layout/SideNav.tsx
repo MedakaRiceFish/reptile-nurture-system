@@ -12,7 +12,8 @@ import {
   BarChart3, 
   Droplet,
   TreeDeciduous,
-  Turtle
+  Turtle,
+  CheckSquare
 } from "lucide-react";
 
 type NavItem = {
@@ -43,9 +44,9 @@ const navItems: NavItem[] = [
     icon: <BarChart3 className="w-5 h-5" />,
   },
   {
-    label: "Schedule",
-    href: "/schedule",
-    icon: <Calendar className="w-5 h-5" />,
+    label: "Tasks",
+    href: "/tasks",
+    icon: <CheckSquare className="w-5 h-5" />,
   },
   {
     label: "Notifications",
