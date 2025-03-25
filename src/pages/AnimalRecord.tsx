@@ -30,7 +30,8 @@ const AnimalRecord = () => {
     handleBack,
     handleAddWeight,
     handleDeleteWeight,
-    handleEditSubmit
+    handleEditSubmit,
+    deletedRecordIds
   } = useAnimalRecord();
 
   // Log important state changes for debugging
@@ -51,13 +52,17 @@ const AnimalRecord = () => {
     }
   }, [id]);
 
-  // Log the current state of weight records for debugging
+  // Log the current state of weight records and deleted IDs for debugging
   useEffect(() => {
     if (weightRecords && weightRecords.length > 0) {
       console.log(`AnimalRecord received ${weightRecords.length} weight records:`, 
         weightRecords.map(r => ({ id: r.id, date: r.date, weight: r.weight })));
     }
-  }, [weightRecords]);
+    
+    if (deletedRecordIds && deletedRecordIds.size > 0) {
+      console.log(`Current deletedRecordIds in state:`, Array.from(deletedRecordIds));
+    }
+  }, [weightRecords, deletedRecordIds]);
 
   // Memoize the animal with weight history
   const animalWithWeightHistory = useMemo(() => {

@@ -23,8 +23,12 @@ export const useAnimalData = (
   const filterDeletedRecords = useCallback((records: WeightRecord[]) => {
     if (!records) return [];
     
-    const filteredRecords = records.filter(record => 
-      record && record.id && !deletedRecordIds.has(record.id)
+    // Make sure we're properly checking for null/undefined records
+    const validRecords = records.filter(record => record && record.id);
+    
+    // Now filter out records with IDs in deletedRecordIds
+    const filteredRecords = validRecords.filter(record => 
+      !deletedRecordIds.has(record.id!)
     );
     
     console.log(`Filtered ${records.length - filteredRecords.length} deleted records out of ${records.length} total records`);
@@ -133,6 +137,7 @@ export const useAnimalData = (
       if (!isMountedRef.current) return null;
       
       console.log("Refetched weight records:", weightRecordsResult);
+      console.log("Current deletedRecordIds for filtering:", Array.from(deletedRecordIds));
       
       // Filter out deleted records
       const filteredRecords = filterDeletedRecords(weightRecordsResult);
@@ -157,17 +162,15 @@ export const useAnimalData = (
     }
   }, [animalId, userId, animalData, filterDeletedRecords, deletedRecordIds]);
 
-  // Check if the deletedRecordIds set has changed by comparing the serialized arrays
+  // Check if the deletedRecordIds set has changed
   const haveDeletedIdsChanged = useCallback(() => {
     const currentDeletedIdsArray = Array.from(deletedRecordIds).sort();
     const prevDeletedIdsArray = [...prevDeletedIdsRef.current].sort();
     
-    // Check if array lengths differ first (quick check)
     if (currentDeletedIdsArray.length !== prevDeletedIdsArray.length) {
       return true;
     }
     
-    // Compare each element
     for (let i = 0; i < currentDeletedIdsArray.length; i++) {
       if (currentDeletedIdsArray[i] !== prevDeletedIdsArray[i]) {
         return true;
@@ -212,20 +215,20 @@ export const useAnimalData = (
     };
   }, [animalId, userId, deletedRecordIds, fetchData, animalData, haveDeletedIdsChanged]);
 
-  // Additional effect to filter locally when deletedRecordIds changes
+  // Immediately filter records when deletedRecordIds changes
   useEffect(() => {
-    // If we have records and deleted IDs, filter records client-side
-    if (weightRecords.length > 0 && deletedRecordIds.size > 0) {
-      console.log("Filtering weight records based on deletedRecordIds");
+    if (weightRecords.length > 0) {
+      console.log("Filtering weight records due to deletedRecordIds change");
+      
       const filteredRecords = filterDeletedRecords(weightRecords);
       
-      // Only update state if the filtered result is different
+      // Only update if the filtering actually removed something
       if (filteredRecords.length !== weightRecords.length) {
-        console.log("Updating weightRecords with filtered results");
+        console.log("Updating weightRecords with filtered results:", filteredRecords);
         setWeightRecords(filteredRecords);
       }
     }
-  }, [deletedRecordIds, filterDeletedRecords, weightRecords]);
+  }, [deletedRecordIds, filterDeletedRecords, weightRecords.length]);
 
   return {
     animalData,

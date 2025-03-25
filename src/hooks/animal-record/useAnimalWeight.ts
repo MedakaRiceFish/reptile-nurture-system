@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { 
   addWeightRecord, 
   deleteWeightRecord,
@@ -105,16 +106,18 @@ export const useAnimalWeight = (
     try {
       console.log("Deleting weight record with ID:", id);
       
-      // Optimistically update UI first for better UX
-      setWeightRecords(prevRecords => {
-        return prevRecords.filter(record => record.id !== id);
-      });
-      
-      // Add to deletedRecordIds immediately
+      // Add to deletedRecordIds immediately for optimistic UI update
       setDeletedRecordIds(prev => {
+        // Create a new Set with all previous values plus the new one
         const newSet = new Set(prev);
         newSet.add(id);
+        console.log(`Added ID ${id} to deletedRecordIds. New set:`, Array.from(newSet));
         return newSet;
+      });
+      
+      // Update UI by filtering out the deleted record
+      setWeightRecords(prevRecords => {
+        return prevRecords.filter(record => record.id !== id);
       });
       
       // Now do the actual API call
@@ -124,13 +127,7 @@ export const useAnimalWeight = (
         console.log("Successfully deleted weight record ID:", id);
         console.log("Updated deletedRecordIds after deletion:", Array.from(deletedRecordIds));
         
-        // Refetch weight records to get the latest state
-        const updatedRecords = await refetchWeightRecords();
-        
-        if (!updatedRecords) {
-          console.log("Failed to refetch weight records after deletion");
-        }
-        
+        // Notify user of success
         toast({
           title: "Weight record deleted",
           description: "The weight record has been successfully deleted"
@@ -138,7 +135,14 @@ export const useAnimalWeight = (
       } else {
         console.error("Failed to delete weight record ID:", id);
         
-        // Rollback UI changes if the API call failed
+        // Remove from deletedRecordIds if API call failed
+        setDeletedRecordIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+        
+        // Rollback UI changes
         refetchWeightRecords();
         
         toast({
@@ -150,7 +154,14 @@ export const useAnimalWeight = (
     } catch (error: any) {
       console.error("Error deleting weight record:", error);
       
-      // Rollback optimistic update
+      // Remove from deletedRecordIds if an error occurred
+      setDeletedRecordIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+      
+      // Rollback optimistic UI update
       refetchWeightRecords();
       
       toast({

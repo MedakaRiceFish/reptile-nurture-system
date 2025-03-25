@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +7,7 @@ import { useAnimalData } from "./useAnimalData";
 import { useAnimalWeight } from "./useAnimalWeight";
 import { useAnimalEdit } from "./useAnimalEdit";
 import { AnimalNote, WeightRecord } from "./types";
+import { toast } from "sonner";
 
 // Create a storage key for deleted records that's unique per animal
 const getDeletedRecordsStorageKey = (animalId: string) => 
@@ -22,16 +23,25 @@ export const useAnimalRecord = () => {
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  // Initialize deletedRecordIds from localStorage if available
+  // Load deletedRecordIds from localStorage with better error handling
   const [deletedRecordIds, setDeletedRecordIds] = useState<Set<string>>(() => {
     if (!id) return new Set<string>();
     
     try {
-      const storedDeletedIds = localStorage.getItem(getDeletedRecordsStorageKey(id));
+      console.log(`Initializing deletedRecordIds from localStorage for animal ${id}`);
+      const storageKey = getDeletedRecordsStorageKey(id);
+      const storedDeletedIds = localStorage.getItem(storageKey);
+      
       if (storedDeletedIds) {
         const parsedIds = JSON.parse(storedDeletedIds);
-        console.log(`Retrieved ${parsedIds.length} deleted records from localStorage for animal ${id}:`, parsedIds);
-        return new Set<string>(parsedIds);
+        if (Array.isArray(parsedIds)) {
+          console.log(`Retrieved ${parsedIds.length} deleted records from localStorage for animal ${id}:`, parsedIds);
+          // Filter out any null or undefined values for safety
+          const validIds = parsedIds.filter(idVal => idVal && typeof idVal === 'string');
+          return new Set<string>(validIds);
+        } else {
+          console.warn(`Invalid deletedRecordIds format in localStorage for animal ${id}:`, parsedIds);
+        }
       } else {
         console.log(`No deleted records found in localStorage for animal ${id}`);
       }
@@ -42,20 +52,27 @@ export const useAnimalRecord = () => {
     return new Set<string>();
   });
 
-  // Save deletedRecordIds to localStorage whenever it changes
-  useEffect(() => {
+  // Save deletedRecordIds to localStorage whenever it changes with better error handling
+  const persistDeletedRecordsToLocalStorage = useCallback(() => {
     if (!id) return;
     
     try {
       const deletedIdsArray = Array.from(deletedRecordIds);
+      const storageKey = getDeletedRecordsStorageKey(id);
       
-      // Always save the current state, even if empty (to clear previous data)
-      localStorage.setItem(getDeletedRecordsStorageKey(id), JSON.stringify(deletedIdsArray));
+      // Save even if empty (to clear previous data)
+      localStorage.setItem(storageKey, JSON.stringify(deletedIdsArray));
       console.log(`Saved ${deletedIdsArray.length} deletedRecordIds to localStorage for animal ${id}:`, deletedIdsArray);
     } catch (error) {
       console.error("Error saving deleted records to localStorage:", error);
+      toast.error("Failed to save deleted records. Some records may reappear on page refresh.");
     }
   }, [id, deletedRecordIds]);
+
+  // Persist to localStorage whenever deletedRecordIds changes
+  useEffect(() => {
+    persistDeletedRecordsToLocalStorage();
+  }, [persistDeletedRecordsToLocalStorage]);
 
   // Get animal data functionality with deletedRecordIds
   const {
@@ -109,6 +126,7 @@ export const useAnimalRecord = () => {
     animalNotes,
     isWeightDialogOpen,
     isEditDialogOpen,
+    deletedRecordIds,
     setAnimalData,
     setAnimalNotes,
     setIsWeightDialogOpen,
