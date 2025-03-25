@@ -38,6 +38,8 @@ export const useAnimalRecord = () => {
   const [animalData, setAnimalData] = useState<any>(null);
   const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  // Track deleted record IDs to ensure they don't reappear
+  const [deletedRecordIds, setDeletedRecordIds] = useState<Set<string>>(new Set());
 
   const [animalNotes, setAnimalNotes] = useState<AnimalNote[]>([
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
@@ -51,10 +53,15 @@ export const useAnimalRecord = () => {
       const records = await getAnimalWeightRecords(id);
       console.log("Fetched weight records:", records);
       
-      setWeightRecords(records);
+      // Filter out any previously deleted records that might still be returned
+      const filteredRecords = records.filter(record => 
+        record.id ? !deletedRecordIds.has(record.id) : true
+      );
       
-      if (records.length > 0 && animalData) {
-        const sortedRecords = [...records].sort(
+      setWeightRecords(filteredRecords);
+      
+      if (filteredRecords.length > 0 && animalData) {
+        const sortedRecords = [...filteredRecords].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         
@@ -180,21 +187,30 @@ export const useAnimalRecord = () => {
       if (result) {
         console.log("Added new weight record:", result);
         
+        // Add the new record to the state instead of refetching all records
+        // This prevents deleted records from reappearing
         setWeightRecords(prevRecords => {
           const newRecords = [...prevRecords, result];
-          console.log("Updated weight records state:", newRecords);
-          return newRecords;
+          // Sort records by date (newest first)
+          return newRecords.sort((a, b) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
         });
         
-        const updatedAnimal = {
-          ...animalData,
-          weight: weightValue
-        };
+        // Update the animal's weight if this is the newest record
+        const isNewestRecord = !weightRecords.some(record => 
+          new Date(record.date) > new Date(result.date)
+        );
         
-        await updateAnimalWeight(animalData.id, weightValue);
-        setAnimalData(updatedAnimal);
-        
-        await fetchWeightRecords();
+        if (isNewestRecord) {
+          const updatedAnimal = {
+            ...animalData,
+            weight: weightValue
+          };
+          
+          await updateAnimalWeight(animalData.id, weightValue);
+          setAnimalData(updatedAnimal);
+        }
         
         toast({
           title: "Weight record added",
@@ -221,21 +237,32 @@ export const useAnimalRecord = () => {
       const success = await deleteWeightRecord(id);
       
       if (success) {
-        // Update the weight records list
-        setWeightRecords(prevRecords => 
-          prevRecords.filter(record => record.id !== id)
-        );
+        // Add the deleted record ID to our tracking set
+        setDeletedRecordIds(prev => {
+          const newSet = new Set(prev);
+          newSet.add(id);
+          return newSet;
+        });
         
-        // Refetch weight records to get the latest data
-        const updatedRecords = await getAnimalWeightRecords(animalData.id);
+        // Update the weight records list
+        setWeightRecords(prevRecords => {
+          const updatedRecords = prevRecords.filter(record => record.id !== id);
+          return updatedRecords;
+        });
+        
+        // Update the animal's current weight if needed
+        const remainingRecords = weightRecords.filter(record => record.id !== id);
         
         let newWeight = 0;
-        if (updatedRecords.length > 0) {
+        if (remainingRecords.length > 0) {
           // Sort to get the latest record
-          const sortedRecords = [...updatedRecords].sort(
+          const sortedRecords = [...remainingRecords].sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
           );
           newWeight = sortedRecords[0].weight;
+          
+          // Update the animal's weight in the database
+          await updateAnimalWeight(animalData.id, newWeight);
         }
         
         // Update the animal's weight in the state
@@ -243,9 +270,6 @@ export const useAnimalRecord = () => {
           ...prev,
           weight: newWeight
         }));
-        
-        // Update the animal's weight in the database
-        await updateAnimalWeight(animalData.id, newWeight);
         
         toast({
           title: "Weight record deleted",

@@ -66,7 +66,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
             })();
             
             return (
-              <TableRow key={`${record.date}-${index}`}>
+              <TableRow key={record.id || `${record.date}-${index}`}>
                 <TableCell>{formattedDate}</TableCell>
                 <TableCell className="font-medium">{record.weight}</TableCell>
                 <TableCell>

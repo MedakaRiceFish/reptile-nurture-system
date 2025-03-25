@@ -75,13 +75,19 @@ export const addWeightRecord = async (record: WeightRecord): Promise<FormattedWe
 // Delete a weight record
 export const deleteWeightRecord = async (id: string): Promise<boolean> => {
   try {
+    console.log("Deleting weight record with ID:", id);
+    
     const { error } = await supabase
       .from('weight_records')
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase delete error:", error);
+      throw error;
+    }
     
+    console.log("Weight record deleted successfully");
     return true;
   } catch (error: any) {
     console.error("Error deleting weight record:", error);
