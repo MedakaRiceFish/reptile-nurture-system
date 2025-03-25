@@ -53,6 +53,18 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     fetchEnclosureName();
   }, [animal, setAnimalData]);
 
+  // Get the current weight from weight history if available
+  const currentWeight = useMemo(() => {
+    if (animal.weightHistory && animal.weightHistory.length > 0) {
+      // Sort weight records by date (newest first)
+      const sortedRecords = [...animal.weightHistory].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      return sortedRecords[0].weight;
+    }
+    return animal.weight || 0;
+  }, [animal.weightHistory, animal.weight]);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -138,7 +150,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           </DetailsItem>
           
           <DetailsItem label="Current Weight">
-            {animal.weight} g
+            {currentWeight} g
           </DetailsItem>
           
           <DetailsItem label="Length">
@@ -162,3 +174,8 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     </Card>
   );
 };
+
+// Fix TypeScript error
+function useMemo<T>(factory: () => T, deps: React.DependencyList): T {
+  return React.useMemo(factory, deps);
+}

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -91,6 +92,51 @@ export const addWeightRecord = async (record: WeightRecordInsert): Promise<Weigh
   } catch (error: any) {
     console.error('Error adding weight record:', error);
     toast.error(`Error adding weight record: ${error.message}`);
+    return null;
+  }
+};
+
+// Add this new function to get the latest weight record for an animal
+export const getLatestWeightRecord = async (animalId: string): Promise<{date: string, weight: number} | null> => {
+  try {
+    console.log("Fetching latest weight record for animal ID:", animalId);
+    
+    const { data, error } = await supabase
+      .from('weight_records')
+      .select('*')
+      .eq('animal_id', animalId)
+      .order('recorded_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No records found
+        console.log('No weight records found for animal:', animalId);
+        return null;
+      }
+      throw error;
+    }
+    
+    if (!data) return null;
+    
+    // Format the date
+    let dateString;
+    if (typeof data.recorded_at === 'string') {
+      dateString = data.recorded_at.substring(0, 10);
+    } else {
+      dateString = new Date(data.recorded_at).toISOString().substring(0, 10);
+    }
+    
+    const formattedRecord = {
+      date: dateString,
+      weight: Number(data.weight)
+    };
+    
+    console.log('Latest weight record:', formattedRecord);
+    return formattedRecord;
+  } catch (error: any) {
+    console.error("Error fetching latest weight record:", error);
     return null;
   }
 };

@@ -29,6 +29,24 @@ export const AddWeightDialog: React.FC<AddWeightDialogProps> = ({
     }
   });
 
+  const handleSubmit = (data: any) => {
+    // Validate weight is a positive number
+    const weightValue = parseFloat(data.weight);
+    if (isNaN(weightValue) || weightValue <= 0) {
+      alert("Please enter a valid positive weight");
+      return;
+    }
+    
+    // Call the onSave handler with validated data
+    onSave(data);
+    
+    // Reset the form
+    weightForm.reset({
+      weight: "",
+      date: new Date()
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -36,7 +54,7 @@ export const AddWeightDialog: React.FC<AddWeightDialogProps> = ({
           <DialogTitle>Add Weight Record</DialogTitle>
         </DialogHeader>
         <Form {...weightForm}>
-          <form onSubmit={weightForm.handleSubmit(onSave)} className="space-y-4">
+          <form onSubmit={weightForm.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={weightForm.control}
               name="date"

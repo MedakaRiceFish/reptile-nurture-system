@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -65,6 +65,11 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
       percentChange
     };
   }, [animal.weightHistory, animal.weight]);
+
+  // Force re-render when weight history changes
+  useEffect(() => {
+    console.log("Weight history changed, recalculating stats");
+  }, [animal.weightHistory]);
 
   // Determine color based on percentage change
   const getPercentChangeColor = (percentChange: number) => {

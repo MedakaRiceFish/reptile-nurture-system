@@ -10,7 +10,7 @@ import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
 import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
 import { getAnimal, updateAnimal } from "@/services/animalService";
-import { getAnimalWeightRecords, addWeightRecord } from "@/services/weightService";
+import { getAnimalWeightRecords, addWeightRecord, getLatestWeightRecord } from "@/services/weightService";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,6 +29,41 @@ const AnimalRecord = () => {
   const [animalNotes, setAnimalNotes] = useState<{date: string, note: string}[]>([
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
+
+  // Function to fetch and update weight records
+  const fetchWeightRecords = async () => {
+    if (!id) return;
+    
+    try {
+      console.log("Fetching weight records for animal ID:", id);
+      const records = await getAnimalWeightRecords(id);
+      console.log("Fetched weight records:", records);
+      
+      setWeightRecords(records);
+      
+      // Update animal's current weight if we have weight records
+      if (records.length > 0 && animalData) {
+        // Sort by date (newest first)
+        const sortedRecords = [...records].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        const latestWeight = sortedRecords[0].weight;
+        console.log("Setting latest weight from records:", latestWeight);
+        
+        // Update animal data with the latest weight
+        setAnimalData(prev => ({
+          ...prev,
+          weight: latestWeight
+        }));
+        
+        // Also update the weight in the database
+        await updateAnimal(id, { weight: latestWeight });
+      }
+    } catch (error) {
+      console.error("Error fetching weight records:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -172,6 +207,9 @@ const AnimalRecord = () => {
         
         await updateAnimal(animalData.id, { weight: weightValue });
         setAnimalData(updatedAnimal);
+        
+        // Force refresh the weight records to ensure everything is up to date
+        await fetchWeightRecords();
         
         toast({
           title: "Weight record added",
