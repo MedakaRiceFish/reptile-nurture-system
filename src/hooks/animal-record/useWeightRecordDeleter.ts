@@ -25,20 +25,19 @@ export const useWeightRecordDeleter = (
     
     // Perform optimistic UI update first - remove from UI immediately
     setWeightRecords(prevRecords => {
-      // Make sure we're not trying to filter an already filtered list
       return prevRecords.filter(record => record.id !== id);
     });
     
-    // Also add to deletedRecordIds set for filtering
+    // Add to deletedRecordIds set for tracking
     setDeletedRecordIds(prev => {
       const newSet = new Set(prev);
       newSet.add(id);
       return newSet;
     });
     
-    // Then do the actual API call - use a slight delay to ensure UI updates complete first
-    setTimeout(() => {
-      deleteWeightRecord(id).then(success => {
+    // Call the API without blocking the UI
+    deleteWeightRecord(id)
+      .then(success => {
         if (success) {
           console.log("Successfully deleted weight record ID:", id);
           toast.success("Weight record deleted", {
@@ -49,36 +48,35 @@ export const useWeightRecordDeleter = (
           console.error("Failed to delete weight record ID:", id);
           
           // Rollback UI changes if API call failed
-          refetchWeightRecords();
-          
-          // Remove from deletedRecordIds if API call failed
-          setDeletedRecordIds(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(id);
-            return newSet;
-          });
+          rollbackDeletion(id);
           
           toast.error("Failed to delete weight record");
         }
-      }).catch(error => {
+      })
+      .catch(error => {
         console.error("Error deleting weight record:", error);
         
         // Rollback UI changes on error
-        refetchWeightRecords();
-        
-        // Remove from deletedRecordIds on error
-        setDeletedRecordIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
+        rollbackDeletion(id);
         
         toast.error("Failed to delete weight record");
       });
-    }, 50);
     
     return true;
-  }, [animalId, setDeletedRecordIds, setWeightRecords, refetchWeightRecords, deletedRecordIds]);
+  }, [animalId, setDeletedRecordIds, setWeightRecords, deletedRecordIds]);
+
+  // Helper function to rollback deletion
+  const rollbackDeletion = useCallback((id: string) => {
+    // Remove from deletedRecordIds
+    setDeletedRecordIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+    
+    // Refetch records to restore the deleted one
+    refetchWeightRecords();
+  }, [setDeletedRecordIds, refetchWeightRecords]);
 
   return { handleDeleteWeight };
 };

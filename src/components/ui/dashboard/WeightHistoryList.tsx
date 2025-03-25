@@ -29,23 +29,10 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
     });
   }, [weightHistory]);
 
-  // Handle delete click with proper event handling
-  const handleDeleteClick = useCallback((
-    event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
-    id: string
-  ) => {
-    // Prevent default button behavior
-    event.preventDefault();
-    
-    // Stop event propagation to prevent any parent handlers from firing
-    event.stopPropagation();
-    
-    // Use setTimeout to break out of the current event cycle
-    // This helps prevent unwanted page refreshes or state updates
+  // Handle delete with minimal side effects
+  const handleDeleteClick = useCallback((id: string) => {
     if (onDeleteWeight && id) {
-      setTimeout(() => {
-        onDeleteWeight(id);
-      }, 0);
+      onDeleteWeight(id);
     }
   }, [onDeleteWeight]);
 
@@ -104,19 +91,11 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={(e) => handleDeleteClick(e, record.id!)}
+                      onClick={() => handleDeleteClick(record.id!)}
                       title="Delete record"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleDeleteClick(e, record.id!);
-                        }
-                      }}
                       aria-label={`Delete weight record from ${formattedDate}`}
                     >
-                      <X className="h-4 w-4 pointer-events-none" />
+                      <X className="h-4 w-4" />
                       <span className="sr-only">Delete record</span>
                     </Button>
                   </TableCell>
