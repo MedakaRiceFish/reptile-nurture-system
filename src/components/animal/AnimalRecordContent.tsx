@@ -33,7 +33,8 @@ interface AnimalRecordContentProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-const AnimalRecordContent = ({
+// Create a separate memoized component for the content
+const AnimalRecordContent = memo(({
   animal,
   animalNotes,
   setAnimalData,
@@ -65,7 +66,10 @@ const AnimalRecordContent = ({
       />
     </div>
   );
-};
+});
 
-export const MemoizedAnimalRecordContent = memo(AnimalRecordContent);
-export { MemoizedAnimalRecordContent as AnimalRecordContent };
+AnimalRecordContent.displayName = "AnimalRecordContent";
+
+// Export as both named and default export to prevent import issues
+export default AnimalRecordContent;
+export { AnimalRecordContent };

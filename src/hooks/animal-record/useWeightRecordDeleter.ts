@@ -26,35 +26,38 @@ export const useWeightRecordDeleter = (
     // Mark as in progress
     pendingDeletions.current.add(id);
     
-    try {
-      // Optimistic UI update as a single operation
-      setWeightRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+    // Use a separate function for the update to prevent context captures
+    const performOptimisticUpdate = () => {
+      setWeightRecords(prevRecords => 
+        prevRecords.filter(record => record.id !== id)
+      );
+      
       setDeletedRecordIds(prevIds => {
         const newIds = new Set(prevIds);
         newIds.add(id);
         return newIds;
       });
-      
-      // Then perform the API call
-      deleteWeightRecord(id)
-        .then(success => {
-          if (!success) {
-            console.error("Failed to delete weight record:", id);
-            // We're not rolling back UI - persistence layer will handle reconciliation
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting weight record:", error);
-        })
-        .finally(() => {
-          // Clear from pending set
-          pendingDeletions.current.delete(id);
-        });
-    } catch (error) {
-      // Error handling
-      console.error("Error in delete weight operation:", error);
-      pendingDeletions.current.delete(id);
-    }
+    };
+    
+    // Perform the optimistic update
+    performOptimisticUpdate();
+    
+    // Then perform the API call without affecting UI state again
+    deleteWeightRecord(id)
+      .then(success => {
+        if (!success) {
+          console.error("Failed to delete weight record:", id);
+        } else {
+          console.log("Successfully deleted weight record:", id);
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting weight record:", error);
+      })
+      .finally(() => {
+        // Clear from pending set
+        pendingDeletions.current.delete(id);
+      });
   }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords]);
 
   return { handleDeleteWeight };
