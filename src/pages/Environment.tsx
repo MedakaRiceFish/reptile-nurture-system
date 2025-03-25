@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -260,7 +259,7 @@ export default function Environment() {
             />
           </div>
 
-          <div className="md:col-span-1 grid grid-rows-2 gap-6">
+          <div className="md:col-span-1 grid grid-rows-2 gap-6 h-full">
             <EnvironmentDetailsCard 
               enclosure={enclosure}
               getStatusColor={getStatusColor}

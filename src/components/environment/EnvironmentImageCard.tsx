@@ -31,8 +31,8 @@ export const EnvironmentImageCard: React.FC<EnvironmentImageCardProps> = ({
   fileInputRef
 }) => {
   return (
-    <Card>
-      <div className="relative">
+    <Card className="h-full">
+      <div className="relative h-auto">
         <img 
           src={imageError ? getPlaceholderImage() : (imagePreview || enclosure.image_url || enclosure.image)} 
           alt={enclosure.name} 
