@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
 import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
@@ -14,7 +14,8 @@ interface AnimalRecordContentProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-export const AnimalRecordContent: React.FC<AnimalRecordContentProps> = ({
+// Use memo to prevent unnecessary re-renders
+export const AnimalRecordContent = memo(({
   animal,
   animalNotes,
   setAnimalData,
@@ -46,4 +47,6 @@ export const AnimalRecordContent: React.FC<AnimalRecordContentProps> = ({
       />
     </>
   );
-};
+});
+
+AnimalRecordContent.displayName = "AnimalRecordContent";

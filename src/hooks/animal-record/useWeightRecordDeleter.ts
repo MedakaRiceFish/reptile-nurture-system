@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { deleteWeightRecord } from "@/services/weightService";
 import { WeightRecord } from "./types";
@@ -11,28 +11,30 @@ export const useWeightRecordDeleter = (
   setDeletedRecordIds: React.Dispatch<React.SetStateAction<Set<string>>>,
   refetchWeightRecords: () => Promise<WeightRecord[] | null>
 ) => {
-  // Handle delete weight record
+  // Use a ref to track in-progress deletions to prevent duplicate calls
+  const pendingDeletions = useRef(new Set<string>());
+
+  // Handle delete weight record with optimistic updates
   const handleDeleteWeight = useCallback((id: string) => {
     if (!animalId || !id) return;
     
-    // Check if already marked as deleted
-    if (deletedRecordIds.has(id)) {
+    // Skip if already in progress or already deleted
+    if (pendingDeletions.current.has(id) || deletedRecordIds.has(id)) {
       return;
     }
     
-    // Create new Sets/Arrays to avoid reference issues
+    // Mark as in progress
+    pendingDeletions.current.add(id);
+    
+    // Create new Sets to avoid reference issues
     const newDeletedIds = new Set(deletedRecordIds);
     newDeletedIds.add(id);
     
-    // Update UI immediately by filtering out the deleted record
-    setWeightRecords(currentRecords => 
-      currentRecords.filter(record => record.id !== id)
-    );
-    
-    // Update deleted IDs record
+    // Update UI first (optimistic update) - use functional update
+    setWeightRecords(prevRecords => prevRecords.filter(record => record.id !== id));
     setDeletedRecordIds(newDeletedIds);
     
-    // Call API to delete the record
+    // Then perform the API call in the background
     deleteWeightRecord(id)
       .then(success => {
         if (success) {
@@ -41,33 +43,33 @@ export const useWeightRecordDeleter = (
             position: "bottom-right",
           });
         } else {
-          // Rollback UI changes
-          setDeletedRecordIds(current => {
-            const updatedIds = new Set(current);
-            updatedIds.delete(id);
-            return updatedIds;
-          });
-          
-          // Refetch to restore the correct data
-          refetchWeightRecords();
-          
-          toast.error("Failed to delete weight record");
+          // Rollback if failed
+          handleDeleteFailure(id);
         }
       })
       .catch(() => {
-        // Rollback UI changes
-        setDeletedRecordIds(current => {
-          const updatedIds = new Set(current);
-          updatedIds.delete(id);
-          return updatedIds;
-        });
-        
-        // Refetch to restore the correct data
-        refetchWeightRecords();
-        
-        toast.error("Failed to delete weight record");
+        handleDeleteFailure(id);
+      })
+      .finally(() => {
+        // Clear from pending set
+        pendingDeletions.current.delete(id);
       });
   }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords, refetchWeightRecords]);
+
+  // Helper for handling deletion failures
+  const handleDeleteFailure = useCallback((id: string) => {
+    // Rollback deleted IDs
+    setDeletedRecordIds(prev => {
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
+    
+    // Refetch to restore correct data
+    refetchWeightRecords();
+    
+    toast.error("Failed to delete weight record");
+  }, [setDeletedRecordIds, refetchWeightRecords]);
 
   return { handleDeleteWeight };
 };

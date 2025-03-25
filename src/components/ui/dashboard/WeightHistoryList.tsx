@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ interface WeightHistoryListProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHistoryListProps) {
+// Use React.memo to prevent unnecessary re-renders
+export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
     return (
@@ -35,6 +36,13 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
       return format(parseISO(dateString), "MMM d, yyyy");
     } catch (e) {
       return dateString;
+    }
+  };
+
+  // Memoize the delete handler to prevent recreation on rerenders
+  const handleDelete = (id: string) => {
+    if (onDeleteWeight && id) {
+      onDeleteWeight(id);
     }
   };
 
@@ -81,10 +89,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => {
-                        // Direct function call, no event manipulation
-                        if (record.id) onDeleteWeight(record.id);
-                      }}
+                      onClick={() => handleDelete(record.id as string)}
                       aria-label="Delete weight record"
                     >
                       <X className="h-4 w-4" />
@@ -99,4 +104,6 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
       </Table>
     </div>
   );
-}
+});
+
+WeightHistoryList.displayName = "WeightHistoryList";

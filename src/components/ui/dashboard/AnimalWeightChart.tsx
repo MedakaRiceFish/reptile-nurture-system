@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { 
   ChartContainer, 
@@ -26,9 +26,8 @@ interface AnimalWeightChartProps {
   weightHistory: WeightRecord[];
 }
 
-export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
-  console.log("AnimalWeightChart received weightHistory:", weightHistory);
-  
+// Use memo to prevent unnecessary re-renders
+export const AnimalWeightChart = memo(({ weightHistory }: AnimalWeightChartProps) => {
   // If no history, show a message
   if (!weightHistory || weightHistory.length === 0) {
     return (
@@ -69,8 +68,6 @@ export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
       formattedDate,
     };
   });
-
-  console.log("Formatted chart data:", chartData);
 
   return (
     <Card className="p-2 h-[400px]">
@@ -113,10 +110,10 @@ export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
       </ChartContainer>
     </Card>
   );
-}
+});
 
-// Custom tooltip component
-const CustomTooltip = ({ active, payload, label }: any) => {
+// Custom tooltip component (also memoized)
+const CustomTooltip = memo(({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     let formattedDate;
     try {
@@ -140,4 +137,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
   }
   return null;
-};
+});
+
+AnimalWeightChart.displayName = "AnimalWeightChart";
+CustomTooltip.displayName = "CustomTooltip";

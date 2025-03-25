@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +19,7 @@ interface WeightTrackerProps {
   onDeleteWeight?: (id: string) => void;
 }
 
-export const WeightTracker: React.FC<WeightTrackerProps> = ({
+export const WeightTracker: React.FC<WeightTrackerProps> = React.memo(({
   animal,
   onAddWeightClick,
   onDeleteWeight
@@ -42,6 +42,13 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
       console.error("Error saving tab state:", e);
     }
   }, [activeTab]);
+  
+  // Stable handler for deletion to prevent excessive re-renders
+  const handleDeleteWeight = useCallback((id: string) => {
+    if (onDeleteWeight) {
+      onDeleteWeight(id);
+    }
+  }, [onDeleteWeight]);
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -146,7 +153,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
             <TabsContent value="list">
               <WeightHistoryList 
                 weightHistory={animal.weightHistory}
-                onDeleteWeight={onDeleteWeight}
+                onDeleteWeight={handleDeleteWeight}
               />
             </TabsContent>
           </Tabs>
@@ -154,4 +161,6 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
       </CardContent>
     </Card>
   );
-}
+});
+
+WeightTracker.displayName = "WeightTracker";
