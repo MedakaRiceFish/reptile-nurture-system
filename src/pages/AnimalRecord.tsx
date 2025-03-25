@@ -1,3 +1,4 @@
+
 import React, { useMemo, Suspense, lazy, useEffect } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
