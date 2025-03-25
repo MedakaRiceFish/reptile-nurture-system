@@ -122,6 +122,11 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     }
   };
 
+  // Format length to display properly regardless of type
+  const displayLength = animal.length ? 
+    (typeof animal.length === 'number' ? animal.length : parseFloat(String(animal.length) || '0')) : 
+    "--";
+
   return (
     <Card className="lg:col-span-1">
       <div className="relative">
@@ -154,7 +159,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           </DetailsItem>
           
           <DetailsItem label="Length">
-            {animal.length} cm
+            {displayLength === "--" ? displayLength : `${displayLength} cm`}
           </DetailsItem>
           
           <DetailsItem label="Feeding Schedule">
