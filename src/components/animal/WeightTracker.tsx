@@ -1,4 +1,3 @@
-
 import React, { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -27,8 +26,18 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   console.log("WeightTracker animal:", animal);
   console.log("Weight history array:", animal.weightHistory);
   
-  // Add state to maintain tab selection
-  const [activeTab, setActiveTab] = useState("chart");
+  // Use state to maintain tab selection
+  // Persist this state across re-renders
+  const [activeTab, setActiveTab] = useState(() => {
+    // Try to get the last active tab from sessionStorage
+    const savedTab = sessionStorage.getItem('weightTrackerActiveTab');
+    return savedTab || "chart";
+  });
+  
+  // Save tab selection to sessionStorage when it changes
+  useEffect(() => {
+    sessionStorage.setItem('weightTrackerActiveTab', activeTab);
+  }, [activeTab]);
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -94,6 +103,8 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   // Handle deletion without changing tabs
   const handleDeleteWeight = (id: string) => {
     if (onDeleteWeight) {
+      console.log(`Deleting weight record ${id} while on tab: ${activeTab}`);
+      // Just call the original handler, but keep the tab state
       onDeleteWeight(id);
     }
   };
@@ -136,7 +147,12 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
             <p className="mt-2">Add a weight record to start tracking.</p>
           </div>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            // Add key to ensure proper re-rendering
+            key={`weight-tabs-${animal.id}-${animal.weightHistory?.length || 0}`}
+          >
             <TabsList className="mb-4">
               <TabsTrigger value="chart">Chart</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>

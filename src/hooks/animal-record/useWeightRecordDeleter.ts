@@ -49,7 +49,8 @@ export const useWeightRecordDeleter = (
           return newSet;
         });
         
-        // Rollback UI changes by refetching, but don't force a full reload
+        // Rollback UI changes by refetching, but don't trigger any reloads
+        // Just update the state directly
         const updatedRecords = await refetchWeightRecords();
         if (!updatedRecords) {
           console.error("Failed to rollback UI after failed deletion");
@@ -68,7 +69,7 @@ export const useWeightRecordDeleter = (
         return newSet;
       });
       
-      // Rollback UI changes by refetching, but don't force a full reload
+      // Rollback UI changes by refetching, but don't trigger any reloads
       const updatedRecords = await refetchWeightRecords();
       if (!updatedRecords) {
         console.error("Failed to rollback UI after error during deletion");
@@ -77,7 +78,7 @@ export const useWeightRecordDeleter = (
       toast.error("Failed to delete weight record");
       return false;
     }
-  }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords, refetchWeightRecords]);
+  }, [animalId, setDeletedRecordIds, setWeightRecords, refetchWeightRecords]);
 
   return { handleDeleteWeight };
 };
