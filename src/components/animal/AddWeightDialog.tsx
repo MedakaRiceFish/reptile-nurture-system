@@ -45,6 +45,9 @@ export const AddWeightDialog: React.FC<AddWeightDialogProps> = ({
       weight: "",
       date: new Date()
     });
+    
+    // Automatically close the dialog after successful submission
+    onOpenChange(false);
   };
 
   return (
