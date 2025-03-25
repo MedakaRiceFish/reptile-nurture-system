@@ -60,10 +60,15 @@ export const AddAnimalDialog: React.FC<AddAnimalDialogProps> = ({
       if (result) {
         // Add the initial weight record
         if (parseFloat(data.weight) > 0) {
+          const today = new Date();
+          const formattedDate = format(today, "yyyy-MM-dd");
+          
+          console.log('Creating initial weight record with date:', formattedDate);
+          
           const weightRecord = {
             animal_id: result.id,
             weight: parseFloat(data.weight),
-            recorded_at: format(new Date(), "yyyy-MM-dd"),
+            recorded_at: formattedDate,
             owner_id: user.id
           };
           

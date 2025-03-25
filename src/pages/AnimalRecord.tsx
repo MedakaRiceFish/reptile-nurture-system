@@ -39,13 +39,28 @@ const AnimalRecord = () => {
         const animalData = await getAnimal(id);
         
         if (animalData) {
-          setAnimalData(animalData);
-
+          // Fetch weight records
           const records = await getAnimalWeightRecords(id);
           console.log("Raw records from service:", records);
           setWeightRecords(records);
           
-          console.log("Weight records loaded:", records);
+          // Make sure the animalData has the latest weight value from records
+          if (records.length > 0) {
+            // Sort by date, newest first
+            const sortedRecords = [...records].sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
+            
+            // Use most recent weight for the animal's current weight
+            const currentWeight = sortedRecords[0].weight;
+            animalData.weight = currentWeight;
+          }
+          
+          setAnimalData(animalData);
+          console.log("Animal data loaded with weight history:", { 
+            animalData, 
+            weightRecords: records 
+          });
         }
       } catch (error) {
         console.error("Error fetching animal data:", error);

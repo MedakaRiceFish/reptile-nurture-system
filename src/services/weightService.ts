@@ -25,10 +25,15 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<{date: s
     console.log('Raw weight records from DB:', data);
     
     // Format the records to match the expected format for the components
-    return data.map(record => ({
-      date: record.recorded_at.substring(0, 10), // Ensure we only get YYYY-MM-DD
-      weight: record.weight
-    })) || [];
+    const formattedRecords = data.map(record => ({
+      date: typeof record.recorded_at === 'string' 
+        ? record.recorded_at.substring(0, 10) 
+        : new Date(record.recorded_at).toISOString().substring(0, 10),
+      weight: Number(record.weight)
+    }));
+    
+    console.log('Formatted weight records:', formattedRecords);
+    return formattedRecords || [];
   } catch (error: any) {
     toast.error(`Error fetching weight records: ${error.message}`);
     return [];
@@ -37,16 +42,30 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<{date: s
 
 export const addWeightRecord = async (record: WeightRecordInsert): Promise<WeightRecord | null> => {
   try {
+    // Ensure the date is properly formatted
+    const recordToInsert = {
+      ...record,
+      recorded_at: typeof record.recorded_at === 'string' 
+        ? record.recorded_at 
+        : new Date(record.recorded_at).toISOString(),
+      weight: Number(record.weight)
+    };
+    
+    console.log('Adding weight record:', recordToInsert);
+    
     const { data, error } = await supabase
       .from('weight_records')
-      .insert(record)
+      .insert(recordToInsert)
       .select()
       .single();
     
     if (error) throw error;
+    
+    console.log('Weight record added successfully:', data);
     toast.success('Weight record added successfully');
     return data;
   } catch (error: any) {
+    console.error('Error adding weight record:', error);
     toast.error(`Error adding weight record: ${error.message}`);
     return null;
   }

@@ -48,7 +48,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     const currentWeight = sortedWeights[0].weight;
     
     // Find maximum weight
-    const maxWeight = Math.max(...animal.weightHistory.map(record => record.weight));
+    const maxWeight = Math.max(...animal.weightHistory.map((record: WeightRecord) => record.weight));
     
     // Calculate percentage change from the previous weight
     let percentChange = 0;
@@ -76,6 +76,9 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
 
   // Check if there's weight history AND it has at least one record
   const hasWeightHistory = animal.weightHistory && animal.weightHistory.length > 0;
+
+  console.log("Has weight history:", hasWeightHistory);
+  console.log("Weight stats:", weightStats);
 
   return (
     <Card className="lg:col-span-2">

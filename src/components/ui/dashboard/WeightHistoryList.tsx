@@ -18,6 +18,8 @@ export function WeightHistoryList({ weightHistory }: WeightHistoryListProps) {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
+  console.log("Sorted weight history:", sortedHistory);
+
   return (
     <div className="max-h-[350px] overflow-auto">
       <Table>
@@ -36,9 +38,19 @@ export function WeightHistoryList({ weightHistory }: WeightHistoryListProps) {
               ? record.weight - nextRecord.weight 
               : 0;
             
+            // Ensure date is properly parsed
+            const formattedDate = (() => {
+              try {
+                return format(parseISO(record.date), "MMM d, yyyy");
+              } catch (e) {
+                console.error("Date parsing error:", e, record.date);
+                return record.date;
+              }
+            })();
+            
             return (
-              <TableRow key={record.date}>
-                <TableCell>{format(parseISO(record.date), "MMM d, yyyy")}</TableCell>
+              <TableRow key={`${record.date}-${index}`}>
+                <TableCell>{formattedDate}</TableCell>
                 <TableCell className="font-medium">{record.weight}</TableCell>
                 <TableCell>
                   {index < sortedHistory.length - 1 && (

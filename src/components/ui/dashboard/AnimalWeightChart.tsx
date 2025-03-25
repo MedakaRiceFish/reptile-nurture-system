@@ -34,12 +34,27 @@ export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
     },
   };
 
+  console.log("Weight history for chart:", weightHistory);
+
   // Format the data for the chart
-  const chartData = weightHistory.map(record => ({
-    date: record.date,
-    weight: record.weight,
-    formattedDate: format(parseISO(record.date), "MMM d, yyyy"),
-  }));
+  const chartData = weightHistory.map(record => {
+    // Ensure the date is properly parsed
+    let formattedDate;
+    try {
+      formattedDate = format(parseISO(record.date), "MMM d, yyyy");
+    } catch (e) {
+      console.error("Date parsing error in chart:", e, record.date);
+      formattedDate = record.date;
+    }
+    
+    return {
+      date: record.date,
+      weight: record.weight,
+      formattedDate,
+    };
+  });
+
+  console.log("Formatted chart data:", chartData);
 
   return (
     <Card className="p-2 h-[400px]">
@@ -52,7 +67,14 @@ export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
-              tickFormatter={(value) => format(parseISO(value), "MMM dd")}
+              tickFormatter={(value) => {
+                try {
+                  return format(parseISO(value), "MMM dd");
+                } catch (e) {
+                  console.error("XAxis date formatting error:", e, value);
+                  return value;
+                }
+              }}
               tick={{ fontSize: 12 }}
               tickMargin={10}
             />
@@ -80,11 +102,19 @@ export function AnimalWeightChart({ weightHistory }: AnimalWeightChartProps) {
 // Custom tooltip component
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    let formattedDate;
+    try {
+      formattedDate = format(parseISO(label), "MMM d, yyyy");
+    } catch (e) {
+      console.error("Tooltip date formatting error:", e, label);
+      formattedDate = label;
+    }
+    
     return (
       <ChartTooltipContent>
         <div className="bg-background border rounded-md shadow-md p-2">
           <p className="font-medium text-sm">
-            {format(parseISO(label), "MMM d, yyyy")}
+            {formattedDate}
           </p>
           <p className="text-sm">
             <span className="font-medium">Weight:</span> {payload[0].value} g
