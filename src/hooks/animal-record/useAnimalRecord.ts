@@ -18,10 +18,10 @@ export const useAnimalRecord = () => {
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  // Initialize deletedRecordIds set - this needs to be before useAnimalData
-  const [deletedRecordIds] = useState<Set<string>>(new Set<string>());
+  // Initialize deletedRecordIds set in the parent hook to maintain state across rerenders
+  const [deletedRecordIds, setDeletedRecordIds] = useState<Set<string>>(new Set<string>());
 
-  // Get animal data functionality
+  // Get animal data functionality with deletedRecordIds
   const {
     animalData,
     setAnimalData,
@@ -30,13 +30,13 @@ export const useAnimalRecord = () => {
     loading
   } = useAnimalData(id, user?.id, deletedRecordIds);
 
-  // Then get animal weight functionality with setAnimalData now available
+  // Then get animal weight functionality with the ability to update deletedRecordIds
   const {
     isWeightDialogOpen,
     setIsWeightDialogOpen,
     handleAddWeight,
     handleDeleteWeight
-  } = useAnimalWeight(id, user?.id, setAnimalData, weightRecords, setWeightRecords);
+  } = useAnimalWeight(id, user?.id, setAnimalData, weightRecords, setWeightRecords, deletedRecordIds, setDeletedRecordIds);
 
   // Get animal edit functionality
   const {

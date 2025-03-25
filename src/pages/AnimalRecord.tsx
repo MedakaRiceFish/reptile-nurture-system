@@ -1,5 +1,5 @@
 
-import React, { useMemo, Suspense, lazy } from "react";
+import React, { useMemo, Suspense, lazy, useEffect } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
@@ -32,6 +32,14 @@ const AnimalRecord = () => {
     handleDeleteWeight,
     handleEditSubmit
   } = useAnimalRecord();
+
+  // Log the current state of weight records for debugging
+  useEffect(() => {
+    if (weightRecords && weightRecords.length > 0) {
+      console.log(`AnimalRecord received ${weightRecords.length} weight records:`, 
+        weightRecords.map(r => ({ id: r.id, date: r.date, weight: r.weight })));
+    }
+  }, [weightRecords]);
 
   // Memoize the animal with weight history
   const animalWithWeightHistory = useMemo(() => {
