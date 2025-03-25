@@ -266,7 +266,7 @@ export default function Environment() {
               onEditClick={() => setIsEditDialogOpen(true)}
             />
             
-            <InhabitantsCard inhabitants={inhabitants} />
+            <InhabitantsCard enclosureId={enclosure.id} />
           </div>
         </div>
 
@@ -297,3 +297,4 @@ export default function Environment() {
     </MainLayout>
   );
 }
+
