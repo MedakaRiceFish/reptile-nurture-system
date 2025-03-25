@@ -38,8 +38,11 @@ const AnimalRecord = () => {
     if (id) {
       try {
         const storedDeletedIds = localStorage.getItem(`animal_${id}_deleted_records`);
-        console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, 
-          storedDeletedIds ? JSON.parse(storedDeletedIds) : []);
+        const parsed = storedDeletedIds ? JSON.parse(storedDeletedIds) : [];
+        console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, parsed);
+        if (parsed.length > 0) {
+          console.log(`Found ${parsed.length} deleted records in localStorage for animal ${id}`);
+        }
       } catch (error) {
         console.error("Error reading localStorage:", error);
       }

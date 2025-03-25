@@ -29,8 +29,9 @@ export const useAnimalRecord = () => {
     try {
       const storedDeletedIds = localStorage.getItem(getDeletedRecordsStorageKey(id));
       if (storedDeletedIds) {
-        console.log(`Retrieved deleted records from localStorage for animal ${id}:`, storedDeletedIds);
-        return new Set<string>(JSON.parse(storedDeletedIds));
+        const parsedIds = JSON.parse(storedDeletedIds);
+        console.log(`Retrieved ${parsedIds.length} deleted records from localStorage for animal ${id}:`, parsedIds);
+        return new Set<string>(parsedIds);
       } else {
         console.log(`No deleted records found in localStorage for animal ${id}`);
       }
@@ -48,10 +49,9 @@ export const useAnimalRecord = () => {
     try {
       const deletedIdsArray = Array.from(deletedRecordIds);
       
-      if (deletedIdsArray.length > 0) {
-        localStorage.setItem(getDeletedRecordsStorageKey(id), JSON.stringify(deletedIdsArray));
-        console.log(`Saved ${deletedIdsArray.length} deletedRecordIds to localStorage for animal ${id}:`, deletedIdsArray);
-      }
+      // Always save the current state, even if empty (to clear previous data)
+      localStorage.setItem(getDeletedRecordsStorageKey(id), JSON.stringify(deletedIdsArray));
+      console.log(`Saved ${deletedIdsArray.length} deletedRecordIds to localStorage for animal ${id}:`, deletedIdsArray);
     } catch (error) {
       console.error("Error saving deleted records to localStorage:", error);
     }

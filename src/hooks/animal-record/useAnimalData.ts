@@ -21,9 +21,12 @@ export const useAnimalData = (
 
   // Function to filter out deleted records
   const filterDeletedRecords = useCallback((records: WeightRecord[]) => {
-    return records.filter(record => 
+    const filteredRecords = records.filter(record => 
       !record.id || !deletedRecordIds.has(record.id)
     );
+    
+    console.log(`Filtered ${records.length - filteredRecords.length} deleted records out of ${records.length} total records`);
+    return filteredRecords;
   }, [deletedRecordIds]);
 
   // Memoize the data fetching function with useCallback
