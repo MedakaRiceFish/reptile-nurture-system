@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell, LogOut, Menu, Clock } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -15,8 +15,20 @@ interface HeaderProps {
 export function Header({ pageTitle }: HeaderProps) {
   const { signOut, user } = useAuth();
   const { renderLatency, pageLoadTime } = usePerformanceMonitor();
+  const [displayRenderLatency, setDisplayRenderLatency] = useState<number | null>(null);
+  const [displayPageLoadTime, setDisplayPageLoadTime] = useState<number | null>(null);
   
-  // Only show this to admin users
+  // Update the displayed metrics when they change
+  useEffect(() => {
+    if (renderLatency !== null) {
+      setDisplayRenderLatency(renderLatency);
+    }
+    if (pageLoadTime !== null) {
+      setDisplayPageLoadTime(pageLoadTime);
+    }
+  }, [renderLatency, pageLoadTime]);
+
+  // Only show metrics to admin users or in development
   const isAdmin = user?.email?.includes('admin') || process.env.NODE_ENV === 'development';
 
   return (
@@ -38,16 +50,16 @@ export function Header({ pageTitle }: HeaderProps) {
       </div>
       
       <div className="flex items-center gap-2">
-        {isAdmin && renderLatency && (
+        {isAdmin && (
           <div className="hidden md:flex items-center text-xs text-muted-foreground mr-2">
             <Clock className="h-3 w-3 mr-1" />
             <span className={cn(
-              renderLatency > 500 ? "text-destructive" : 
-              renderLatency > 200 ? "text-amber-500" : 
+              displayRenderLatency && displayRenderLatency > 500 ? "text-destructive" : 
+              displayRenderLatency && displayRenderLatency > 200 ? "text-amber-500" : 
               "text-emerald-500"
             )}>
-              REN: {renderLatency}ms
-              {pageLoadTime && pageLoadTime !== renderLatency && ` / TTL: ${pageLoadTime}ms`}
+              REN: {displayRenderLatency ?? '...'}ms
+              {displayPageLoadTime && ` / TTL: ${displayPageLoadTime}ms`}
             </span>
           </div>
         )}

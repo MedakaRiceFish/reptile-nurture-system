@@ -14,52 +14,68 @@ export const usePerformanceMonitor = () => {
   const isMountedRef = useRef<boolean>(true);
   const latencyMeasuredRef = useRef<boolean>(false);
   const loadTimeMeasuredRef = useRef<boolean>(false);
+  const locationKeyRef = useRef<string>(location.key || 'initial');
 
   useEffect(() => {
-    // Reset metrics and refs when location changes
-    setPageLoadTime(null);
-    setRenderLatency(null);
-    startTimeRef.current = performance.now();
-    latencyMeasuredRef.current = false;
-    loadTimeMeasuredRef.current = false;
-    
-    // Use a single RAF call for initial render measurement
-    // This helps reduce overhead from multiple RAF calls
-    const frameId = requestAnimationFrame(() => {
-      if (!isMountedRef.current || latencyMeasuredRef.current) return;
+    // Reset metrics and refs when location changes or on initial load
+    if (locationKeyRef.current !== location.key) {
+      console.log(`Location changed: ${locationKeyRef.current} → ${location.key}`);
       
-      const currentTime = performance.now();
-      const latency = Math.round(currentTime - startTimeRef.current);
+      // Reset all metrics
+      setPageLoadTime(null);
+      setRenderLatency(null);
+      startTimeRef.current = performance.now();
+      latencyMeasuredRef.current = false;
+      loadTimeMeasuredRef.current = false;
+      locationKeyRef.current = location.key || `${Date.now()}`;
       
-      setRenderLatency(latency);
-      latencyMeasuredRef.current = true;
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Render Latency [${location.pathname}]: ${latency}ms`);
-      }
-    });
-
-    // Use only one observer to avoid performance overhead
-    let observer: PerformanceObserver | null = null;
-    
-    if (typeof PerformanceObserver !== 'undefined') {
-      observer = new PerformanceObserver((list) => {
-        if (!isMountedRef.current || loadTimeMeasuredRef.current) return;
+      // Force immediate measurement of render latency
+      requestAnimationFrame(() => {
+        if (!isMountedRef.current) return;
         
-        const perfEntries = list.getEntries();
-        const navigationEntry = perfEntries[0] as PerformanceNavigationTiming;
+        const currentTime = performance.now();
+        const latency = Math.round(currentTime - startTimeRef.current);
         
-        if (navigationEntry) {
-          const loadTime = Math.round(navigationEntry.loadEventEnd - navigationEntry.fetchStart);
-          setPageLoadTime(loadTime);
-          loadTimeMeasuredRef.current = true;
+        setRenderLatency(latency);
+        latencyMeasuredRef.current = true;
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`New Render Latency [${location.pathname}]: ${latency}ms`);
         }
       });
-      
-      observer.observe({ type: 'navigation', buffered: true });
+
+      // Set up performance observer for navigation timing
+      if (typeof PerformanceObserver !== 'undefined') {
+        const observer = new PerformanceObserver((list) => {
+          if (!isMountedRef.current || loadTimeMeasuredRef.current) return;
+          
+          const perfEntries = list.getEntries();
+          if (perfEntries.length > 0) {
+            const navigationEntry = perfEntries[0] as PerformanceNavigationTiming;
+            
+            if (navigationEntry) {
+              const loadTime = Math.round(navigationEntry.loadEventEnd - navigationEntry.fetchStart);
+              setPageLoadTime(loadTime);
+              loadTimeMeasuredRef.current = true;
+              
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`Navigation Timing [${location.pathname}]:`, {
+                  loadTime,
+                  navigationEntry
+                });
+              }
+            }
+          }
+        });
+        
+        observer.observe({ type: 'navigation', buffered: true });
+        
+        // Clean up observer
+        return () => observer.disconnect();
+      }
     }
 
-    // Shorter timeout for force measurement (1500ms instead of 3000ms)
+    // Set a backup timeout to measure total page load time if the PerformanceObserver doesn't fire
     const timeoutId = setTimeout(() => {
       if (!isMountedRef.current || loadTimeMeasuredRef.current) return;
       
@@ -68,21 +84,32 @@ export const usePerformanceMonitor = () => {
       loadTimeMeasuredRef.current = true;
       
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Page Performance [${location.pathname}]:`, {
-          renderLatency: renderLatency || 'measuring...',
-          totalLoadTime: loadTime
-        });
+        console.log(`Fallback Page Load Time [${location.pathname}]: ${loadTime}ms`);
       }
-    }, 1500);
+    }, 1000); // Reduced to 1000ms for faster feedback
 
     // Cleanup function
     return () => {
-      isMountedRef.current = false;
-      cancelAnimationFrame(frameId);
       clearTimeout(timeoutId);
-      observer?.disconnect();
     };
-  }, [location.pathname]);
+  }, [location]);
+
+  // Add a second useEffect to measure component mount time
+  useEffect(() => {
+    const mountTime = performance.now() - startTimeRef.current;
+    if (!latencyMeasuredRef.current) {
+      setRenderLatency(Math.round(mountTime));
+      latencyMeasuredRef.current = true;
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Component Mount Time [${location.pathname}]: ${Math.round(mountTime)}ms`);
+      }
+    }
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return { pageLoadTime, renderLatency };
 };

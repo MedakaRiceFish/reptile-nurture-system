@@ -1,15 +1,20 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, Suspense, lazy } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
-import { EditAnimalDialog } from "@/components/animal/EditAnimalDialog";
-import { AddWeightDialog } from "@/components/animal/AddWeightDialog";
 import { AnimalNotFound } from "@/components/animal/AnimalNotFound";
 import { AnimalRecordHeader } from "@/components/animal/AnimalRecordHeader";
 import { AnimalRecordContent } from "@/components/animal/AnimalRecordContent";
 import { useAnimalRecord } from "@/hooks/animal-record/useAnimalRecord";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Lazy load dialogs to improve initial render time
+const EditAnimalDialog = lazy(() => import("@/components/animal/EditAnimalDialog").then(module => ({ default: module.EditAnimalDialog })));
+const AddWeightDialog = lazy(() => import("@/components/animal/AddWeightDialog").then(module => ({ default: module.AddWeightDialog })));
+
 const AnimalRecord = () => {
+  // Track render start time
+  const renderStartTime = performance.now();
+  
   const {
     id,
     animalData,
@@ -28,7 +33,7 @@ const AnimalRecord = () => {
     handleEditSubmit
   } = useAnimalRecord();
 
-  // Memoize the animal with weight history to prevent unnecessary object creation on every render
+  // Memoize the animal with weight history
   const animalWithWeightHistory = useMemo(() => {
     if (!animalData) return null;
     return {
@@ -36,6 +41,12 @@ const AnimalRecord = () => {
       weightHistory: weightRecords
     };
   }, [animalData, weightRecords]);
+
+  // Log render completion time in development
+  if (process.env.NODE_ENV === 'development') {
+    const renderTime = performance.now() - renderStartTime;
+    console.log(`AnimalRecord component render time: ${renderTime.toFixed(2)}ms`);
+  }
 
   // Render loading state
   if (loading) {
@@ -67,7 +78,7 @@ const AnimalRecord = () => {
     );
   }
 
-  // Main render with optimized props passing
+  // Main render
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>
       <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">
@@ -84,22 +95,24 @@ const AnimalRecord = () => {
         />
 
         {/* Only render dialogs when they're open to reduce initial load time */}
-        {isEditDialogOpen && (
-          <EditAnimalDialog 
-            animal={animalData} 
-            isOpen={isEditDialogOpen} 
-            onOpenChange={setIsEditDialogOpen} 
-            onSave={handleEditSubmit} 
-          />
-        )}
+        <Suspense fallback={null}>
+          {isEditDialogOpen && (
+            <EditAnimalDialog 
+              animal={animalData} 
+              isOpen={isEditDialogOpen} 
+              onOpenChange={setIsEditDialogOpen} 
+              onSave={handleEditSubmit} 
+            />
+          )}
 
-        {isWeightDialogOpen && (
-          <AddWeightDialog 
-            isOpen={isWeightDialogOpen} 
-            onOpenChange={setIsWeightDialogOpen} 
-            onSave={handleAddWeight} 
-          />
-        )}
+          {isWeightDialogOpen && (
+            <AddWeightDialog 
+              isOpen={isWeightDialogOpen} 
+              onOpenChange={setIsWeightDialogOpen} 
+              onSave={handleAddWeight} 
+            />
+          )}
+        </Suspense>
       </div>
     </MainLayout>
   );
