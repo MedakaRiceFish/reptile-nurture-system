@@ -5,7 +5,7 @@ import { StatCard } from "@/components/ui/dashboard/StatCard";
 import { EnclosureList } from "@/components/ui/dashboard/EnclosureList";
 import { QuickActions } from "@/components/ui/dashboard/QuickActions";
 import { UpcomingSchedule } from "@/components/ui/dashboard/UpcomingSchedule";
-import { Bell, Clock, Turtle, TreeDeciduous } from "lucide-react";
+import { Bell, CheckSquare, Turtle, TreeDeciduous } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -97,7 +97,7 @@ const Dashboard = () => {
           <StatCard
             title="UPCOMING TASKS"
             value="4"
-            icon={<Clock className="w-6 h-6" />}
+            icon={<CheckSquare className="w-6 h-6" />}
           />
         </div>
 
