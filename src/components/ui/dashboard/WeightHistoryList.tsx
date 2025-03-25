@@ -32,7 +32,11 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
   }, [weightHistory]);
 
   // Memoized handler to avoid recreating on every render
-  const handleDeleteClick = useCallback((id: string) => {
+  const handleDeleteClick = useCallback((event: React.MouseEvent, id: string) => {
+    // Prevent event bubbling to avoid tab switching
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (onDeleteWeight && id) {
       console.log("WeightHistoryList: Deleting record with ID:", id);
       onDeleteWeight(id);
@@ -94,7 +98,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => handleDeleteClick(record.id!)}
+                      onClick={(e) => handleDeleteClick(e, record.id!)}
                       title="Delete record"
                     >
                       <X className="h-4 w-4" />

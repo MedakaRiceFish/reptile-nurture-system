@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,8 +24,11 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   onAddWeightClick,
   onDeleteWeight
 }) => {
-  console.log("WeightTracker animal:", animal); // Debug log
-  console.log("Weight history array:", animal.weightHistory); // Debug log
+  console.log("WeightTracker animal:", animal);
+  console.log("Weight history array:", animal.weightHistory);
+  
+  // Add state to maintain tab selection
+  const [activeTab, setActiveTab] = useState("chart");
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -87,6 +90,13 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
 
   console.log("Has weight history:", hasWeightHistory);
   console.log("Weight stats:", weightStats);
+  
+  // Handle deletion without changing tabs
+  const handleDeleteWeight = (id: string) => {
+    if (onDeleteWeight) {
+      onDeleteWeight(id);
+    }
+  };
 
   return (
     <Card className="lg:col-span-2">
@@ -126,7 +136,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
             <p className="mt-2">Add a weight record to start tracking.</p>
           </div>
         ) : (
-          <Tabs defaultValue="chart">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="chart">Chart</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
@@ -137,7 +147,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
             <TabsContent value="list">
               <WeightHistoryList 
                 weightHistory={animal.weightHistory} 
-                onDeleteWeight={onDeleteWeight} 
+                onDeleteWeight={handleDeleteWeight} 
               />
             </TabsContent>
           </Tabs>

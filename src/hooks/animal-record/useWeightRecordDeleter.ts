@@ -37,14 +37,8 @@ export const useWeightRecordDeleter = (
       
       if (success) {
         console.log("Successfully deleted weight record ID:", id);
-        
-        // Extra logging to ensure the state update worked
-        setTimeout(() => {
-          console.log("Current deletedRecordIds after deletion:", Array.from(deletedRecordIds));
-        }, 0);
-        
-        // Notify user of success
         toast.success("The weight record has been successfully deleted");
+        return true;
       } else {
         console.error("Failed to delete weight record ID:", id);
         
@@ -55,10 +49,14 @@ export const useWeightRecordDeleter = (
           return newSet;
         });
         
-        // Rollback UI changes
-        refetchWeightRecords();
+        // Rollback UI changes by refetching, but don't force a full reload
+        const updatedRecords = await refetchWeightRecords();
+        if (!updatedRecords) {
+          console.error("Failed to rollback UI after failed deletion");
+        }
         
         toast.error("Failed to delete weight record");
+        return false;
       }
     } catch (error: any) {
       console.error("Error deleting weight record:", error);
@@ -70,10 +68,14 @@ export const useWeightRecordDeleter = (
         return newSet;
       });
       
-      // Rollback optimistic UI update
-      refetchWeightRecords();
+      // Rollback UI changes by refetching, but don't force a full reload
+      const updatedRecords = await refetchWeightRecords();
+      if (!updatedRecords) {
+        console.error("Failed to rollback UI after error during deletion");
+      }
       
       toast.error("Failed to delete weight record");
+      return false;
     }
   }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords, refetchWeightRecords]);
 
