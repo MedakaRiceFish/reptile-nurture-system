@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AnimalCard } from "./AnimalCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,6 +5,7 @@ import { Calendar, Weight, Ruler } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAnimals, Animal } from "@/services/animalService";
 import { useAuth } from "@/context/AuthContext";
+import { getShortenedId } from "@/utils/idFormatters";
 
 interface AnimalListProps {
   viewMode?: "grid" | "list";
@@ -90,7 +90,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
                 </TableCell>
                 <TableCell>
                   <span className="text-xs px-2 py-0.5 bg-reptile-100 text-reptile-800 rounded-full">
-                    Enclosure #{animal.enclosure_id || "None"}
+                    {animal.enclosure_id ? `#${getShortenedId(animal.enclosure_id)}` : "None"}
                   </span>
                 </TableCell>
                 <TableCell>{animal.feeding_schedule || "Not set"}</TableCell>
@@ -117,7 +117,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               species={animal.species}
               age={animal.age}
               weight={animal.weight}
-              length={animal.length} // Pass the length directly which might be null
+              length={animal.length}
               image={animal.image_url || "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60"}
             />
           </div>
