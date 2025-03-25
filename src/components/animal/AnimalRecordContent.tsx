@@ -1,5 +1,5 @@
 
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { AnimalDetails } from "@/components/animal/AnimalDetails";
 import { WeightTracker } from "@/components/animal/WeightTracker";
 import { NotesSection } from "@/components/animal/NotesSection";
@@ -43,6 +43,11 @@ export const AnimalRecordContent = memo(({
   onAddWeightClick,
   onDeleteWeight
 }: AnimalRecordContentProps) => {
+  // Memoize the delete weight handler
+  const handleDeleteWeight = useMemo(() => {
+    return onDeleteWeight;
+  }, [onDeleteWeight]);
+
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -55,7 +60,7 @@ export const AnimalRecordContent = memo(({
         <WeightTracker 
           animal={animal} 
           onAddWeightClick={onAddWeightClick} 
-          onDeleteWeight={onDeleteWeight}
+          onDeleteWeight={handleDeleteWeight}
         />
       </div>
 

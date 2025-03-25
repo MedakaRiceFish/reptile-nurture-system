@@ -42,11 +42,24 @@ export const WeightTracker = React.memo(({
     }
   }, [activeTab]);
   
-  // Extract the weight history or use an empty array
+  // Extract the weight history or use an empty array (memoized)
   const weightHistory = useMemo(() => {
     return animal.weightHistory || [];
   }, [animal.weightHistory]);
+
+  // Memoize the add weight click handler
+  const handleAddWeight = useCallback(() => {
+    onAddWeightClick();
+  }, [onAddWeightClick]);
   
+  // Memoize the delete weight handler
+  const handleDeleteWeight = useCallback((id: string) => {
+    if (onDeleteWeight) {
+      onDeleteWeight(id);
+    }
+  }, [onDeleteWeight]);
+  
+  // Memoize weight stats calculation
   const weightStats = useMemo(() => {
     // Initialize with default values
     const defaultStats = {
@@ -87,22 +100,56 @@ export const WeightTracker = React.memo(({
   }, [weightHistory, animal.weight]);
 
   // Determine color based on percentage change
-  const getPercentChangeColor = (percentChange: number) => {
+  const getPercentChangeColor = useCallback((percentChange: number) => {
     if (percentChange > 0) return 'text-green-500';
     if (percentChange < 0 && percentChange >= -3) return 'text-yellow-500';
     if (percentChange < -3) return 'text-red-500';
     return '';
-  };
+  }, []);
 
   // Check if there's weight history AND it has at least one record
   const hasWeightHistory = weightHistory.length > 0;
+
+  // Memoized content based on whether there's weight history
+  const content = useMemo(() => {
+    if (!hasWeightHistory) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No weight history available.</p>
+          <p className="mt-2">Add a weight record to start tracking.</p>
+        </div>
+      );
+    }
+    
+    return (
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        defaultValue={activeTab}
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="chart">Chart</TabsTrigger>
+          <TabsTrigger value="list">List</TabsTrigger>
+        </TabsList>
+        <TabsContent value="chart" className="pt-2">
+          <AnimalWeightChart weightHistory={weightHistory} />
+        </TabsContent>
+        <TabsContent value="list">
+          <WeightHistoryList 
+            weightHistory={weightHistory}
+            onDeleteWeight={handleDeleteWeight}
+          />
+        </TabsContent>
+      </Tabs>
+    );
+  }, [activeTab, hasWeightHistory, weightHistory, setActiveTab, handleDeleteWeight]);
 
   return (
     <Card className="lg:col-span-2">
       <CardHeader className="pb-0">
         <div className="flex justify-between items-center">
           <CardTitle>Weight Records</CardTitle>
-          <Button size="sm" onClick={onAddWeightClick}>
+          <Button size="sm" onClick={handleAddWeight}>
             <Weight className="w-4 h-4 mr-2" />
             Add Weight
           </Button>
@@ -129,32 +176,7 @@ export const WeightTracker = React.memo(({
           </div>
         </div>
 
-        {!hasWeightHistory ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No weight history available.</p>
-            <p className="mt-2">Add a weight record to start tracking.</p>
-          </div>
-        ) : (
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            defaultValue={activeTab}
-          >
-            <TabsList className="mb-4">
-              <TabsTrigger value="chart">Chart</TabsTrigger>
-              <TabsTrigger value="list">List</TabsTrigger>
-            </TabsList>
-            <TabsContent value="chart" className="pt-2">
-              <AnimalWeightChart weightHistory={weightHistory} />
-            </TabsContent>
-            <TabsContent value="list">
-              <WeightHistoryList 
-                weightHistory={weightHistory}
-                onDeleteWeight={onDeleteWeight}
-              />
-            </TabsContent>
-          </Tabs>
-        )}
+        {content}
       </CardContent>
     </Card>
   );

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useWeightRecordManager } from "./useWeightRecordManager";
 import { useWeightRecordDeleter } from "./useWeightRecordDeleter";
 import { WeightRecord } from "./types";
@@ -29,8 +29,7 @@ export const useAnimalWeight = (
     animalId,
     setWeightRecords,
     deletedRecordIds,
-    setDeletedRecordIds,
-    refetchWeightRecords
+    setDeletedRecordIds
   );
 
   return {

@@ -1,5 +1,5 @@
 
-import React, { useMemo, memo } from "react";
+import React, { useMemo, memo, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,13 @@ const WeightHistoryRow = memo(({
     formattedDate = record.date;
   }
 
+  // Memoize the delete handler to prevent recreating it on every render
+  const handleDelete = useCallback(() => {
+    if (record.id && onDelete) {
+      onDelete(record.id);
+    }
+  }, [record.id, onDelete]);
+
   return (
     <TableRow>
       <TableCell>{formattedDate}</TableCell>
@@ -50,7 +57,7 @@ const WeightHistoryRow = memo(({
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0"
-            onClick={() => record.id && onDelete(record.id)}
+            onClick={handleDelete}
             aria-label="Delete weight record"
           >
             <X className="h-4 w-4" />
@@ -78,6 +85,8 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
 
   // Memoize the sorted history
   const sortedHistory = useMemo(() => {
+    if (!weightHistory || !Array.isArray(weightHistory)) return [];
+    
     return [...weightHistory].sort((a, b) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
@@ -97,7 +106,7 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
         <TableBody>
           {sortedHistory.map((record, index) => {
             // Skip records without IDs for safety
-            if (!record.id) return null;
+            if (!record || !record.id) return null;
             
             // Get the next record for change calculation
             const nextRecord = sortedHistory[index + 1];
