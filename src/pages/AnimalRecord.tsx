@@ -61,9 +61,6 @@ const AnimalRecord = () => {
     weightHistory: weightRecords
   };
 
-  console.log("Animal with weight history:", animalWithWeightHistory);
-  console.log("Weight records before passing to components:", weightRecords);
-
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>
       <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">

@@ -15,8 +15,18 @@ export const useAnimalData = (
   const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [isInitialDataFetched, setIsInitialDataFetched] = useState(false);
 
   useEffect(() => {
+    // Skip the effect if we've already fetched the initial data
+    // and the IDs haven't changed
+    if (isInitialDataFetched && 
+        animalData && 
+        animalData.id === animalId && 
+        Object.keys(deletedRecordIds).length === 0) {
+      return;
+    }
+
     const fetchData = async () => {
       if (!animalId || !userId) {
         setLoading(false);
@@ -88,13 +98,14 @@ export const useAnimalData = (
         });
       } finally {
         setLoading(false);
+        setIsInitialDataFetched(true);
       }
     };
 
     // Set loading to true before fetching data
     setLoading(true);
     fetchData();
-  }, [animalId, userId, deletedRecordIds, toast]);
+  }, [animalId, userId, deletedRecordIds, toast, isInitialDataFetched, animalData]);
 
   return {
     animalData,

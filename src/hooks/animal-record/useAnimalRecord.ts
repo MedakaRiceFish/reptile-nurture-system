@@ -18,18 +18,20 @@ export const useAnimalRecord = () => {
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  // First get animal data functionality
+  // Initialize deletedRecordIds set - this needs to be before useAnimalData
+  const [deletedRecordIds] = useState<Set<string>>(new Set<string>());
+
+  // Get animal data functionality
   const {
     animalData,
     setAnimalData,
     weightRecords,
     setWeightRecords,
     loading
-  } = useAnimalData(id, user?.id, new Set<string>());
+  } = useAnimalData(id, user?.id, deletedRecordIds);
 
   // Then get animal weight functionality with setAnimalData now available
   const {
-    deletedRecordIds,
     isWeightDialogOpen,
     setIsWeightDialogOpen,
     handleAddWeight,
