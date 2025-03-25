@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,10 +16,13 @@ export type Animal = {
   owner_id: string;
   created_at?: string;
   updated_at?: string;
+  enclosureName?: string;
+  enclosure?: string;
+  enclosure_name?: string;
 };
 
-export type AnimalInsert = Omit<Animal, 'id' | 'created_at' | 'updated_at'>;
-export type AnimalUpdate = Partial<Omit<Animal, 'id' | 'owner_id' | 'created_at' | 'updated_at'>>;
+export type AnimalInsert = Omit<Animal, 'id' | 'created_at' | 'updated_at' | 'enclosureName' | 'enclosure' | 'enclosure_name'>;
+export type AnimalUpdate = Partial<Omit<Animal, 'id' | 'owner_id' | 'created_at' | 'updated_at' | 'enclosureName' | 'enclosure' | 'enclosure_name'>>;
 
 export const getAnimals = async (): Promise<Animal[]> => {
   try {
