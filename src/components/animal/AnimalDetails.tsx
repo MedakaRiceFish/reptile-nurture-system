@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -152,11 +151,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Enclosure:</span>
-            <EnclosureSelector 
-              animal={animal} 
-              enclosures={enclosures} 
-              setAnimalData={setAnimalData} 
-            />
+            <EnclosureSelector animal={animal} />
           </div>
           
           <DetailsItem label="Breeder Source">
