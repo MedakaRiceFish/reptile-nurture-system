@@ -12,8 +12,6 @@ interface WeightHistoryListProps {
 }
 
 export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHistoryListProps) {
-  console.log("WeightHistoryList rendering with", weightHistory?.length, "records");
-  
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
     return (
@@ -38,10 +36,19 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
     event.stopPropagation();
     
     if (onDeleteWeight && id) {
-      console.log("WeightHistoryList: Deleting record with ID:", id);
       onDeleteWeight(id);
     }
   }, [onDeleteWeight]);
+
+  // Create a formatting function that handles errors gracefully
+  const formatDate = useCallback((dateString: string) => {
+    try {
+      return format(parseISO(dateString), "MMM d, yyyy");
+    } catch (e) {
+      console.warn("Date formatting error:", e, dateString);
+      return dateString;
+    }
+  }, []);
 
   return (
     <div className="max-h-[350px] overflow-auto relative">
@@ -58,7 +65,6 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
           {sortedHistory.map((record, index) => {
             // Skip records without IDs for safety
             if (onDeleteWeight && !record.id) {
-              console.warn("Record missing ID:", record);
               return null;
             }
             
@@ -67,16 +73,6 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
             const change = nextRecord 
               ? record.weight - nextRecord.weight 
               : 0;
-            
-            // Create a formatting function that handles errors gracefully
-            const formatDate = (dateString: string) => {
-              try {
-                return format(parseISO(dateString), "MMM d, yyyy");
-              } catch (e) {
-                console.warn("Date formatting error:", e, dateString);
-                return dateString;
-              }
-            };
             
             // Pre-format the date outside of the render to improve performance
             const formattedDate = formatDate(record.date);
@@ -100,8 +96,6 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       className="h-8 w-8 p-0"
                       onClick={(e) => handleDeleteClick(e, record.id!)}
                       title="Delete record"
-                      // Add data attribute to prevent unnecessary re-renders
-                      data-delete-id={record.id}
                     >
                       <X className="h-4 w-4" />
                     </Button>

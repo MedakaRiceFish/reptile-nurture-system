@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,29 +24,24 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   onAddWeightClick,
   onDeleteWeight
 }) => {
-  console.log("WeightTracker animal:", animal);
-  console.log("Weight history array:", animal.weightHistory);
-  
   // Use state to maintain tab selection with localStorage for persistence
   const [activeTab, setActiveTab] = useState(() => {
-    // Try to get the last active tab from sessionStorage
-    const savedTab = sessionStorage.getItem('weightTrackerActiveTab');
-    return savedTab || "chart";
+    try {
+      const savedTab = sessionStorage.getItem('weightTrackerActiveTab');
+      return savedTab || "chart";
+    } catch (e) {
+      return "chart";
+    }
   });
   
   // Save tab selection to sessionStorage when it changes
   useEffect(() => {
-    sessionStorage.setItem('weightTrackerActiveTab', activeTab);
+    try {
+      sessionStorage.setItem('weightTrackerActiveTab', activeTab);
+    } catch (e) {
+      console.error("Error saving tab state:", e);
+    }
   }, [activeTab]);
-  
-  // Force tab state preservation on re-renders
-  useEffect(() => {
-    // This is a no-op effect, but it signals to React that we want to preserve
-    // the tab state even when parent components cause re-renders
-    return () => {
-      // Intentionally empty cleanup function
-    };
-  }, []);
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -58,11 +53,8 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     
     // If no weight history, use the current animal weight as both current and max
     if (!animal.weightHistory || animal.weightHistory.length === 0) {
-      console.log("No weight history found, using animal.weight:", animal.weight); 
       return defaultStats;
     }
-
-    console.log("Weight history found:", animal.weightHistory.length, "records"); 
     
     // Sort by date (newest first) to get current weight
     const sortedWeights = [...animal.weightHistory].sort(
@@ -100,28 +92,14 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
 
   // Check if there's weight history AND it has at least one record
   const hasWeightHistory = animal.weightHistory && animal.weightHistory.length > 0;
-
-  console.log("Has weight history:", hasWeightHistory);
-  console.log("Weight stats:", weightStats);
   
   // Handle deletion without changing tabs or causing UI flicker
-  const handleDeleteWeight = (id: string) => {
+  const handleDeleteWeight = useCallback((id: string) => {
     if (onDeleteWeight) {
-      console.log(`Deleting weight record ${id} while on tab: ${activeTab}`);
-      
-      // Call the deletion handler and prevent default event propagation
-      // which might cause parent component re-renders
+      // Call the parent's delete handler
       onDeleteWeight(id);
-      
-      // Explicitly maintain the current tab to prevent switching
-      setTimeout(() => {
-        setActiveTab((currentTab) => currentTab);
-      }, 0);
     }
-  };
-
-  // Use a stable key for the Tabs component to maintain its internal state
-  const tabsKey = `weight-tabs-${activeTab}`;
+  }, [onDeleteWeight]);
 
   return (
     <Card className="lg:col-span-2">
@@ -164,7 +142,6 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
           <Tabs 
             value={activeTab} 
             onValueChange={setActiveTab}
-            key={tabsKey}
             defaultValue={activeTab}
           >
             <TabsList className="mb-4">
