@@ -22,9 +22,11 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<{date: s
     
     if (error) throw error;
     
+    console.log('Raw weight records from DB:', data);
+    
     // Format the records to match the expected format for the components
     return data.map(record => ({
-      date: record.recorded_at,
+      date: record.recorded_at.substring(0, 10), // Ensure we only get YYYY-MM-DD
       weight: record.weight
     })) || [];
   } catch (error: any) {

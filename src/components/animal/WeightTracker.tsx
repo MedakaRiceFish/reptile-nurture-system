@@ -22,6 +22,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   onAddWeightClick,
 }) => {
   console.log("WeightTracker animal:", animal); // Debug log
+  console.log("Weight history:", animal.weightHistory); // Debug log
   
   const weightStats = useMemo(() => {
     // Initialize with default values

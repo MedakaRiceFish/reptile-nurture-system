@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -41,6 +42,7 @@ const AnimalRecord = () => {
           setAnimalData(animalData);
 
           const records = await getAnimalWeightRecords(id);
+          console.log("Raw records from service:", records);
           setWeightRecords(records);
           
           console.log("Weight records loaded:", records);
