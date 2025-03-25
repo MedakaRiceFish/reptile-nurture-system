@@ -101,8 +101,17 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       className="h-8 w-8 p-0"
                       onClick={(e) => handleDeleteClick(e, record.id!)}
                       title="Delete record"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteWeight(record.id!);
+                        }
+                      }}
                     >
                       <X className="h-4 w-4" />
+                      <span className="sr-only">Delete record</span>
                     </Button>
                   </TableCell>
                 )}
