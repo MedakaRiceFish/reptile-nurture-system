@@ -1,16 +1,18 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { EnvironmentCard } from "./EnvironmentCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Thermometer, Droplet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EnclosureValueEditor } from "./EnclosureValueEditor";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
-// Initial enclosure data
+// Initial enclosure data (fallback when no DB data available)
 const INITIAL_ENCLOSURE_DATA = [
   {
-    id: 1,
+    id: "sample-1",
     name: "Gargoyle Gecko Enclosure",
     temperature: 78,
     humidity: 65,
@@ -19,7 +21,7 @@ const INITIAL_ENCLOSURE_DATA = [
     image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60"
   },
   {
-    id: 2,
+    id: "sample-2",
     name: "Bearded Dragon Habitat",
     temperature: 92,
     humidity: 35,
@@ -28,7 +30,7 @@ const INITIAL_ENCLOSURE_DATA = [
     image: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60"
   },
   {
-    id: 3,
+    id: "sample-3",
     name: "Ball Python Terrarium",
     temperature: 82,
     humidity: 60,
@@ -37,7 +39,7 @@ const INITIAL_ENCLOSURE_DATA = [
     image: "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60"
   },
   {
-    id: 4,
+    id: "sample-4",
     name: "Leopard Gecko Home",
     temperature: 80,
     humidity: 45,
@@ -55,12 +57,55 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [enclosures, setEnclosures] = useState(INITIAL_ENCLOSURE_DATA);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const handleEnclosureClick = (id: number) => {
+  useEffect(() => {
+    const fetchEnclosures = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('enclosures')
+          .select('*')
+          .order('name', { ascending: true });
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Map database data to the format expected by the component
+          const mappedData = data.map(enclosure => ({
+            id: enclosure.id,
+            name: enclosure.name,
+            temperature: enclosure.temperature || 75,
+            humidity: enclosure.humidity || 50,
+            light: 120, // Default values for fields not in DB
+            pressure: 1013,
+            image: enclosure.image_url || getRandomPlaceholderImage(),
+            readingStatus: enclosure.reading_status
+          }));
+          setEnclosures(mappedData);
+        }
+      } catch (error: any) {
+        console.error('Error fetching enclosures:', error);
+        toast({
+          title: "Failed to load enclosures",
+          description: error.message,
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEnclosures();
+  }, [user, toast]);
+
+  const handleEnclosureClick = (id: string | number) => {
     navigate(`/enclosure/${id}`);
   };
 
-  const handleUpdateValues = (id: number, values: { temperature: number; humidity: number }) => {
+  const handleUpdateValues = (id: string | number, values: { temperature: number; humidity: number }) => {
     setEnclosures(prevEnclosures => 
       prevEnclosures.map(enclosure => 
         enclosure.id === id 
@@ -86,6 +131,28 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
     if (hum < 40) return "text-amber-500";
     return "text-reptile-500";
   };
+
+  const getRandomPlaceholderImage = () => {
+    const images = [
+      "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60",
+      "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60",
+      "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60",
+      "https://images.unsplash.com/photo-1487252665478-49b61b47f302?w=800&auto=format&fit=crop&q=60"
+    ];
+    return images[Math.floor(Math.random() * images.length)];
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((_, index) => (
+            <div key={index} className="h-64 bg-muted rounded-lg animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (viewMode === "list") {
     return (
@@ -132,7 +199,7 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
                 </TableCell>
                 <TableCell onClick={() => handleEnclosureClick(enclosure.id)}>
                   <span className="text-xs px-2 py-0.5 bg-reptile-100 text-reptile-800 rounded-full">
-                    Active
+                    {enclosure.readingStatus || "Active"}
                   </span>
                 </TableCell>
                 <TableCell>

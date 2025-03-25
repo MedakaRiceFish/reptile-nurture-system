@@ -7,7 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface EnvironmentCardProps {
-  enclosureId: number;
+  enclosureId: string | number;
   enclosureName: string;
   temperature: number;
   humidity: number;
@@ -15,7 +15,7 @@ interface EnvironmentCardProps {
   pressure: number;
   image?: string;
   className?: string;
-  onUpdateValues?: (id: number, values: { temperature: number; humidity: number }) => void;
+  onUpdateValues?: (id: string | number, values: { temperature: number; humidity: number }) => void;
   onClick?: () => void;
 }
 
