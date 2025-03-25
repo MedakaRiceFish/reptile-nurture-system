@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { useParams, useNavigate } from "react-router-dom";
@@ -115,7 +114,6 @@ const TaskDetail = () => {
     }
   };
 
-  // Function to handle task updates from the edit dialog
   const handleTaskUpdated = async () => {
     if (!taskId) return;
     try {
@@ -275,7 +273,7 @@ const TaskDetail = () => {
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           onTaskAdded={handleTaskUpdated}
-          initialTask={task}
+          existingTask={task}
           isEditing={true}
         />
       )}

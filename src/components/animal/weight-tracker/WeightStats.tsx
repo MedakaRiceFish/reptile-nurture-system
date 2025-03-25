@@ -61,26 +61,26 @@ const WeightStats = ({ weightHistory, currentWeight }: WeightStatsProps) => {
 
   return (
     <div className="grid grid-cols-4 gap-4 mb-6 mt-2">
-      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-        <div className="text-sm text-muted-foreground mb-1">Current Weight</div>
-        <div className="text-2xl font-bold text-right">{weightStats.currentWeight} g</div>
+      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
+        <div className="text-sm text-muted-foreground">Current Weight</div>
+        <div className="text-2xl font-bold">{weightStats.currentWeight} g</div>
       </div>
       
-      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-        <div className="text-sm text-muted-foreground mb-1">Max Weight</div>
-        <div className="text-2xl font-bold text-right">{weightStats.maxWeight} g</div>
+      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
+        <div className="text-sm text-muted-foreground">Max Weight</div>
+        <div className="text-2xl font-bold">{weightStats.maxWeight} g</div>
       </div>
       
-      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-        <div className="text-sm text-muted-foreground mb-1">Change Since Last</div>
-        <div className={`text-2xl font-bold text-right ${getPercentChangeColor(weightStats.percentChange)}`}>
+      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
+        <div className="text-sm text-muted-foreground">Change Since Last</div>
+        <div className={`text-2xl font-bold ${getPercentChangeColor(weightStats.percentChange)}`}>
           {weightStats.percentChange > 0 ? '+' : ''}{weightStats.percentChange.toFixed(1)}%
         </div>
       </div>
 
-      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
-        <div className="text-sm text-muted-foreground mb-1">From Max Weight</div>
-        <div className={`text-2xl font-bold text-right ${getPercentChangeColor(weightStats.maxPercentChange)}`}>
+      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
+        <div className="text-sm text-muted-foreground">From Max Weight</div>
+        <div className={`text-2xl font-bold ${getPercentChangeColor(weightStats.maxPercentChange)}`}>
           {weightStats.maxPercentChange > 0 ? '+' : ''}{weightStats.maxPercentChange.toFixed(1)}%
         </div>
       </div>
