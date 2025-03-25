@@ -46,8 +46,8 @@ export function Header({ pageTitle }: HeaderProps) {
               renderLatency > 200 ? "text-amber-500" : 
               "text-emerald-500"
             )}>
-              {renderLatency}ms
-              {pageLoadTime && pageLoadTime !== renderLatency && ` / ${pageLoadTime}ms`}
+              REN: {renderLatency}ms
+              {pageLoadTime && pageLoadTime !== renderLatency && ` / TTL: ${pageLoadTime}ms`}
             </span>
           </div>
         )}
