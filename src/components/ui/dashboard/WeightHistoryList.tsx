@@ -1,5 +1,5 @@
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -22,29 +22,21 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
     );
   }
 
-  // Memoize the sorted history to avoid re-sorting on every render
+  // Memoize the sorted history
   const sortedHistory = useMemo(() => {
     return [...weightHistory].sort((a, b) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
   }, [weightHistory]);
 
-  // Handle delete with minimal side effects
-  const handleDeleteClick = useCallback((id: string) => {
-    if (onDeleteWeight && id) {
-      onDeleteWeight(id);
-    }
-  }, [onDeleteWeight]);
-
   // Create a formatting function that handles errors gracefully
-  const formatDate = useCallback((dateString: string) => {
+  const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), "MMM d, yyyy");
     } catch (e) {
-      console.warn("Date formatting error:", e, dateString);
       return dateString;
     }
-  }, []);
+  };
 
   return (
     <div className="max-h-[350px] overflow-auto relative">
@@ -60,9 +52,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
         <TableBody>
           {sortedHistory.map((record, index) => {
             // Skip records without IDs for safety
-            if (onDeleteWeight && !record.id) {
-              return null;
-            }
+            if (!record.id) return null;
             
             // Calculate weight change
             const nextRecord = sortedHistory[index + 1];
@@ -70,11 +60,11 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
               ? record.weight - nextRecord.weight 
               : 0;
             
-            // Pre-format the date outside of the render to improve performance
+            // Format date
             const formattedDate = formatDate(record.date);
             
             return (
-              <TableRow key={record.id || `${record.date}-${index}`}>
+              <TableRow key={record.id}>
                 <TableCell>{formattedDate}</TableCell>
                 <TableCell className="font-medium">{record.weight}</TableCell>
                 <TableCell>
@@ -84,19 +74,21 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                     </span>
                   )}
                 </TableCell>
-                {onDeleteWeight && record.id && (
+                {onDeleteWeight && (
                   <TableCell>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => handleDeleteClick(record.id!)}
-                      title="Delete record"
-                      aria-label={`Delete weight record from ${formattedDate}`}
+                      onClick={() => {
+                        // Direct function call, no event manipulation
+                        if (record.id) onDeleteWeight(record.id);
+                      }}
+                      aria-label="Delete weight record"
                     >
                       <X className="h-4 w-4" />
-                      <span className="sr-only">Delete record</span>
+                      <span className="sr-only">Delete</span>
                     </Button>
                   </TableCell>
                 )}

@@ -145,8 +145,8 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
             </TabsContent>
             <TabsContent value="list">
               <WeightHistoryList 
-                weightHistory={animal.weightHistory} 
-                onDeleteWeight={onDeleteWeight} 
+                weightHistory={animal.weightHistory}
+                onDeleteWeight={onDeleteWeight}
               />
             </TabsContent>
           </Tabs>

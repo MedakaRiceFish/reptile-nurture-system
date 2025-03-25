@@ -11,72 +11,63 @@ export const useWeightRecordDeleter = (
   setDeletedRecordIds: React.Dispatch<React.SetStateAction<Set<string>>>,
   refetchWeightRecords: () => Promise<WeightRecord[] | null>
 ) => {
-  // Delete weight record functionality with optimistic UI updates
+  // Handle delete weight record
   const handleDeleteWeight = useCallback((id: string) => {
-    if (!animalId || !id) return false;
+    if (!animalId || !id) return;
     
-    console.log("Deleting weight record with ID:", id);
-    
-    // Check if we've already processed this delete request
+    // Check if already marked as deleted
     if (deletedRecordIds.has(id)) {
-      console.log("Record already marked as deleted, ignoring duplicate request");
-      return true;
+      return;
     }
     
-    // Perform optimistic UI update first - remove from UI immediately
-    setWeightRecords(prevRecords => {
-      return prevRecords.filter(record => record.id !== id);
-    });
+    // Create new Sets/Arrays to avoid reference issues
+    const newDeletedIds = new Set(deletedRecordIds);
+    newDeletedIds.add(id);
     
-    // Add to deletedRecordIds set for tracking
-    setDeletedRecordIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(id);
-      return newSet;
-    });
+    // Update UI immediately by filtering out the deleted record
+    setWeightRecords(currentRecords => 
+      currentRecords.filter(record => record.id !== id)
+    );
     
-    // Call the API without blocking the UI
+    // Update deleted IDs record
+    setDeletedRecordIds(newDeletedIds);
+    
+    // Call API to delete the record
     deleteWeightRecord(id)
       .then(success => {
         if (success) {
-          console.log("Successfully deleted weight record ID:", id);
           toast.success("Weight record deleted", {
             duration: 2000,
-            position: "bottom-right"
+            position: "bottom-right",
           });
         } else {
-          console.error("Failed to delete weight record ID:", id);
+          // Rollback UI changes
+          setDeletedRecordIds(current => {
+            const updatedIds = new Set(current);
+            updatedIds.delete(id);
+            return updatedIds;
+          });
           
-          // Rollback UI changes if API call failed
-          rollbackDeletion(id);
+          // Refetch to restore the correct data
+          refetchWeightRecords();
           
           toast.error("Failed to delete weight record");
         }
       })
-      .catch(error => {
-        console.error("Error deleting weight record:", error);
+      .catch(() => {
+        // Rollback UI changes
+        setDeletedRecordIds(current => {
+          const updatedIds = new Set(current);
+          updatedIds.delete(id);
+          return updatedIds;
+        });
         
-        // Rollback UI changes on error
-        rollbackDeletion(id);
+        // Refetch to restore the correct data
+        refetchWeightRecords();
         
         toast.error("Failed to delete weight record");
       });
-    
-    return true;
-  }, [animalId, setDeletedRecordIds, setWeightRecords, deletedRecordIds]);
-
-  // Helper function to rollback deletion
-  const rollbackDeletion = useCallback((id: string) => {
-    // Remove from deletedRecordIds
-    setDeletedRecordIds(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
-    
-    // Refetch records to restore the deleted one
-    refetchWeightRecords();
-  }, [setDeletedRecordIds, refetchWeightRecords]);
+  }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords, refetchWeightRecords]);
 
   return { handleDeleteWeight };
 };
