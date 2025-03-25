@@ -104,39 +104,55 @@ export const useAnimalWeight = (
     
     try {
       console.log("Deleting weight record with ID:", id);
+      
+      // Optimistically update UI first for better UX
+      setWeightRecords(prevRecords => {
+        return prevRecords.filter(record => record.id !== id);
+      });
+      
+      // Add to deletedRecordIds immediately
+      setDeletedRecordIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(id);
+        return newSet;
+      });
+      
+      // Now do the actual API call
       const success = await deleteWeightRecord(id);
       
       if (success) {
-        // Add the deleted record ID to our tracking set
-        setDeletedRecordIds(prev => {
-          const newSet = new Set(prev);
-          newSet.add(id);
-          return newSet;
-        });
-        
-        // Log the updated set of deleted IDs for debugging
-        console.log("Updated deletedRecordIds after deletion:", 
-          Array.from(new Set([...Array.from(deletedRecordIds), id])));
+        console.log("Successfully deleted weight record ID:", id);
+        console.log("Updated deletedRecordIds after deletion:", Array.from(deletedRecordIds));
         
         // Refetch weight records to get the latest state
         const updatedRecords = await refetchWeightRecords();
         
-        // If refetch failed, update the UI optimistically
         if (!updatedRecords) {
-          setWeightRecords(prevRecords => {
-            const filteredRecords = prevRecords.filter(record => record.id !== id);
-            console.log("Updated weight records after deletion:", filteredRecords);
-            return filteredRecords;
-          });
+          console.log("Failed to refetch weight records after deletion");
         }
         
         toast({
           title: "Weight record deleted",
           description: "The weight record has been successfully deleted"
         });
+      } else {
+        console.error("Failed to delete weight record ID:", id);
+        
+        // Rollback UI changes if the API call failed
+        refetchWeightRecords();
+        
+        toast({
+          title: "Error",
+          description: "Failed to delete weight record",
+          variant: "destructive"
+        });
       }
     } catch (error: any) {
       console.error("Error deleting weight record:", error);
+      
+      // Rollback optimistic update
+      refetchWeightRecords();
+      
       toast({
         title: "Error",
         description: "Failed to delete weight record",

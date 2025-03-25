@@ -19,10 +19,12 @@ export const useAnimalData = (
   const isMountedRef = useRef(true);
   const prevDeletedIdsRef = useRef<string[]>([]);
 
-  // Function to filter out deleted records
+  // Function to filter out deleted records - ensure it's comprehensive
   const filterDeletedRecords = useCallback((records: WeightRecord[]) => {
+    if (!records) return [];
+    
     const filteredRecords = records.filter(record => 
-      !record.id || !deletedRecordIds.has(record.id)
+      record && record.id && !deletedRecordIds.has(record.id)
     );
     
     console.log(`Filtered ${records.length - filteredRecords.length} deleted records out of ${records.length} total records`);
@@ -175,7 +177,11 @@ export const useAnimalData = (
     return false;
   }, [deletedRecordIds]);
 
+  // Main effect to fetch data when relevant props change
   useEffect(() => {
+    // Reset isMountedRef to true when the component mounts
+    isMountedRef.current = true;
+    
     const shouldFetchData = !initialDataFetchedRef.current || 
                           !animalData || 
                           animalData.id !== animalId || 
@@ -199,21 +205,27 @@ export const useAnimalData = (
       console.log("Skipping data fetch - no relevant changes detected");
     }
     
+    // Clean up function
     return () => {
       // Mark as unmounted to prevent state updates after unmount
       isMountedRef.current = false;
     };
   }, [animalId, userId, deletedRecordIds, fetchData, animalData, haveDeletedIdsChanged]);
 
-  // Filter weight records client-side if deletedRecordIds changes without requiring a full refetch
+  // Additional effect to filter locally when deletedRecordIds changes
   useEffect(() => {
+    // If we have records and deleted IDs, filter records client-side
     if (weightRecords.length > 0 && deletedRecordIds.size > 0) {
       console.log("Filtering weight records based on deletedRecordIds");
-      setWeightRecords(prevRecords => 
-        filterDeletedRecords(prevRecords)
-      );
+      const filteredRecords = filterDeletedRecords(weightRecords);
+      
+      // Only update state if the filtered result is different
+      if (filteredRecords.length !== weightRecords.length) {
+        console.log("Updating weightRecords with filtered results");
+        setWeightRecords(filteredRecords);
+      }
     }
-  }, [deletedRecordIds, filterDeletedRecords]);
+  }, [deletedRecordIds, filterDeletedRecords, weightRecords]);
 
   return {
     animalData,

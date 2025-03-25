@@ -33,13 +33,15 @@ const AnimalRecord = () => {
     handleEditSubmit
   } = useAnimalRecord();
 
-  // Log important state changes
+  // Log important state changes for debugging
   useEffect(() => {
     if (id) {
       try {
-        const storedDeletedIds = localStorage.getItem(`animal_${id}_deleted_records`);
+        const storageKey = `animal_${id}_deleted_records`;
+        const storedDeletedIds = localStorage.getItem(storageKey);
         const parsed = storedDeletedIds ? JSON.parse(storedDeletedIds) : [];
         console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, parsed);
+        
         if (parsed.length > 0) {
           console.log(`Found ${parsed.length} deleted records in localStorage for animal ${id}`);
         }
@@ -60,6 +62,9 @@ const AnimalRecord = () => {
   // Memoize the animal with weight history
   const animalWithWeightHistory = useMemo(() => {
     if (!animalData) return null;
+    
+    console.log(`Creating animalWithWeightHistory with ${weightRecords.length} weight records`);
+    
     return {
       ...animalData,
       weightHistory: weightRecords
