@@ -259,15 +259,14 @@ export default function Environment() {
             />
           </div>
 
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 flex flex-col gap-6">
             <EnvironmentDetailsCard 
               enclosure={enclosure}
               getStatusColor={getStatusColor}
               onEditClick={() => setIsEditDialogOpen(true)}
             />
-            <div className="mt-6">
-              <InhabitantsCard inhabitants={inhabitants} />
-            </div>
+            
+            <InhabitantsCard inhabitants={inhabitants} />
           </div>
         </div>
 
