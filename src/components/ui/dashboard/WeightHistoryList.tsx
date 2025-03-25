@@ -4,12 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-
-interface WeightRecord {
-  date: string;
-  weight: number;
-  id?: string;
-}
+import { WeightRecord } from "@/hooks/animal-record/types";
 
 interface WeightHistoryListProps {
   weightHistory: WeightRecord[];
