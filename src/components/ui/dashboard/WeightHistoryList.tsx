@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ interface WeightHistoryListProps {
 }
 
 export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHistoryListProps) {
+  console.log("WeightHistoryList rendering with", weightHistory?.length, "records");
+  
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
     return (
@@ -29,6 +31,14 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
     });
   }, [weightHistory]);
 
+  // Memoized handler to avoid recreating on every render
+  const handleDeleteClick = useCallback((id: string) => {
+    if (onDeleteWeight && id) {
+      console.log("WeightHistoryList: Deleting record with ID:", id);
+      onDeleteWeight(id);
+    }
+  }, [onDeleteWeight]);
+
   return (
     <div className="max-h-[350px] overflow-auto">
       <Table>
@@ -42,6 +52,12 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
         </TableHeader>
         <TableBody>
           {sortedHistory.map((record, index) => {
+            // Skip records without IDs for safety
+            if (onDeleteWeight && !record.id) {
+              console.warn("Record missing ID:", record);
+              return null;
+            }
+            
             // Calculate weight change
             const nextRecord = sortedHistory[index + 1];
             const change = nextRecord 
@@ -53,6 +69,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
               try {
                 return format(parseISO(dateString), "MMM d, yyyy");
               } catch (e) {
+                console.warn("Date formatting error:", e, dateString);
                 return dateString;
               }
             };
@@ -77,11 +94,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => {
-                        if (record.id) {
-                          onDeleteWeight(record.id);
-                        }
-                      }}
+                      onClick={() => handleDeleteClick(record.id!)}
                       title="Delete record"
                     >
                       <X className="h-4 w-4" />

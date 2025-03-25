@@ -33,6 +33,19 @@ const AnimalRecord = () => {
     handleEditSubmit
   } = useAnimalRecord();
 
+  // Log important state changes
+  useEffect(() => {
+    if (id) {
+      try {
+        const storedDeletedIds = localStorage.getItem(`animal_${id}_deleted_records`);
+        console.log(`[AnimalRecord] Stored deletedRecordIds for animal ${id}:`, 
+          storedDeletedIds ? JSON.parse(storedDeletedIds) : []);
+      } catch (error) {
+        console.error("Error reading localStorage:", error);
+      }
+    }
+  }, [id]);
+
   // Log the current state of weight records for debugging
   useEffect(() => {
     if (weightRecords && weightRecords.length > 0) {

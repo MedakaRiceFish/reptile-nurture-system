@@ -17,7 +17,7 @@ export const useAnimalData = (
   const { toast } = useToast();
   const initialDataFetchedRef = useRef(false);
   const isMountedRef = useRef(true);
-  const prevDeletedIdsLengthRef = useRef(0);
+  const prevDeletedIdsRef = useRef<string[]>([]);
 
   // Memoize the data fetching function with useCallback
   const fetchData = useCallback(async () => {
@@ -46,7 +46,7 @@ export const useAnimalData = (
         
         // Filter out deleted records once instead of on every render
         const filteredRecords = weightRecordsResult.filter(record => 
-          record.id ? !deletedRecordIds.has(record.id) : true
+          !record.id || !deletedRecordIds.has(record.id)
         );
         
         console.log("Filtered weight records (after removing deleted):", filteredRecords);
@@ -91,6 +91,9 @@ export const useAnimalData = (
         
         setAnimalData(animalWithUpdatedWeight);
       }
+      
+      // Update initialDataFetchedRef after data has been fetched
+      initialDataFetchedRef.current = true;
     } catch (error) {
       if (!isMountedRef.current) return;
       
@@ -103,47 +106,66 @@ export const useAnimalData = (
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
-        initialDataFetchedRef.current = true;
       }
     }
   }, [animalId, userId, deletedRecordIds, toast]);
 
-  useEffect(() => {
-    // Track whether the deletedRecordIds set has changed
-    const currentDeletedIdsLength = deletedRecordIds.size;
-    const hasDeletedIdsChanged = currentDeletedIdsLength !== prevDeletedIdsLengthRef.current;
+  // Check if the deletedRecordIds set has changed by comparing the serialized arrays
+  const haveDeletedIdsChanged = useCallback(() => {
+    const currentDeletedIdsArray = Array.from(deletedRecordIds).sort();
+    const prevDeletedIdsArray = [...prevDeletedIdsRef.current].sort();
     
-    console.log("Deleted IDs length changed:", hasDeletedIdsChanged, 
-      "Current:", currentDeletedIdsLength, 
-      "Previous:", prevDeletedIdsLengthRef.current);
-    
-    // Skip if we've already fetched the initial data and nothing relevant has changed
-    if (initialDataFetchedRef.current && 
-        animalData && 
-        animalData.id === animalId && 
-        !hasDeletedIdsChanged) {
-      return;
+    // Check if array lengths differ first (quick check)
+    if (currentDeletedIdsArray.length !== prevDeletedIdsArray.length) {
+      return true;
     }
-
-    // Update the previous deleted ids length reference
-    prevDeletedIdsLengthRef.current = currentDeletedIdsLength;
     
-    // Set loading to true before fetching data
-    setLoading(true);
-    fetchData();
+    // Compare each element
+    for (let i = 0; i < currentDeletedIdsArray.length; i++) {
+      if (currentDeletedIdsArray[i] !== prevDeletedIdsArray[i]) {
+        return true;
+      }
+    }
+    
+    return false;
+  }, [deletedRecordIds]);
+
+  useEffect(() => {
+    const shouldFetchData = !initialDataFetchedRef.current || 
+                           !animalData || 
+                           animalData.id !== animalId || 
+                           haveDeletedIdsChanged();
+    
+    if (shouldFetchData) {
+      console.log("Fetching data because:", {
+        initialDataFetched: initialDataFetchedRef.current,
+        animalDataExists: !!animalData,
+        idMatch: animalData?.id === animalId,
+        deletedIdsChanged: haveDeletedIdsChanged()
+      });
+      
+      // Update the previous deleted ids reference before fetching
+      prevDeletedIdsRef.current = Array.from(deletedRecordIds);
+      
+      // Set loading to true before fetching data
+      setLoading(true);
+      fetchData();
+    } else {
+      console.log("Skipping data fetch - no relevant changes detected");
+    }
     
     return () => {
       // Mark as unmounted to prevent state updates after unmount
       isMountedRef.current = false;
     };
-  }, [animalId, userId, deletedRecordIds, fetchData, animalData]);
+  }, [animalId, userId, deletedRecordIds, fetchData, animalData, haveDeletedIdsChanged]);
 
-  // Filter weight records client-side when deletedRecordIds changes
+  // Filter weight records client-side if deletedRecordIds changes
   useEffect(() => {
     if (weightRecords.length > 0 && deletedRecordIds.size > 0) {
       console.log("Filtering weight records based on deletedRecordIds");
       setWeightRecords(prevRecords => 
-        prevRecords.filter(record => record.id ? !deletedRecordIds.has(record.id) : true)
+        prevRecords.filter(record => !record.id || !deletedRecordIds.has(record.id))
       );
     }
   }, [deletedRecordIds]);

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +7,10 @@ import { useAnimalData } from "./useAnimalData";
 import { useAnimalWeight } from "./useAnimalWeight";
 import { useAnimalEdit } from "./useAnimalEdit";
 import { AnimalNote } from "./types";
+
+// Create a storage key for deleted records that's unique per animal
+const getDeletedRecordsStorageKey = (animalId: string) => 
+  `animal_${animalId}_deleted_records`;
 
 export const useAnimalRecord = () => {
   const { id } = useParams();
@@ -18,8 +22,34 @@ export const useAnimalRecord = () => {
     {date: format(new Date(), "yyyy-MM-dd"), note: "Initial health assessment complete. Animal appears in good condition."}
   ]);
 
-  // Initialize deletedRecordIds set in the parent hook to maintain state across rerenders
-  const [deletedRecordIds, setDeletedRecordIds] = useState<Set<string>>(new Set<string>());
+  // Initialize deletedRecordIds from localStorage if available
+  const [deletedRecordIds, setDeletedRecordIds] = useState<Set<string>>(() => {
+    if (!id) return new Set<string>();
+    
+    try {
+      const storedDeletedIds = localStorage.getItem(getDeletedRecordsStorageKey(id));
+      if (storedDeletedIds) {
+        return new Set<string>(JSON.parse(storedDeletedIds));
+      }
+    } catch (error) {
+      console.error("Error retrieving deleted records from localStorage:", error);
+    }
+    
+    return new Set<string>();
+  });
+
+  // Save deletedRecordIds to localStorage whenever it changes
+  useEffect(() => {
+    if (!id || deletedRecordIds.size === 0) return;
+    
+    try {
+      const deletedIdsArray = Array.from(deletedRecordIds);
+      localStorage.setItem(getDeletedRecordsStorageKey(id), JSON.stringify(deletedIdsArray));
+      console.log("Saved deletedRecordIds to localStorage:", deletedIdsArray);
+    } catch (error) {
+      console.error("Error saving deleted records to localStorage:", error);
+    }
+  }, [id, deletedRecordIds]);
 
   // Get animal data functionality with deletedRecordIds
   const {

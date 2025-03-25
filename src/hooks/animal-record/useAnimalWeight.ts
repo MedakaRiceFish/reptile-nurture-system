@@ -109,9 +109,14 @@ export const useAnimalWeight = (
           return newSet;
         });
         
+        // Log the updated set of deleted IDs for debugging
+        console.log("Updated deletedRecordIds after deletion:", 
+          Array.from(new Set([...Array.from(deletedRecordIds), id])));
+        
         // Update the weight records list
         setWeightRecords(prevRecords => {
           const updatedRecords = prevRecords.filter(record => record.id !== id);
+          console.log("Updated weight records after deletion:", updatedRecords);
           return updatedRecords;
         });
         
