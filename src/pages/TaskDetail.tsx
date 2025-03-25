@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { useParams, useNavigate } from "react-router-dom";
@@ -111,6 +112,17 @@ const TaskDetail = () => {
         return <Badge variant="outline" className="ml-2">Pending</Badge>;
       default:
         return null;
+    }
+  };
+
+  // Function to handle task updates from the edit dialog
+  const handleTaskUpdated = async () => {
+    if (!taskId) return;
+    try {
+      const updatedTask = await getTask(taskId);
+      setTask(updatedTask);
+    } catch (error) {
+      console.error("Error updating task data:", error);
     }
   };
 
@@ -262,7 +274,7 @@ const TaskDetail = () => {
         <AddTaskDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
-          onTaskAdded={() => {}}
+          onTaskAdded={handleTaskUpdated}
           initialTask={task}
           isEditing={true}
         />
