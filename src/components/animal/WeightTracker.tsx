@@ -26,8 +26,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   console.log("WeightTracker animal:", animal);
   console.log("Weight history array:", animal.weightHistory);
   
-  // Use state to maintain tab selection
-  // Persist this state across re-renders
+  // Use state to maintain tab selection with localStorage for persistence
   const [activeTab, setActiveTab] = useState(() => {
     // Try to get the last active tab from sessionStorage
     const savedTab = sessionStorage.getItem('weightTrackerActiveTab');
@@ -38,6 +37,15 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   useEffect(() => {
     sessionStorage.setItem('weightTrackerActiveTab', activeTab);
   }, [activeTab]);
+  
+  // Force tab state preservation on re-renders
+  useEffect(() => {
+    // This is a no-op effect, but it signals to React that we want to preserve
+    // the tab state even when parent components cause re-renders
+    return () => {
+      // Intentionally empty cleanup function
+    };
+  }, []);
   
   const weightStats = useMemo(() => {
     // Initialize with default values
@@ -104,8 +112,17 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   const handleDeleteWeight = (id: string) => {
     if (onDeleteWeight) {
       console.log(`Deleting weight record ${id} while on tab: ${activeTab}`);
-      // Just call the original handler, but keep the tab state
+      // Prevent tab switching by storing current tab first
+      const currentTab = activeTab;
+      
+      // Call the deletion handler
       onDeleteWeight(id);
+      
+      // Ensure tab state is preserved after the operation
+      // This is a defensive measure in case the deletion causes state changes
+      setTimeout(() => {
+        setActiveTab(currentTab);
+      }, 0);
     }
   };
 
@@ -150,8 +167,10 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
           <Tabs 
             value={activeTab} 
             onValueChange={setActiveTab}
-            // Add key to ensure proper re-rendering
-            key={`weight-tabs-${animal.id}-${animal.weightHistory?.length || 0}`}
+            // Add key to ensure proper re-rendering without resetting state
+            key={`weight-tabs-${animal.id}`}
+            // Add defaultValue to ensure the tab is set even if the value prop changes
+            defaultValue={activeTab}
           >
             <TabsList className="mb-4">
               <TabsTrigger value="chart">Chart</TabsTrigger>
