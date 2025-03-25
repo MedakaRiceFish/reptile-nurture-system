@@ -1,3 +1,4 @@
+
 import React, { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -89,11 +90,6 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     };
   }, [animal.weightHistory, animal.weight]);
 
-  // Force re-render when weight history changes
-  useEffect(() => {
-    console.log("Weight history changed, recalculating stats");
-  }, [animal.weightHistory]);
-
   // Determine color based on percentage change
   const getPercentChangeColor = (percentChange: number) => {
     if (percentChange > 0) return 'text-green-500';
@@ -108,23 +104,24 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   console.log("Has weight history:", hasWeightHistory);
   console.log("Weight stats:", weightStats);
   
-  // Handle deletion without changing tabs
+  // Handle deletion without changing tabs or causing UI flicker
   const handleDeleteWeight = (id: string) => {
     if (onDeleteWeight) {
       console.log(`Deleting weight record ${id} while on tab: ${activeTab}`);
-      // Prevent tab switching by storing current tab first
-      const currentTab = activeTab;
       
-      // Call the deletion handler
+      // Call the deletion handler and prevent default event propagation
+      // which might cause parent component re-renders
       onDeleteWeight(id);
       
-      // Ensure tab state is preserved after the operation
-      // This is a defensive measure in case the deletion causes state changes
+      // Explicitly maintain the current tab to prevent switching
       setTimeout(() => {
-        setActiveTab(currentTab);
+        setActiveTab((currentTab) => currentTab);
       }, 0);
     }
   };
+
+  // Use a stable key for the Tabs component to maintain its internal state
+  const tabsKey = `weight-tabs-${activeTab}`;
 
   return (
     <Card className="lg:col-span-2">
@@ -167,9 +164,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
           <Tabs 
             value={activeTab} 
             onValueChange={setActiveTab}
-            // Add key to ensure proper re-rendering without resetting state
-            key={`weight-tabs-${animal.id}`}
-            // Add defaultValue to ensure the tab is set even if the value prop changes
+            key={tabsKey}
             defaultValue={activeTab}
           >
             <TabsList className="mb-4">
