@@ -43,10 +43,11 @@ const AnimalRecordContent = memo(({
   onAddWeightClick,
   onDeleteWeight
 }: AnimalRecordContentProps) => {
+  console.log(`[AnimalRecordContent] Rendering for animal: ${animal.id}, with ${animal.weightHistory?.length || 0} weight records`);
+  
   // Wrap the deletion handler to ensure consistent handling
   const handleWeightDelete = useCallback((id: string) => {
     console.log(`[AnimalRecordContent] Delegating weight deletion for record: ${id}`);
-    // This wrapping ensures we can provide consistent deletion behavior and logging
     if (onDeleteWeight) {
       onDeleteWeight(id);
     }

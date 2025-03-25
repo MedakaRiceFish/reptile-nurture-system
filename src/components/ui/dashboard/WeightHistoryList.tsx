@@ -21,8 +21,6 @@ const WeightHistoryRow = memo(({
   prevWeight?: number; 
   onDelete?: (id: string) => void;
 }) => {
-  const rowId = useRef(Math.random().toString(36).substring(7));
-  
   // Calculate weight change
   const change = prevWeight ? record.weight - prevWeight : 0;
   
@@ -36,12 +34,12 @@ const WeightHistoryRow = memo(({
 
   // Memoize the delete handler to prevent recreating it on every render
   const handleDelete = useCallback((e: React.MouseEvent) => {
-    // IMPORTANT: Stop propagation to prevent the event from bubbling up
+    // IMPORTANT: Stop propagation to prevent bubbling events
     e.preventDefault();
     e.stopPropagation();
     
-    console.log(`[DEBUG-Action] Delete button clicked for record: ${record.id}`);
     if (record.id && onDelete) {
+      console.log(`[WeightHistoryRow] Delete button clicked for record: ${record.id}`);
       onDelete(record.id);
     }
   }, [record.id, onDelete]);
@@ -90,8 +88,6 @@ EmptyWeightHistory.displayName = "EmptyWeightHistory";
 
 // Final optimized component
 const WeightHistoryListComponent = ({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
-  const componentId = useRef(Math.random().toString(36).substring(7));
-  
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
     return <EmptyWeightHistory />;
@@ -122,7 +118,7 @@ const WeightHistoryListComponent = ({ weightHistory, onDeleteWeight }: WeightHis
 
   // Wrap the delete handler with event management
   const handleDeleteWithLogging = useCallback((id: string) => {
-    console.log(`[DEBUG-Action] WeightHistoryList ${componentId.current} delete handler called for record: ${id}`);
+    console.log(`[WeightHistoryList] Delegating delete for record: ${id}`);
     onDeleteWeight?.(id);
   }, [onDeleteWeight]);
   

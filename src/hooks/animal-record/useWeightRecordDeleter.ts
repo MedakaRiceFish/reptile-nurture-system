@@ -1,4 +1,5 @@
-import { useCallback, useRef, useEffect } from "react";
+
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { deleteWeightRecord } from "@/services/weightService";
 import { WeightRecord } from "./types";
@@ -12,79 +13,65 @@ export const useWeightRecordDeleter = (
   // Use a ref to track in-progress deletions to prevent duplicate calls
   const pendingDeletions = useRef(new Set<string>());
   
-  // Add debug counter to track hook re-initialization
-  const hookInstanceId = useRef(Math.random().toString(36).substring(7));
-  
-  useEffect(() => {
-    console.log(`[DEBUG] useWeightRecordDeleter hook initialized with ID: ${hookInstanceId.current}`);
-    return () => console.log(`[DEBUG] useWeightRecordDeleter hook with ID ${hookInstanceId.current} unmounting`);
-  }, []);
-
-  // Log whenever deletedRecordIds changes
-  useEffect(() => {
-    console.log(`[DEBUG] deletedRecordIds changed in useWeightRecordDeleter ${hookInstanceId.current}:`, 
-      Array.from(deletedRecordIds).slice(0, 3) + (deletedRecordIds.size > 3 ? '... and more' : ''));
-  }, [deletedRecordIds]);
-
   // Handle delete weight record with optimistic updates
   const handleDeleteWeight = useCallback((id: string) => {
-    console.log(`[DEBUG] handleDeleteWeight called for record ID: ${id}`);
+    console.log(`[useWeightRecordDeleter] Handling delete for record ID: ${id}`);
+    
     if (!animalId || !id) {
-      console.log(`[DEBUG] Abort deletion - missing animalId or recordId`);
+      console.log(`[useWeightRecordDeleter] Abort deletion - missing animalId or recordId`);
       return;
     }
     
     // Skip if already in progress or already deleted
     if (pendingDeletions.current.has(id) || deletedRecordIds.has(id)) {
-      console.log(`[DEBUG] Skipping deletion for already-deleted or in-progress record: ${id}`);
+      console.log(`[useWeightRecordDeleter] Skipping deletion for already processing record: ${id}`);
       return;
     }
     
     // Mark as in progress
     pendingDeletions.current.add(id);
-    console.log(`[DEBUG] Added record ${id} to pendingDeletions`);
     
-    // Use a separate function for the update to prevent context captures
+    // Capture original records for rollback if needed (before closure is created)
+    // This prevents stale closure issues
     const performOptimisticUpdate = () => {
-      console.log(`[DEBUG] Performing optimistic UI update for record deletion: ${id}`);
+      console.log(`[useWeightRecordDeleter] Performing optimistic UI update for record: ${id}`);
       
+      // Update UI optimistically - remove record from display
       setWeightRecords(prevRecords => {
-        console.log(`[DEBUG] Current weight records count before filter: ${prevRecords.length}`);
-        const filteredRecords = prevRecords.filter(record => record.id !== id);
-        console.log(`[DEBUG] Filtered weight records count: ${filteredRecords.length}`);
-        return filteredRecords;
+        return prevRecords.filter(record => record.id !== id);
       });
       
+      // Track deleted ID
       setDeletedRecordIds(prevIds => {
-        console.log(`[DEBUG] Current deletedRecordIds count: ${prevIds.size}`);
         const newIds = new Set(prevIds);
         newIds.add(id);
-        console.log(`[DEBUG] New deletedRecordIds count: ${newIds.size}`);
         return newIds;
       });
     };
     
-    // Perform the optimistic update
-    console.log(`[DEBUG] Calling performOptimisticUpdate() for record: ${id}`);
+    // Perform the optimistic update first
     performOptimisticUpdate();
     
-    // Then perform the API call without affecting UI state again
-    console.log(`[DEBUG] Making API call to delete record: ${id}`);
+    // Then perform the API call
+    console.log(`[useWeightRecordDeleter] Making API call to delete record: ${id}`);
     deleteWeightRecord(id)
       .then(success => {
-        if (!success) {
-          console.error(`[DEBUG] Failed to delete weight record: ${id}`);
+        if (success) {
+          console.log(`[useWeightRecordDeleter] Successfully deleted record: ${id}`);
+          // Successfully deleted - already reflected in UI
         } else {
-          console.log(`[DEBUG] Successfully deleted weight record: ${id}`);
+          console.error(`[useWeightRecordDeleter] Failed to delete record: ${id}`);
+          toast.error("Failed to delete weight record. Please try again.");
         }
       })
       .catch((error) => {
-        console.error(`[DEBUG] Error deleting weight record: ${id}`, error);
+        console.error(`[useWeightRecordDeleter] Error deleting record: ${id}`, error);
+        toast.error("Error deleting weight record. Please try again.");
       })
       .finally(() => {
-        // Clear from pending set
+        // Clear from pending set regardless of outcome
         pendingDeletions.current.delete(id);
-        console.log(`[DEBUG] Removed record ${id} from pendingDeletions`);
+        console.log(`[useWeightRecordDeleter] Removed record ${id} from pendingDeletions`);
       });
   }, [animalId, deletedRecordIds, setDeletedRecordIds, setWeightRecords]);
 
