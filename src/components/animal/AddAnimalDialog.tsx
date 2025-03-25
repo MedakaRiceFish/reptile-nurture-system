@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
 import { createAnimal, AnimalInsert } from "@/services/animalService";
+import { addWeightRecord } from "@/services/weightService";
+import { format } from "date-fns";
 
 interface AddAnimalDialogProps {
   isOpen: boolean;
@@ -56,6 +58,18 @@ export const AddAnimalDialog: React.FC<AddAnimalDialogProps> = ({
       const result = await createAnimal(animal);
       
       if (result) {
+        // Add the initial weight record
+        if (parseFloat(data.weight) > 0) {
+          const weightRecord = {
+            animal_id: result.id,
+            weight: parseFloat(data.weight),
+            recorded_at: format(new Date(), "yyyy-MM-dd"),
+            owner_id: user.id
+          };
+          
+          await addWeightRecord(weightRecord);
+        }
+        
         onOpenChange(false);
         animalForm.reset();
         onSuccess();

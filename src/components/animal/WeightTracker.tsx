@@ -17,12 +17,16 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   onAddWeightClick,
 }) => {
   const weightStats = useMemo(() => {
+    // Initialize with default values
+    const defaultStats = {
+      currentWeight: animal.weight || 0,
+      maxWeight: animal.weight || 0,
+      percentChange: 0
+    };
+    
+    // If no weight history, use the current animal weight as both current and max
     if (!animal.weightHistory || animal.weightHistory.length === 0) {
-      return {
-        currentWeight: 0,
-        maxWeight: 0,
-        percentChange: 0
-      };
+      return defaultStats;
     }
 
     // Sort by date (newest first) to get current weight
@@ -49,7 +53,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
       maxWeight,
       percentChange
     };
-  }, [animal.weightHistory]);
+  }, [animal.weightHistory, animal.weight]);
 
   // Determine color based on percentage change
   const getPercentChangeColor = (percentChange: number) => {
@@ -58,6 +62,8 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     if (percentChange < -3) return 'text-red-500';
     return '';
   };
+
+  const hasWeightHistory = animal.weightHistory && animal.weightHistory.length > 0;
 
   return (
     <Card className="lg:col-span-2">
@@ -91,18 +97,25 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
           </div>
         </div>
 
-        <Tabs defaultValue="chart">
-          <TabsList className="mb-4">
-            <TabsTrigger value="chart">Chart</TabsTrigger>
-            <TabsTrigger value="list">List</TabsTrigger>
-          </TabsList>
-          <TabsContent value="chart" className="pt-2">
-            <AnimalWeightChart weightHistory={animal.weightHistory} />
-          </TabsContent>
-          <TabsContent value="list">
-            <WeightHistoryList weightHistory={animal.weightHistory} />
-          </TabsContent>
-        </Tabs>
+        {!hasWeightHistory ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No weight history available.</p>
+            <p className="mt-2">Add a weight record to start tracking.</p>
+          </div>
+        ) : (
+          <Tabs defaultValue="chart">
+            <TabsList className="mb-4">
+              <TabsTrigger value="chart">Chart</TabsTrigger>
+              <TabsTrigger value="list">List</TabsTrigger>
+            </TabsList>
+            <TabsContent value="chart" className="pt-2">
+              <AnimalWeightChart weightHistory={animal.weightHistory} />
+            </TabsContent>
+            <TabsContent value="list">
+              <WeightHistoryList weightHistory={animal.weightHistory} />
+            </TabsContent>
+          </Tabs>
+        )}
       </CardContent>
     </Card>
   );
