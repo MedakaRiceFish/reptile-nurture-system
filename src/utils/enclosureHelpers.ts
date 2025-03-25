@@ -21,6 +21,16 @@ export const getHumidityColor = (hum: number) => {
   return "text-reptile-500";
 };
 
+export const getStatusColor = (status: string) => {
+  if (status === "online") return "bg-green-500";
+  if (status === "warning") return "bg-amber-500";
+  return "bg-red-500";
+};
+
+export const getPlaceholderImage = () => {
+  return "https://images.unsplash.com/photo-1585858229735-7be23558d95e?q=80&w=2070&auto=format&fit=crop";
+};
+
 // Initial enclosure data (fallback when no DB data available)
 export const INITIAL_ENCLOSURE_DATA = [
   {

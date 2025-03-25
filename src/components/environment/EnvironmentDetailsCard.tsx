@@ -57,7 +57,11 @@ export const EnvironmentDetailsCard: React.FC<EnvironmentDetailsCardProps> = ({
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Plants:</span>
-            <span>{enclosure.plants && Array.isArray(enclosure.plants) ? enclosure.plants.join(", ") : "None"}</span>
+            <span>
+              {enclosure.plants && Array.isArray(enclosure.plants) && enclosure.plants.length > 0 
+                ? enclosure.plants.join(", ") 
+                : "None"}
+            </span>
           </div>
         </div>
       </CardContent>
