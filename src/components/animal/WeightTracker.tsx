@@ -82,6 +82,14 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     };
   }, [animal.weightHistory, animal.weight]);
 
+  // Handle deletion without changing tabs or causing UI flicker
+  const handleDeleteWeight = useCallback((id: string) => {
+    if (onDeleteWeight) {
+      // Call the parent's delete handler
+      onDeleteWeight(id);
+    }
+  }, [onDeleteWeight]);
+
   // Determine color based on percentage change
   const getPercentChangeColor = (percentChange: number) => {
     if (percentChange > 0) return 'text-green-500';
@@ -92,14 +100,6 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
 
   // Check if there's weight history AND it has at least one record
   const hasWeightHistory = animal.weightHistory && animal.weightHistory.length > 0;
-  
-  // Handle deletion without changing tabs or causing UI flicker
-  const handleDeleteWeight = useCallback((id: string) => {
-    if (onDeleteWeight) {
-      // Call the parent's delete handler
-      onDeleteWeight(id);
-    }
-  }, [onDeleteWeight]);
 
   return (
     <Card className="lg:col-span-2">

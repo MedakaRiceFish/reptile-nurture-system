@@ -29,13 +29,17 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
     });
   }, [weightHistory]);
 
-  // Memoized handler to avoid recreating on every render and prevent event bubbling
-  const handleDeleteClick = useCallback((event: React.MouseEvent, id: string) => {
-    // Prevent event bubbling to avoid tab switching or any parent reflows
+  // Handle delete click with proper event handling
+  const handleDeleteClick = useCallback((
+    event: React.MouseEvent<HTMLButtonElement>,
+    id: string
+  ) => {
+    // Stop event propagation to prevent tab switching or parent reflows
     event.preventDefault();
     event.stopPropagation();
     
     if (onDeleteWeight && id) {
+      // Call the delete handler synchronously
       onDeleteWeight(id);
     }
   }, [onDeleteWeight]);
@@ -53,7 +57,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
   return (
     <div className="max-h-[350px] overflow-auto relative">
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 bg-background z-10">
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Weight (g)</TableHead>
@@ -91,6 +95,7 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
                 {onDeleteWeight && record.id && (
                   <TableCell>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
