@@ -22,7 +22,7 @@ const AnimalRecord = () => {
   const { user } = useAuth();
 
   const [animalData, setAnimalData] = useState<any>(null);
-  const [weightRecords, setWeightRecords] = useState<any[]>([]);
+  const [weightRecords, setWeightRecords] = useState<{date: string, weight: number}[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [animalNotes, setAnimalNotes] = useState<{date: string, note: string}[]>([
@@ -41,12 +41,9 @@ const AnimalRecord = () => {
           setAnimalData(animalData);
 
           const records = await getAnimalWeightRecords(id);
-          const formattedRecords = records.map(record => ({
-            date: format(new Date(record.recorded_at), "yyyy-MM-dd"),
-            weight: record.weight
-          }));
-
-          setWeightRecords(formattedRecords);
+          setWeightRecords(records);
+          
+          console.log("Weight records loaded:", records);
         }
       } catch (error) {
         console.error("Error fetching animal data:", error);
@@ -203,6 +200,8 @@ const AnimalRecord = () => {
     ...animalData,
     weightHistory: weightRecords
   };
+
+  console.log("Animal with weight history:", animalWithWeightHistory);
 
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>

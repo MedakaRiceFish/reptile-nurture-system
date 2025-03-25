@@ -12,7 +12,7 @@ export type WeightRecord = {
 
 export type WeightRecordInsert = Omit<WeightRecord, 'id'>;
 
-export const getAnimalWeightRecords = async (animalId: string): Promise<WeightRecord[]> => {
+export const getAnimalWeightRecords = async (animalId: string): Promise<{date: string, weight: number}[]> => {
   try {
     const { data, error } = await supabase
       .from('weight_records')
@@ -21,7 +21,12 @@ export const getAnimalWeightRecords = async (animalId: string): Promise<WeightRe
       .order('recorded_at', { ascending: true });
     
     if (error) throw error;
-    return data || [];
+    
+    // Format the records to match the expected format for the components
+    return data.map(record => ({
+      date: record.recorded_at,
+      weight: record.weight
+    })) || [];
   } catch (error: any) {
     toast.error(`Error fetching weight records: ${error.message}`);
     return [];

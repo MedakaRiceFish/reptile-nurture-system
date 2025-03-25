@@ -7,6 +7,11 @@ import { Weight } from "lucide-react";
 import { AnimalWeightChart } from "@/components/ui/dashboard/AnimalWeightChart";
 import { WeightHistoryList } from "@/components/ui/dashboard/WeightHistoryList";
 
+interface WeightRecord {
+  date: string;
+  weight: number;
+}
+
 interface WeightTrackerProps {
   animal: any;
   onAddWeightClick: () => void;
@@ -16,6 +21,8 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
   animal,
   onAddWeightClick,
 }) => {
+  console.log("WeightTracker animal:", animal); // Debug log
+  
   const weightStats = useMemo(() => {
     // Initialize with default values
     const defaultStats = {
@@ -26,9 +33,12 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     
     // If no weight history, use the current animal weight as both current and max
     if (!animal.weightHistory || animal.weightHistory.length === 0) {
+      console.log("No weight history found"); // Debug log
       return defaultStats;
     }
 
+    console.log("Weight history found:", animal.weightHistory.length, "records"); // Debug log
+    
     // Sort by date (newest first) to get current weight
     const sortedWeights = [...animal.weightHistory].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -63,6 +73,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({
     return '';
   };
 
+  // Check if there's weight history AND it has at least one record
   const hasWeightHistory = animal.weightHistory && animal.weightHistory.length > 0;
 
   return (
