@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -8,6 +8,9 @@ import { HardDrive, Wrench, PlusCircle } from "lucide-react";
 import { AddDeviceDialog } from "../device/AddDeviceDialog";
 import { toast } from "sonner";
 import { HardwareItem } from "@/types/hardware";
+import { useAuth } from "@/context/AuthContext";
+import { fetchHardwareDevices, addHardwareDevice, updateDeviceMaintenance } from "@/services/hardwareService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HardwareManagementProps {
   enclosureId?: string;
@@ -15,68 +18,122 @@ interface HardwareManagementProps {
 
 export const HardwareManagement: React.FC<HardwareManagementProps> = ({ enclosureId }) => {
   // State for hardware items
-  const [hardwareItems, setHardwareItems] = useState<HardwareItem[]>([
-    {
-      id: 1,
-      name: "Temperature Sensor",
-      type: "Sensor",
-      lastMaintenance: new Date(2023, 9, 15),
-      nextMaintenance: new Date(2024, 3, 15),
-    },
-    {
-      id: 2,
-      name: "Humidity Controller",
-      type: "Controller",
-      lastMaintenance: new Date(2023, 11, 5),
-      nextMaintenance: new Date(2024, 5, 5),
-    },
-    {
-      id: 3,
-      name: "UV Light",
-      type: "Light",
-      lastMaintenance: new Date(2024, 0, 20),
-      nextMaintenance: new Date(2024, 6, 20),
-    }
-  ]);
+  const [hardwareItems, setHardwareItems] = useState<HardwareItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   // State for add device dialog
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
 
-  // Function to handle adding a new device
-  const handleAddDevice = (data: any) => {
-    const newDevice: HardwareItem = {
-      id: Date.now(), // Simple ID generation
-      name: data.name,
-      type: data.type,
-      lastMaintenance: data.lastMaintenance,
-      nextMaintenance: data.nextMaintenance,
-    };
+  // Fetch hardware devices
+  const fetchDevices = async () => {
+    if (!enclosureId) return;
+    
+    setIsLoading(true);
+    try {
+      const devices = await fetchHardwareDevices(enclosureId);
+      setHardwareItems(devices);
+    } catch (error) {
+      console.error("Failed to fetch hardware devices:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    setHardwareItems([...hardwareItems, newDevice]);
-    setIsAddDeviceDialogOpen(false);
-    toast.success(`${data.name} added successfully`);
+  useEffect(() => {
+    fetchDevices();
+    
+    // Set up real-time subscription for hardware device changes
+    if (enclosureId) {
+      const channel = supabase
+        .channel('hardware-changes')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'hardware_devices',
+          filter: `enclosure_id=eq.${enclosureId}`
+        }, (payload) => {
+          console.log('Hardware device change detected:', payload);
+          fetchDevices(); // Refetch when changes are detected
+        })
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [enclosureId, user]);
+
+  // Function to handle adding a new device
+  const handleAddDevice = async (data: any) => {
+    if (!enclosureId || !user) {
+      toast.error("You need to be logged in to add devices");
+      return;
+    }
+    
+    try {
+      const newDevice = {
+        name: data.name,
+        type: data.type,
+        lastMaintenance: data.lastMaintenance,
+        nextMaintenance: data.nextMaintenance,
+        enclosureId: enclosureId
+      };
+
+      await addHardwareDevice(newDevice);
+      setIsAddDeviceDialogOpen(false);
+      toast.success(`${data.name} added successfully`);
+      fetchDevices(); // Refresh list after adding
+    } catch (error: any) {
+      toast.error(`Failed to add device: ${error.message}`);
+    }
   };
 
   // Function to handle device maintenance
-  const handleMaintenance = (id: number) => {
-    const today = new Date();
-    const sixMonthsLater = new Date();
-    sixMonthsLater.setMonth(today.getMonth() + 6);
+  const handleMaintenance = async (id: string) => {
+    try {
+      const today = new Date();
+      const sixMonthsLater = new Date();
+      sixMonthsLater.setMonth(today.getMonth() + 6);
 
-    setHardwareItems(prevItems => 
-      prevItems.map(item => 
-        item.id === id 
-          ? { 
-              ...item, 
-              lastMaintenance: today,
-              nextMaintenance: sixMonthsLater 
-            } 
-          : item
-      )
-    );
-    
-    toast.success("Maintenance recorded");
+      await updateDeviceMaintenance(id, today, sixMonthsLater);
+      
+      // Update the local state optimistically
+      setHardwareItems(prevItems => 
+        prevItems.map(item => 
+          item.id === id 
+            ? { 
+                ...item, 
+                lastMaintenance: today,
+                nextMaintenance: sixMonthsLater 
+              } 
+            : item
+        )
+      );
+      
+      toast.success("Maintenance recorded");
+    } catch (error: any) {
+      toast.error(`Failed to update maintenance: ${error.message}`);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Hardware Management</CardTitle>
+          <CardDescription>Loading devices...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded-lg w-full"></div>
+            <div className="h-20 bg-muted rounded-lg w-full"></div>
+            <div className="h-20 bg-muted rounded-lg w-full"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

@@ -117,6 +117,50 @@ export type Database = {
         }
         Relationships: []
       }
+      hardware_devices: {
+        Row: {
+          created_at: string
+          enclosure_id: string
+          id: string
+          last_maintenance: string
+          name: string
+          next_maintenance: string
+          owner_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enclosure_id: string
+          id?: string
+          last_maintenance?: string
+          name: string
+          next_maintenance?: string
+          owner_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enclosure_id?: string
+          id?: string
+          last_maintenance?: string
+          name?: string
+          next_maintenance?: string
+          owner_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_devices_enclosure_id_fkey"
+            columns: ["enclosure_id"]
+            isOneToOne: false
+            referencedRelation: "enclosures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
