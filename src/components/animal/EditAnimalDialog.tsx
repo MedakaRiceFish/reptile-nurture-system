@@ -24,10 +24,10 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
     defaultValues: {
       name: animal?.name || "",
       species: animal?.species || "",
-      age: animal?.age.toString() || "",
-      length: animal?.length.toString() || "",
-      feedingSchedule: animal?.feedingSchedule || "",
-      breederSource: animal?.breederSource || "",
+      age: animal?.age?.toString() || "",
+      length: animal?.length?.toString() || "",
+      feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
+      breederSource: animal?.breeding_source || animal?.breederSource || "",
       description: animal?.description || ""
     }
   });
