@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,6 @@ interface WeightHistoryListProps {
 }
 
 export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHistoryListProps) {
-  console.log("WeightHistoryList received weightHistory:", weightHistory);
-
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
     return (
@@ -24,12 +22,12 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
     );
   }
 
-  // Sort the weight history by date (newest first)
-  const sortedHistory = [...weightHistory].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
-  
-  console.log("Sorted weight history:", sortedHistory);
+  // Memoize the sorted history to avoid re-sorting on every render
+  const sortedHistory = useMemo(() => {
+    return [...weightHistory].sort((a, b) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, [weightHistory]);
 
   return (
     <div className="max-h-[350px] overflow-auto">
@@ -50,15 +48,17 @@ export function WeightHistoryList({ weightHistory, onDeleteWeight }: WeightHisto
               ? record.weight - nextRecord.weight 
               : 0;
             
-            // Ensure date is properly parsed
-            const formattedDate = (() => {
+            // Create a formatting function that handles errors gracefully
+            const formatDate = (dateString: string) => {
               try {
-                return format(parseISO(record.date), "MMM d, yyyy");
+                return format(parseISO(dateString), "MMM d, yyyy");
               } catch (e) {
-                console.error("Date parsing error:", e, record.date);
-                return record.date;
+                return dateString;
               }
-            })();
+            };
+            
+            // Pre-format the date outside of the render to improve performance
+            const formattedDate = formatDate(record.date);
             
             return (
               <TableRow key={record.id || `${record.date}-${index}`}>

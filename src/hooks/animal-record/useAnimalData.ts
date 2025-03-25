@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { getAnimal } from "@/services/animalService";
@@ -15,11 +15,12 @@ export const useAnimalData = (
   const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [isInitialDataFetched, setIsInitialDataFetched] = useState(false);
+  const initialDataFetchedRef = useRef(false);
+  const isMountedRef = useRef(true);
 
-  // Memoize the data fetching function to prevent unnecessary re-renders
+  // Memoize the data fetching function with useCallback
   const fetchData = useCallback(async () => {
-    if (!animalId || !userId) {
+    if (!animalId || !userId || !isMountedRef.current) {
       setLoading(false);
       return;
     }
@@ -31,12 +32,15 @@ export const useAnimalData = (
         getAnimalWeightRecords(animalId)
       ]);
       
+      if (!isMountedRef.current) return;
+      
       if (animalResult) {
-        // Filter out deleted records
+        // Filter out deleted records once instead of on every render
         const filteredRecords = weightRecordsResult.filter(record => 
           record.id ? !deletedRecordIds.has(record.id) : true
         );
         
+        // Set weight records first to reduce cascading updates
         setWeightRecords(filteredRecords);
         
         // Only create initial weight record if no records exist and animal has weight
@@ -51,29 +55,34 @@ export const useAnimalData = (
               owner_id: userId
             };
             
-            const result = await addWeightRecord(newRecord);
-            
-            if (result) {
-              setWeightRecords([result]);
-            }
+            // Create record asynchronously without blocking UI
+            addWeightRecord(newRecord).then(result => {
+              if (result && isMountedRef.current) {
+                setWeightRecords([result]);
+              }
+            });
           } catch (error) {
             console.error("Error creating initial weight record:", error);
           }
         }
         
         // Update current weight if we have records
+        let animalWithUpdatedWeight = {...animalResult};
+        
         if (filteredRecords.length > 0) {
           const sortedRecords = [...filteredRecords].sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
           );
           
           const currentWeight = sortedRecords[0].weight;
-          animalResult.weight = currentWeight;
+          animalWithUpdatedWeight.weight = currentWeight;
         }
         
-        setAnimalData(animalResult);
+        setAnimalData(animalWithUpdatedWeight);
       }
     } catch (error) {
+      if (!isMountedRef.current) return;
+      
       console.error("Error fetching animal data:", error);
       toast({
         title: "Error",
@@ -81,25 +90,31 @@ export const useAnimalData = (
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
-      setIsInitialDataFetched(true);
+      if (isMountedRef.current) {
+        setLoading(false);
+        initialDataFetchedRef.current = true;
+      }
     }
   }, [animalId, userId, deletedRecordIds, toast]);
 
   useEffect(() => {
-    // Skip the effect if we've already fetched the initial data
-    // and the IDs haven't changed
-    if (isInitialDataFetched && 
+    // Skip if we've already fetched the initial data and IDs haven't changed
+    if (initialDataFetchedRef.current && 
         animalData && 
         animalData.id === animalId && 
-        Object.keys(deletedRecordIds).length === 0) {
+        deletedRecordIds.size === 0) {
       return;
     }
 
     // Set loading to true before fetching data
     setLoading(true);
     fetchData();
-  }, [animalId, userId, deletedRecordIds, fetchData, isInitialDataFetched, animalData]);
+    
+    return () => {
+      // Mark as unmounted to prevent state updates after unmount
+      isMountedRef.current = false;
+    };
+  }, [animalId, userId, deletedRecordIds, fetchData, animalData]);
 
   return {
     animalData,

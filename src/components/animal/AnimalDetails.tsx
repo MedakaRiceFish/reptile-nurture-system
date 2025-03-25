@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Edit } from "lucide-react";
@@ -21,39 +21,46 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
   setAnimalData,
   onEditClick,
 }) => {
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Use a dependency array to prevent useEffect from running on every render
   useEffect(() => {
-    // If animal has enclosure_id but no enclosureName, fetch the enclosure name
+    // Only fetch enclosure name if animal has enclosure_id but no enclosureName
+    if (!animal?.enclosure_id || animal.enclosureName) return;
+    
+    let isMounted = true;
+    
     const fetchEnclosureName = async () => {
-      if (animal?.enclosure_id && !animal.enclosureName) {
-        try {
-          const { data, error } = await supabase
-            .from('enclosures')
-            .select('name')
-            .eq('id', animal.enclosure_id)
-            .single();
-            
-          if (error) throw error;
+      try {
+        const { data, error } = await supabase
+          .from('enclosures')
+          .select('name')
+          .eq('id', animal.enclosure_id)
+          .maybeSingle();
           
-          if (data) {
-            setAnimalData({
-              ...animal,
-              enclosureName: data.name,
-              enclosure: animal.enclosure_id // ensure both properties exist
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching enclosure name:', error);
+        if (error) throw error;
+        
+        if (data && isMounted) {
+          setAnimalData((prevData: any) => ({
+            ...prevData,
+            enclosureName: data.name,
+            enclosure: animal.enclosure_id // ensure both properties exist
+          }));
         }
+      } catch (error) {
+        console.error('Error fetching enclosure name:', error);
       }
     };
     
     fetchEnclosureName();
-  }, [animal?.enclosure_id, animal, setAnimalData]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [animal?.enclosure_id, setAnimalData]);
 
-  // Get the current weight from weight history if available
+  // Memoize currentWeight calculation to avoid recalculating on every render
   const currentWeight = useMemo(() => {
     if (animal.weightHistory && animal.weightHistory.length > 0) {
       // Sort weight records by date (newest first)
@@ -65,7 +72,8 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
     return animal.weight || 0;
   }, [animal.weightHistory, animal.weight]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoize the file change handler to avoid recreating on every render
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -87,10 +95,10 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
             
           if (error) throw error;
           
-          setAnimalData({
-            ...animal,
+          setAnimalData((prevData: any) => ({
+            ...prevData,
             image_url: url
-          });
+          }));
           
           toast({
             title: "Photo updated",
@@ -110,19 +118,19 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
         setImagePreview(null);
       }
     } else {
-      setAnimalData({
-        ...animal,
+      setAnimalData((prevData: any) => ({
+        ...prevData,
         image: imagePreview
-      });
+      }));
       
       toast({
         title: "Photo updated",
         description: `${animal.name}'s photo has been updated successfully`,
       });
     }
-  };
+  }, [animal?.id, animal?.name, setAnimalData, toast]);
 
-  // Format length to display properly regardless of type - memoized to avoid unnecessary recalculations
+  // Memoize displayLength to avoid recalculating on every render
   const displayLength = useMemo(() => {
     return animal.length ? 
       (typeof animal.length === 'number' ? animal.length : parseFloat(String(animal.length) || '0')) : 
@@ -136,7 +144,8 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
           src={imagePreview || animal.image_url || animal.image} 
           alt={animal.name} 
           className="w-full h-[300px] object-cover rounded-t-lg"
-          loading="lazy" // Add lazy loading for images
+          loading="lazy" 
+          fetchPriority="high" // Add fetch priority for important images
         />
         <div className="absolute top-4 right-4 flex space-x-2">
           <PhotoUploadButton onFileChange={handleFileChange} />

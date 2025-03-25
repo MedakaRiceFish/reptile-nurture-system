@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { EditAnimalDialog } from "@/components/animal/EditAnimalDialog";
 import { AddWeightDialog } from "@/components/animal/AddWeightDialog";
@@ -28,6 +28,16 @@ const AnimalRecord = () => {
     handleEditSubmit
   } = useAnimalRecord();
 
+  // Memoize the animal with weight history to prevent unnecessary object creation on every render
+  const animalWithWeightHistory = useMemo(() => {
+    if (!animalData) return null;
+    return {
+      ...animalData,
+      weightHistory: weightRecords
+    };
+  }, [animalData, weightRecords]);
+
+  // Render loading state
   if (loading) {
     return (
       <MainLayout pageTitle="Loading Animal Record">
@@ -48,6 +58,7 @@ const AnimalRecord = () => {
     );
   }
 
+  // Render not found state
   if (!animalData) {
     return (
       <MainLayout pageTitle="Animal Not Found">
@@ -56,11 +67,7 @@ const AnimalRecord = () => {
     );
   }
 
-  const animalWithWeightHistory = {
-    ...animalData,
-    weightHistory: weightRecords
-  };
-
+  // Main render with optimized props passing
   return (
     <MainLayout pageTitle={`${animalData.name} - Animal Record`}>
       <div className="max-w-[1200px] mx-auto py-6 animate-fade-up">
@@ -76,18 +83,23 @@ const AnimalRecord = () => {
           onDeleteWeight={handleDeleteWeight}
         />
 
-        <EditAnimalDialog 
-          animal={animalData} 
-          isOpen={isEditDialogOpen} 
-          onOpenChange={setIsEditDialogOpen} 
-          onSave={handleEditSubmit} 
-        />
+        {/* Only render dialogs when they're open to reduce initial load time */}
+        {isEditDialogOpen && (
+          <EditAnimalDialog 
+            animal={animalData} 
+            isOpen={isEditDialogOpen} 
+            onOpenChange={setIsEditDialogOpen} 
+            onSave={handleEditSubmit} 
+          />
+        )}
 
-        <AddWeightDialog 
-          isOpen={isWeightDialogOpen} 
-          onOpenChange={setIsWeightDialogOpen} 
-          onSave={handleAddWeight} 
-        />
+        {isWeightDialogOpen && (
+          <AddWeightDialog 
+            isOpen={isWeightDialogOpen} 
+            onOpenChange={setIsWeightDialogOpen} 
+            onSave={handleAddWeight} 
+          />
+        )}
       </div>
     </MainLayout>
   );

@@ -9,6 +9,8 @@ interface MainLayoutProps {
 }
 
 export const MainLayout = React.memo(function MainLayout({ children, pageTitle }: MainLayoutProps) {
+  // Using direct return without any calculations in the render method
+  // to minimize component complexity and improve rendering performance
   return (
     <div className="flex h-screen w-full bg-background">
       <div className="hidden md:flex h-screen border-r glass-panel">
