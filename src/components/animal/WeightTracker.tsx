@@ -1,5 +1,4 @@
-
-import React, { useMemo, useEffect, useState, useCallback, memo } from "react";
+import React, { useMemo, useEffect, useState, useCallback, memo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,7 +22,25 @@ const WeightTrackerComponent = ({
   onAddWeightClick,
   onDeleteWeight
 }: WeightTrackerProps) => {
-  // Use state to maintain tab selection with localStorage for persistence
+  const instanceId = useRef(Math.random().toString(36).substring(7));
+  
+  useEffect(() => {
+    console.log(`[DEBUG-Render] WeightTracker mounted with ID: ${instanceId.current}`);
+    return () => console.log(`[DEBUG-Render] WeightTracker with ID ${instanceId.current} unmounting`);
+  }, []);
+  
+  useEffect(() => {
+    console.log(`[DEBUG-Render] WeightTracker ${instanceId.current} received animal update:`, {
+      animalId: animal.id,
+      weight: animal.weight,
+      weightHistoryCount: animal.weightHistory?.length || 0
+    });
+  }, [animal, animal.weightHistory]);
+  
+  useEffect(() => {
+    console.log(`[DEBUG-Render] WeightTracker ${instanceId.current} callbacks updated`);
+  }, [onAddWeightClick, onDeleteWeight]);
+  
   const [activeTab, setActiveTab] = useState(() => {
     try {
       const savedTab = sessionStorage.getItem('weightTrackerActiveTab');
@@ -33,7 +50,6 @@ const WeightTrackerComponent = ({
     }
   });
   
-  // Save tab selection to sessionStorage when it changes
   useEffect(() => {
     try {
       sessionStorage.setItem('weightTrackerActiveTab', activeTab);
@@ -42,42 +58,40 @@ const WeightTrackerComponent = ({
     }
   }, [activeTab]);
   
-  // Extract the weight history or use an empty array (memoized)
   const weightHistory = useMemo(() => {
-    return animal.weightHistory || [];
+    const history = animal.weightHistory || [];
+    console.log(`[DEBUG-Render] WeightTracker ${instanceId.current} memoized weightHistory:`, { 
+      count: history.length,
+      recordIds: history.slice(0, 2).map(r => r.id).join(', ') + (history.length > 2 ? '...' : '')
+    });
+    return history;
   }, [animal.weightHistory]);
 
-  // Generate a stable key based on animal ID to force container remounting when animal changes
-  const containerKey = useMemo(() => 
-    `weight-tracker-${animal.id || 'new'}`, 
-    [animal.id]
-  );
+  const containerKey = useMemo(() => {
+    const key = `weight-tracker-${animal.id || 'new'}`;
+    console.log(`[DEBUG-Render] WeightTracker ${instanceId.current} generated containerKey: ${key}`);
+    return key;
+  }, [animal.id]);
 
-  // Memoize weight stats calculation
   const weightStats = useMemo(() => {
-    // Initialize with default values
     const defaultStats = {
       currentWeight: animal.weight || 0,
       maxWeight: animal.weight || 0,
       percentChange: 0
     };
     
-    // If no weight history, use the current animal weight as both current and max
     if (!weightHistory || weightHistory.length === 0) {
       return defaultStats;
     }
     
-    // Sort by date (newest first) to get current weight
     const sortedWeights = [...weightHistory].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
     const currentWeight = sortedWeights[0].weight;
     
-    // Find maximum weight
     const maxWeight = Math.max(...weightHistory.map((record: WeightRecord) => record.weight));
     
-    // Calculate percentage change from the previous weight
     let percentChange = 0;
     if (sortedWeights.length > 1) {
       const previousWeight = sortedWeights[1].weight;
@@ -93,7 +107,6 @@ const WeightTrackerComponent = ({
     };
   }, [weightHistory, animal.weight]);
 
-  // Determine color based on percentage change
   const getPercentChangeColor = useCallback((percentChange: number) => {
     if (percentChange > 0) return 'text-green-500';
     if (percentChange < 0 && percentChange >= -3) return 'text-yellow-500';
@@ -101,10 +114,8 @@ const WeightTrackerComponent = ({
     return '';
   }, []);
 
-  // Check if there's weight history AND it has at least one record
   const hasWeightHistory = weightHistory.length > 0;
 
-  // Memoized content based on whether there's weight history
   const content = useMemo(() => {
     if (!hasWeightHistory) {
       return (
@@ -131,7 +142,10 @@ const WeightTrackerComponent = ({
         <TabsContent value="list">
           <WeightHistoryList 
             weightHistory={weightHistory}
-            onDeleteWeight={onDeleteWeight}
+            onDeleteWeight={(id) => {
+              console.log(`[DEBUG-Action] Delete weight clicked in WeightTracker ${instanceId.current} for record: ${id}`);
+              onDeleteWeight?.(id);
+            }}
             key={`list-${containerKey}`}
           />
         </TabsContent>
@@ -139,6 +153,8 @@ const WeightTrackerComponent = ({
     );
   }, [activeTab, hasWeightHistory, weightHistory, containerKey, onDeleteWeight]);
 
+  console.log(`[DEBUG-Render] WeightTracker ${instanceId.current} rendering`);
+  
   return (
     <Card className="lg:col-span-2" key={containerKey}>
       <CardHeader className="pb-0">
@@ -151,7 +167,6 @@ const WeightTrackerComponent = ({
         </div>
       </CardHeader>
       <CardContent>
-        {/* Weight stats summary */}
         <div className="grid grid-cols-3 gap-4 mb-6 mt-2">
           <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
             <div className="text-sm text-muted-foreground mb-1">Current Weight</div>
@@ -177,9 +192,13 @@ const WeightTrackerComponent = ({
   );
 };
 
-// Create a memoized version of the component
 const WeightTracker = memo(WeightTrackerComponent);
 
-// Export both as named and default export for flexibility
-export { WeightTracker };
-export default WeightTracker;
+const WithLogging = (props: WeightTrackerProps) => {
+  const renderCount = useRef(0);
+  console.log(`[DEBUG-Render] WeightTracker render count: ${++renderCount.current}`);
+  return <WeightTracker {...props} />;
+};
+
+export { WithLogging as WeightTracker };
+export default WithLogging;

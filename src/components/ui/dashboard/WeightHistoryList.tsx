@@ -1,5 +1,5 @@
 
-import React, { useMemo, memo, useCallback } from "react";
+import React, { useMemo, memo, useCallback, useRef, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,13 @@ const WeightHistoryRow = memo(({
   prevWeight?: number; 
   onDelete?: (id: string) => void;
 }) => {
+  const rowId = useRef(Math.random().toString(36).substring(7));
+  
+  useEffect(() => {
+    console.log(`[DEBUG-Render] WeightHistoryRow ${rowId.current} mounted for record: ${record.id}`);
+    return () => console.log(`[DEBUG-Render] WeightHistoryRow ${rowId.current} unmounting for record: ${record.id}`);
+  }, [record.id]);
+  
   // Calculate weight change
   const change = prevWeight ? record.weight - prevWeight : 0;
   
@@ -34,11 +41,14 @@ const WeightHistoryRow = memo(({
 
   // Memoize the delete handler to prevent recreating it on every render
   const handleDelete = useCallback(() => {
+    console.log(`[DEBUG-Action] Delete button clicked for record: ${record.id}`);
     if (record.id && onDelete) {
       onDelete(record.id);
     }
   }, [record.id, onDelete]);
 
+  console.log(`[DEBUG-Render] WeightHistoryRow ${rowId.current} rendering for record: ${record.id}`);
+  
   return (
     <TableRow>
       <TableCell>{formattedDate}</TableCell>
@@ -82,22 +92,40 @@ const EmptyWeightHistory = memo(() => (
 EmptyWeightHistory.displayName = "EmptyWeightHistory";
 
 // Final optimized component
-export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
+const WeightHistoryListComponent = ({ weightHistory, onDeleteWeight }: WeightHistoryListProps) => {
+  const componentId = useRef(Math.random().toString(36).substring(7));
+  
+  useEffect(() => {
+    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} mounted with ${weightHistory.length} records`);
+    return () => console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} unmounting`);
+  }, [weightHistory.length]);
+  
+  // Log when props change
+  useEffect(() => {
+    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} received weightHistory update:`, {
+      count: weightHistory.length,
+      recordIds: weightHistory.slice(0, 2).map(r => r.id).join(', ') + (weightHistory.length > 2 ? '...' : '')
+    });
+  }, [weightHistory]);
+
   // If no history, show a clear message
   if (!weightHistory || weightHistory.length === 0) {
+    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} rendering empty state`);
     return <EmptyWeightHistory />;
   }
 
   // Memoize the sorted history
   const sortedHistory = useMemo(() => {
-    return [...weightHistory].sort((a, b) => {
+    const sorted = [...weightHistory].sort((a, b) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
+    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} memoized sortedHistory with ${sorted.length} records`);
+    return sorted;
   }, [weightHistory]);
 
   // Create memoized row data to prevent re-calculation
   const rowData = useMemo(() => {
-    return sortedHistory.map((record, index) => {
+    const data = sortedHistory.map((record, index) => {
       if (!record || !record.id) return null;
       
       // Get the next record for change calculation
@@ -109,8 +137,19 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
         prevWeight: nextRecord?.weight
       };
     }).filter(Boolean); // Remove any null values
+    
+    console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} memoized rowData with ${data.length} rows`);
+    return data;
   }, [sortedHistory]);
 
+  // Wrap the delete handler with logging
+  const handleDeleteWithLogging = useCallback((id: string) => {
+    console.log(`[DEBUG-Action] WeightHistoryList ${componentId.current} delete handler called for record: ${id}`);
+    onDeleteWeight?.(id);
+  }, [onDeleteWeight]);
+
+  console.log(`[DEBUG-Render] WeightHistoryList ${componentId.current} rendering with ${rowData.length} rows`);
+  
   return (
     <div className="max-h-[350px] overflow-auto relative">
       <Table>
@@ -128,13 +167,19 @@ export const WeightHistoryList = memo(({ weightHistory, onDeleteWeight }: Weight
               key={item.key}
               record={item.record}
               prevWeight={item.prevWeight}
-              onDelete={onDeleteWeight}
+              onDelete={handleDeleteWithLogging}
             />
           ))}
         </TableBody>
       </Table>
     </div>
   );
-});
+};
 
+// Create a memoized version of the component
+const WeightHistoryList = memo(WeightHistoryListComponent);
 WeightHistoryList.displayName = "WeightHistoryList";
+
+// Export as both component and default
+export { WeightHistoryList };
+export default WeightHistoryList;
