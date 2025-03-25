@@ -1,11 +1,13 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { X, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EditAnimalDialogProps {
   animal: any;
@@ -20,6 +22,9 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
   onOpenChange,
   onSave,
 }) => {
+  const [enclosures, setEnclosures] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const form = useForm({
     defaultValues: {
       name: animal?.name || "",
@@ -28,9 +33,52 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
       length: animal?.length?.toString() || "",
       feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
       breederSource: animal?.breeding_source || animal?.breederSource || "",
-      description: animal?.description || ""
+      description: animal?.description || "",
+      enclosure_id: animal?.enclosure_id || ""
     }
   });
+
+  useEffect(() => {
+    const fetchEnclosures = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('enclosures')
+          .select('id, name')
+          .order('name', { ascending: true });
+          
+        if (error) throw error;
+        
+        if (data) {
+          setEnclosures(data);
+        }
+      } catch (error) {
+        console.error('Error fetching enclosures:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (isOpen) {
+      fetchEnclosures();
+    }
+  }, [isOpen]);
+
+  // Update form values when animal changes
+  useEffect(() => {
+    if (animal && isOpen) {
+      form.reset({
+        name: animal?.name || "",
+        species: animal?.species || "",
+        age: animal?.age?.toString() || "",
+        length: animal?.length?.toString() || "",
+        feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
+        breederSource: animal?.breeding_source || animal?.breederSource || "",
+        description: animal?.description || "",
+        enclosure_id: animal?.enclosure_id || ""
+      });
+    }
+  }, [animal, form, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -114,6 +162,35 @@ export const EditAnimalDialog: React.FC<EditAnimalDialogProps> = ({
                     <FormLabel>Breeder Source</FormLabel>
                     <FormControl>
                       <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="enclosure_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Enclosure</FormLabel>
+                    <FormControl>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an enclosure" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {enclosures.map((enclosure) => (
+                            <SelectItem key={enclosure.id} value={enclosure.id}>
+                              {enclosure.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

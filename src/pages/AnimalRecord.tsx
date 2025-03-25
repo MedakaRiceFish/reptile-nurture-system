@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
@@ -40,9 +39,7 @@ const AnimalRecord = () => {
         if (animalData) {
           setAnimalData(animalData);
 
-          // Fetch weight records
           const records = await getAnimalWeightRecords(id);
-          // Transform to format expected by components
           const formattedRecords = records.map(record => ({
             date: format(new Date(record.recorded_at), "yyyy-MM-dd"),
             weight: record.weight
@@ -87,11 +84,9 @@ const AnimalRecord = () => {
         owner_id: user.id
       };
       
-      // Add to database
       const result = await addWeightRecord(newRecord);
       
       if (result) {
-        // Update local state with the new record
         const formattedRecord = {
           date: format(data.date, "yyyy-MM-dd"),
           weight: parseFloat(data.weight)
@@ -101,7 +96,6 @@ const AnimalRecord = () => {
           new Date(a.date).getTime() - new Date(b.date).getTime()
         ));
         
-        // Update animal's current weight
         const updatedAnimal = {
           ...animalData,
           weight: parseFloat(data.weight)
@@ -138,15 +132,35 @@ const AnimalRecord = () => {
         length: parseInt(data.length),
         feeding_schedule: data.feedingSchedule,
         breeding_source: data.breederSource,
-        description: data.description
+        description: data.description,
+        enclosure_id: data.enclosure_id || null
       };
       
       const result = await updateAnimal(animalData.id, updatedAnimal);
       
       if (result) {
+        let enclosureName = "";
+        
+        if (data.enclosure_id) {
+          try {
+            const { data: enclosureData } = await supabase
+              .from('enclosures')
+              .select('name')
+              .eq('id', data.enclosure_id)
+              .single();
+              
+            if (enclosureData) {
+              enclosureName = enclosureData.name;
+            }
+          } catch (error) {
+            console.error("Error fetching enclosure name:", error);
+          }
+        }
+        
         setAnimalData({
           ...animalData,
-          ...updatedAnimal
+          ...updatedAnimal,
+          enclosureName: enclosureName
         });
         
         setIsEditDialogOpen(false);
@@ -184,7 +198,6 @@ const AnimalRecord = () => {
     );
   }
 
-  // Transform the data structure for the weight history component
   const animalWithWeightHistory = {
     ...animalData,
     weightHistory: weightRecords
