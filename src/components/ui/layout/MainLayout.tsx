@@ -8,7 +8,7 @@ interface MainLayoutProps {
   pageTitle?: string;
 }
 
-export function MainLayout({ children, pageTitle }: MainLayoutProps) {
+export const MainLayout = React.memo(function MainLayout({ children, pageTitle }: MainLayoutProps) {
   return (
     <div className="flex h-screen w-full bg-background">
       <div className="hidden md:flex h-screen border-r glass-panel">
@@ -24,4 +24,4 @@ export function MainLayout({ children, pageTitle }: MainLayoutProps) {
       </div>
     </div>
   );
-}
+});

@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+
+import React, { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Edit } from "lucide-react";
@@ -15,7 +16,7 @@ interface AnimalDetailsProps {
   onEditClick: () => void;
 }
 
-export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
+export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
   animal,
   setAnimalData,
   onEditClick,
@@ -50,10 +51,10 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     };
     
     fetchEnclosureName();
-  }, [animal, setAnimalData]);
+  }, [animal?.enclosure_id, animal, setAnimalData]);
 
   // Get the current weight from weight history if available
-  const currentWeight = React.useMemo(() => {
+  const currentWeight = useMemo(() => {
     if (animal.weightHistory && animal.weightHistory.length > 0) {
       // Sort weight records by date (newest first)
       const sortedRecords = [...animal.weightHistory].sort(
@@ -121,10 +122,12 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
     }
   };
 
-  // Format length to display properly regardless of type
-  const displayLength = animal.length ? 
-    (typeof animal.length === 'number' ? animal.length : parseFloat(String(animal.length) || '0')) : 
-    "--";
+  // Format length to display properly regardless of type - memoized to avoid unnecessary recalculations
+  const displayLength = useMemo(() => {
+    return animal.length ? 
+      (typeof animal.length === 'number' ? animal.length : parseFloat(String(animal.length) || '0')) : 
+      "--";
+  }, [animal.length]);
 
   return (
     <Card className="lg:col-span-1">
@@ -133,6 +136,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
           src={imagePreview || animal.image_url || animal.image} 
           alt={animal.name} 
           className="w-full h-[300px] object-cover rounded-t-lg"
+          loading="lazy" // Add lazy loading for images
         />
         <div className="absolute top-4 right-4 flex space-x-2">
           <PhotoUploadButton onFileChange={handleFileChange} />
@@ -177,4 +181,4 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = ({
       </CardContent>
     </Card>
   );
-};
+});

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { getAnimal } from "@/services/animalService";
@@ -17,6 +17,75 @@ export const useAnimalData = (
   const { toast } = useToast();
   const [isInitialDataFetched, setIsInitialDataFetched] = useState(false);
 
+  // Memoize the data fetching function to prevent unnecessary re-renders
+  const fetchData = useCallback(async () => {
+    if (!animalId || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Use Promise.all to fetch animal data and weight records in parallel
+      const [animalResult, weightRecordsResult] = await Promise.all([
+        getAnimal(animalId),
+        getAnimalWeightRecords(animalId)
+      ]);
+      
+      if (animalResult) {
+        // Filter out deleted records
+        const filteredRecords = weightRecordsResult.filter(record => 
+          record.id ? !deletedRecordIds.has(record.id) : true
+        );
+        
+        setWeightRecords(filteredRecords);
+        
+        // Only create initial weight record if no records exist and animal has weight
+        if (filteredRecords.length === 0 && animalResult.weight) {
+          const today = format(new Date(), "yyyy-MM-dd");
+          
+          try {
+            const newRecord = {
+              animal_id: animalResult.id,
+              weight: animalResult.weight,
+              recorded_at: today,
+              owner_id: userId
+            };
+            
+            const result = await addWeightRecord(newRecord);
+            
+            if (result) {
+              setWeightRecords([result]);
+            }
+          } catch (error) {
+            console.error("Error creating initial weight record:", error);
+          }
+        }
+        
+        // Update current weight if we have records
+        if (filteredRecords.length > 0) {
+          const sortedRecords = [...filteredRecords].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          
+          const currentWeight = sortedRecords[0].weight;
+          animalResult.weight = currentWeight;
+        }
+        
+        setAnimalData(animalResult);
+      }
+    } catch (error) {
+      console.error("Error fetching animal data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch animal data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+      setIsInitialDataFetched(true);
+    }
+  }, [animalId, userId, deletedRecordIds, toast]);
+
   useEffect(() => {
     // Skip the effect if we've already fetched the initial data
     // and the IDs haven't changed
@@ -27,85 +96,10 @@ export const useAnimalData = (
       return;
     }
 
-    const fetchData = async () => {
-      if (!animalId || !userId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log("Fetching animal data for ID:", animalId);
-        const animalData = await getAnimal(animalId);
-        
-        if (animalData) {
-          console.log("Fetching weight records for animal ID:", animalId);
-          const records = await getAnimalWeightRecords(animalId);
-          console.log("Raw records from service:", records);
-          
-          // Filter out any previously deleted records
-          const filteredRecords = records.filter(record => 
-            record.id ? !deletedRecordIds.has(record.id) : true
-          );
-          
-          setWeightRecords(filteredRecords);
-          
-          if (filteredRecords.length === 0 && animalData.weight) {
-            console.log("No weight records but animal has weight:", animalData.weight);
-            console.log("Creating initial weight record from animal weight");
-            
-            const today = format(new Date(), "yyyy-MM-dd");
-            
-            try {
-              const newRecord = {
-                animal_id: animalData.id,
-                weight: animalData.weight,
-                recorded_at: today,
-                owner_id: userId
-              };
-              
-              const result = await addWeightRecord(newRecord);
-              
-              if (result) {
-                console.log("Initial weight record created:", result);
-                setWeightRecords([result]);
-              }
-            } catch (error) {
-              console.error("Error creating initial weight record:", error);
-            }
-          }
-          
-          if (filteredRecords.length > 0) {
-            const sortedRecords = [...filteredRecords].sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-            
-            const currentWeight = sortedRecords[0].weight;
-            animalData.weight = currentWeight;
-          }
-          
-          setAnimalData(animalData);
-          console.log("Animal data loaded with weight history:", { 
-            animalData, 
-            weightRecords: filteredRecords 
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching animal data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch animal data",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-        setIsInitialDataFetched(true);
-      }
-    };
-
     // Set loading to true before fetching data
     setLoading(true);
     fetchData();
-  }, [animalId, userId, deletedRecordIds, toast, isInitialDataFetched, animalData]);
+  }, [animalId, userId, deletedRecordIds, fetchData, isInitialDataFetched, animalData]);
 
   return {
     animalData,

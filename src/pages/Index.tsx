@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { StatCard } from "@/components/ui/dashboard/StatCard";
 import { EnclosureList } from "@/components/ui/dashboard/EnclosureList";
@@ -14,67 +14,63 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [enclosureCount, setEnclosureCount] = useState<number>(0);
   const [animalCount, setAnimalCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchCounts = async () => {
+  // Memoize the fetchCounts function to prevent unnecessary re-renders
+  const fetchCounts = useCallback(async () => {
     if (!user) return;
 
     try {
-      // Get enclosure count
-      const { count: enclosuresCount, error: enclosuresError } = await supabase
-        .from('enclosures')
-        .select('*', { count: 'exact', head: true });
+      // Use Promise.all to fetch counts in parallel
+      const [enclosuresResponse, animalsResponse] = await Promise.all([
+        supabase
+          .from('enclosures')
+          .select('*', { count: 'exact', head: true }),
+        supabase
+          .from('animals')
+          .select('*', { count: 'exact', head: true })
+      ]);
         
-      if (!enclosuresError && enclosuresCount !== null) {
-        setEnclosureCount(enclosuresCount);
+      if (!enclosuresResponse.error && enclosuresResponse.count !== null) {
+        setEnclosureCount(enclosuresResponse.count);
       }
       
-      // Get animal count
-      const { count: animalsCount, error: animalsError } = await supabase
-        .from('animals')
-        .select('*', { count: 'exact', head: true });
-        
-      if (!animalsError && animalsCount !== null) {
-        setAnimalCount(animalsCount);
+      if (!animalsResponse.error && animalsResponse.count !== null) {
+        setAnimalCount(animalsResponse.count);
       }
     } catch (error) {
       console.error('Error fetching counts:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchCounts();
     
-    // Set up subscription for enclosures changes
-    const enclosureChannel = supabase
-      .channel('enclosure-count-changes')
+    // Set up optimized subscriptions using a single channel when possible
+    const channel = supabase
+      .channel('db-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'enclosures' 
       }, () => {
-        console.log('Enclosure change detected, updating count');
         fetchCounts();
       })
-      .subscribe();
-      
-    // Set up subscription for animals changes
-    const animalChannel = supabase
-      .channel('animal-count-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'animals' 
       }, () => {
-        console.log('Animal change detected, updating count');
         fetchCounts();
       })
       .subscribe();
       
     return () => {
-      supabase.removeChannel(enclosureChannel);
-      supabase.removeChannel(animalChannel);
+      supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [fetchCounts]);
 
   return (
     <MainLayout pageTitle="Home">
@@ -123,4 +119,4 @@ const Dashboard = () => {
   );
 }
 
-export default Dashboard;
+export default React.memo(Dashboard);
