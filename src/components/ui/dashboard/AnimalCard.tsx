@@ -14,7 +14,7 @@ interface AnimalCardProps {
   species: string;
   age: number;
   weight: number;
-  length: number | string;
+  length: number | string | null;
   image?: string;
   className?: string;
   onClick?: () => void;
@@ -42,7 +42,9 @@ export function AnimalCard({
   };
 
   // Format length to display properly regardless of type
-  const displayLength = typeof length === 'number' ? length : parseFloat(length || '0');
+  const displayLength = length ? 
+    (typeof length === 'number' ? length : parseFloat(String(length) || '0')) : 
+    "--";
 
   return (
     <div 
@@ -90,7 +92,7 @@ export function AnimalCard({
           <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
             <Ruler className="h-4 w-4 mb-1 text-muted-foreground" />
             <span className="text-sm font-medium">
-              {displayLength} cm
+              {displayLength === "--" ? displayLength : `${displayLength} cm`}
             </span>
             <span className="text-xs text-muted-foreground">Length</span>
           </div>

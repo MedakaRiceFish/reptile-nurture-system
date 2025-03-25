@@ -85,7 +85,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Ruler className="h-4 w-4" />
-                    {animal.length || "N/A"} cm
+                    {animal.length ? `${animal.length} cm` : "--"}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -117,7 +117,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               species={animal.species}
               age={animal.age}
               weight={animal.weight}
-              length={animal.length} // Pass the length directly without conversion
+              length={animal.length} // Pass the length directly which might be null
               image={animal.image_url || "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60"}
             />
           </div>
