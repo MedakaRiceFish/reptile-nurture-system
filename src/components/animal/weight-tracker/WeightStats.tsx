@@ -14,7 +14,8 @@ const WeightStats = ({ weightHistory, currentWeight }: WeightStatsProps) => {
     const defaultStats = {
       currentWeight,
       maxWeight: currentWeight || 0,
-      percentChange: 0
+      percentChange: 0,
+      maxPercentChange: 0
     };
     
     if (!weightHistory || weightHistory.length === 0) {
@@ -37,10 +38,16 @@ const WeightStats = ({ weightHistory, currentWeight }: WeightStatsProps) => {
         : 0;
     }
     
+    // Calculate percentage difference between current and max weight
+    const maxPercentChange = maxWeight > 0 && maxWeight !== latestWeight
+      ? ((latestWeight - maxWeight) / maxWeight) * 100
+      : 0;
+    
     return {
       currentWeight: latestWeight,
       maxWeight,
-      percentChange
+      percentChange,
+      maxPercentChange
     };
   }, [weightHistory, currentWeight]);
 
@@ -53,7 +60,7 @@ const WeightStats = ({ weightHistory, currentWeight }: WeightStatsProps) => {
   }, []);
 
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6 mt-2">
+    <div className="grid grid-cols-4 gap-4 mb-6 mt-2">
       <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
         <div className="text-sm text-muted-foreground mb-1">Current Weight</div>
         <div className="text-2xl font-bold">{weightStats.currentWeight} g</div>
@@ -68,6 +75,13 @@ const WeightStats = ({ weightHistory, currentWeight }: WeightStatsProps) => {
         <div className="text-sm text-muted-foreground mb-1">Change Since Last</div>
         <div className={`text-2xl font-bold ${getPercentChangeColor(weightStats.percentChange)}`}>
           {weightStats.percentChange > 0 ? '+' : ''}{weightStats.percentChange.toFixed(1)}%
+        </div>
+      </div>
+
+      <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
+        <div className="text-sm text-muted-foreground mb-1">From Max Weight</div>
+        <div className={`text-2xl font-bold ${getPercentChangeColor(weightStats.maxPercentChange)}`}>
+          {weightStats.maxPercentChange > 0 ? '+' : ''}{weightStats.maxPercentChange.toFixed(1)}%
         </div>
       </div>
     </div>

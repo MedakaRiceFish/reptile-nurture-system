@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { useParams, useNavigate } from "react-router-dom";
@@ -107,7 +106,7 @@ const TaskDetail = () => {
     
     switch (status) {
       case 'completed':
-        return <Badge variant="success" className="ml-2 bg-green-500 hover:bg-green-600">Completed</Badge>;
+        return <Badge variant="secondary" className="ml-2 bg-green-500 hover:bg-green-600">Completed</Badge>;
       case 'pending':
         return <Badge variant="outline" className="ml-2">Pending</Badge>;
       default:
