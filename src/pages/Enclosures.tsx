@@ -2,13 +2,15 @@
 import React, { useState } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { EnclosureList } from "@/components/ui/dashboard/EnclosureList";
+import { AddEnclosureDialog } from "@/components/ui/dashboard/AddEnclosureDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Grid2X2, LayoutList } from "lucide-react";
+import { Grid2X2, LayoutList, Plus } from "lucide-react";
 
 const Enclosures = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   return (
     <MainLayout pageTitle="Enclosures">
@@ -25,8 +27,11 @@ const Enclosures = () => {
                   <LayoutList className="h-4 w-4" />
                 </ToggleGroupItem>
               </ToggleGroup>
-              <Button className="bg-reptile-500 hover:bg-reptile-600">
-                + Add Enclosure
+              <Button 
+                className="bg-reptile-500 hover:bg-reptile-600"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Enclosure
               </Button>
             </div>
           </div>
@@ -40,6 +45,11 @@ const Enclosures = () => {
             <EnclosureList viewMode={viewMode} />
           </CardContent>
         </Card>
+        
+        <AddEnclosureDialog 
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+        />
       </div>
     </MainLayout>
   );
