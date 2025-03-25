@@ -13,7 +13,7 @@ export const EnclosureSelector: React.FC<EnclosureSelectorProps> = ({
   const navigate = useNavigate();
 
   // Navigate to enclosure page when name is clicked
-  const handleEnclosureNameClick = () => {
+  const handleEnclosureClick = () => {
     if (animal.enclosure) {
       navigate(`/enclosure/${animal.enclosure}`);
     }
@@ -25,7 +25,7 @@ export const EnclosureSelector: React.FC<EnclosureSelectorProps> = ({
         <Button 
           variant="link" 
           className="p-0 h-auto font-medium text-reptile-600"
-          onClick={handleEnclosureNameClick}
+          onClick={handleEnclosureClick}
         >
           {animal.enclosureName}
         </Button>
