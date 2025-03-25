@@ -18,7 +18,8 @@ const INITIAL_ENCLOSURE_DATA = [
     humidity: 65,
     light: 120,
     pressure: 1013,
-    image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?w=800&auto=format&fit=crop&q=60",
+    readingStatus: "Active" // Add readingStatus property to sample data
   },
   {
     id: "sample-2",
@@ -27,7 +28,8 @@ const INITIAL_ENCLOSURE_DATA = [
     humidity: 35,
     light: 250,
     pressure: 1012,
-    image: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=800&auto=format&fit=crop&q=60",
+    readingStatus: "Active" // Add readingStatus property to sample data
   },
   {
     id: "sample-3",
@@ -36,7 +38,8 @@ const INITIAL_ENCLOSURE_DATA = [
     humidity: 60,
     light: 80,
     pressure: 1013,
-    image: "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1438565434616-3ef039228b15?w=800&auto=format&fit=crop&q=60",
+    readingStatus: "Active" // Add readingStatus property to sample data
   },
   {
     id: "sample-4",
@@ -45,7 +48,8 @@ const INITIAL_ENCLOSURE_DATA = [
     humidity: 45,
     light: 110,
     pressure: 1012,
-    image: "https://images.unsplash.com/photo-1487252665478-49b61b47f302?w=800&auto=format&fit=crop&q=60"
+    image: "https://images.unsplash.com/photo-1487252665478-49b61b47f302?w=800&auto=format&fit=crop&q=60",
+    readingStatus: "Active" // Add readingStatus property to sample data
   },
 ];
 
@@ -53,10 +57,22 @@ interface EnclosureListProps {
   viewMode?: "grid" | "list";
 }
 
+// Updated interface to include all properties including readingStatus
+interface Enclosure {
+  id: string | number;
+  name: string;
+  temperature: number;
+  humidity: number;
+  light: number;
+  pressure: number;
+  image?: string;
+  readingStatus?: string;
+}
+
 export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [enclosures, setEnclosures] = useState(INITIAL_ENCLOSURE_DATA);
+  const [enclosures, setEnclosures] = useState<Enclosure[]>(INITIAL_ENCLOSURE_DATA);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -82,7 +98,7 @@ export function EnclosureList({ viewMode = "grid" }: EnclosureListProps) {
             light: 120, // Default values for fields not in DB
             pressure: 1013,
             image: enclosure.image_url || getRandomPlaceholderImage(),
-            readingStatus: enclosure.reading_status
+            readingStatus: enclosure.reading_status || "Active"
           }));
           setEnclosures(mappedData);
         }

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,11 @@ import { Thermometer, Droplet, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EnclosureValueEditorProps {
-  enclosureId: number;
+  enclosureId: string | number;
   enclosureName: string;
   currentTemperature: number;
   currentHumidity: number;
-  onUpdate?: (id: number, values: { temperature: number; humidity: number }) => void;
+  onUpdate?: (id: string | number, values: { temperature: number; humidity: number }) => void;
 }
 
 export function EnclosureValueEditor({
@@ -29,7 +28,6 @@ export function EnclosureValueEditor({
   const { toast } = useToast();
 
   const handleSave = () => {
-    // In a real app, this would make an API call
     if (onUpdate) {
       onUpdate(enclosureId, { temperature, humidity });
     }
