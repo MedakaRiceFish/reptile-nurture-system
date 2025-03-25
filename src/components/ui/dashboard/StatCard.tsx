@@ -25,11 +25,14 @@ export function StatCard({
   isAlert = false,
   linkTo
 }: StatCardProps) {
+  // Format the title to include a line break if it's the "ACTIVE ALERTS" title
+  const formattedTitle = title === "ACTIVE ALERTS" ? "ACTIVE<br />ALERTS" : title;
+
   const CardContent = () => (
     <div className="flex flex-col h-full">
       {/* Header section */}
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</h3>
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide" dangerouslySetInnerHTML={{ __html: formattedTitle }}></h3>
         <div className="p-3 bg-reptile-50 text-reptile-500 rounded-xl">
           {icon}
         </div>
