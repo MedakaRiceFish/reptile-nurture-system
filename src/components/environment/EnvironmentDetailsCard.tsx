@@ -17,7 +17,7 @@ export const EnvironmentDetailsCard: React.FC<EnvironmentDetailsCardProps> = ({
   onEditClick
 }) => {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center justify-between">
           <div className="flex items-center">

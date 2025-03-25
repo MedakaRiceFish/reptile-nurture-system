@@ -16,7 +16,7 @@ interface InhabitantsCardProps {
 
 export const InhabitantsCard: React.FC<InhabitantsCardProps> = ({ inhabitants }) => {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center">
           <Users className="h-5 w-5 mr-2 text-muted-foreground" />
