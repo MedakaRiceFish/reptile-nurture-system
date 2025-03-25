@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/ui/layout/MainLayout";
 import { StatCard } from "@/components/ui/dashboard/StatCard";
 import { EnclosureList } from "@/components/ui/dashboard/EnclosureList";
-import { SensorChart } from "@/components/ui/dashboard/SensorChart";
 import { QuickActions } from "@/components/ui/dashboard/QuickActions";
 import { UpcomingSchedule } from "@/components/ui/dashboard/UpcomingSchedule";
 import { Bell, Clock, Turtle, TreeDeciduous } from "lucide-react";
@@ -102,17 +101,13 @@ const Dashboard = () => {
           />
         </div>
 
-        <div className="mb-8">
-          <SensorChart />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <QuickActions />
+          <UpcomingSchedule />
         </div>
 
         <div className="mb-8">
           <EnclosureList />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <QuickActions />
-          <UpcomingSchedule />
         </div>
       </div>
     </MainLayout>
