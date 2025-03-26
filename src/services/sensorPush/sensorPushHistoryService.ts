@@ -17,6 +17,75 @@ export const fetchSensorHistory = async (
   try {
     const userId = await getCurrentUserId();
     
+    // TEMPORARY: For development/testing, generate mock data
+    console.log("Using simulated history data for development");
+    
+    // Calculate the duration between start and end dates
+    const duration = endDate.getTime() - startDate.getTime();
+    const days = Math.ceil(duration / (1000 * 60 * 60 * 24));
+    
+    // Determine the number of data points based on the interval
+    let dataPoints: number;
+    switch (interval) {
+      case 'hour':
+        dataPoints = days * 24; // 24 hours per day
+        break;
+      case 'day':
+        dataPoints = days;
+        break;
+      case 'week':
+        dataPoints = Math.ceil(days / 7);
+        break;
+      case 'month':
+        dataPoints = Math.ceil(days / 30);
+        break;
+      default:
+        dataPoints = days;
+    }
+    
+    // Limit data points to prevent performance issues
+    dataPoints = Math.min(dataPoints, 100);
+    
+    // Generate mock historical data
+    const mockData = Array.from({ length: dataPoints }).map((_, index) => {
+      // Create timestamps going from start to end date
+      const timestamp = new Date(startDate);
+      switch (interval) {
+        case 'hour':
+          timestamp.setHours(timestamp.getHours() + index);
+          break;
+        case 'day':
+          timestamp.setDate(timestamp.getDate() + index);
+          break;
+        case 'week':
+          timestamp.setDate(timestamp.getDate() + index * 7);
+          break;
+        case 'month':
+          timestamp.setMonth(timestamp.getMonth() + index);
+          break;
+      }
+      
+      // Generate realistic values with some variation
+      const baseTemp = 23 + Math.sin(index / 10) * 3; // ~73.4°F with sine wave variation
+      const baseHumidity = 50 + Math.sin(index / 8) * 10; // 50% with sine wave variation
+      
+      return {
+        time_bucket: timestamp.toISOString(),
+        avg_temperature: parseFloat(baseTemp.toFixed(2)),
+        avg_humidity: parseFloat(baseHumidity.toFixed(2)),
+        avg_dewpoint: parseFloat((baseTemp - ((100 - baseHumidity) / 5)).toFixed(2)),
+        min_temperature: parseFloat((baseTemp - 1 - Math.random()).toFixed(2)),
+        max_temperature: parseFloat((baseTemp + 1 + Math.random()).toFixed(2)),
+        min_humidity: parseFloat((baseHumidity - 5 - Math.random() * 2).toFixed(2)),
+        max_humidity: parseFloat((baseHumidity + 5 + Math.random() * 2).toFixed(2)),
+        sample_count: Math.floor(10 + Math.random() * 20)
+      };
+    });
+    
+    return mockData;
+    
+    /* 
+    // COMMENTED OUT FOR NOW - USE THIS ONCE EDGE FUNCTION IS SET UP
     // Use database function to get aggregated history with proper time intervals
     const { data, error } = await supabase.rpc('get_sensor_history', {
       p_sensor_id: sensorId,
@@ -31,6 +100,7 @@ export const fetchSensorHistory = async (
     }
     
     return data;
+    */
   } catch (error: any) {
     console.error("Error fetching sensor history:", error.message);
     toast.error(`Failed to fetch sensor history: ${error.message}`);
@@ -44,6 +114,11 @@ export const fetchSensorHistory = async (
  */
 export const getDataRetentionPolicy = async (): Promise<{ months: number } | null> => {
   try {
+    // For development, just return mock data
+    return { months: 18 };
+    
+    /* 
+    // COMMENTED OUT FOR NOW - USE THIS ONCE EDGE FUNCTION IS SET UP
     const { data, error } = await supabase.rpc('get_data_retention_policy');
     
     if (error) {
@@ -52,6 +127,7 @@ export const getDataRetentionPolicy = async (): Promise<{ months: number } | nul
     
     // Fix: The database function returns an array with one object, so we need to return the first item
     return data && data.length > 0 ? data[0] : { months: 18 };
+    */
   } catch (error: any) {
     console.error("Error fetching data retention policy:", error.message);
     return { months: 18 }; // Default to 18 months if we can't fetch the policy

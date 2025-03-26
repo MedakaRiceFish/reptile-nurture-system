@@ -22,9 +22,12 @@ export function SensorPushAuthForm() {
     // Check if we already have a valid token
     const checkConnection = async () => {
       const token = await getSensorPushToken();
-      setIsConnected(!!token);
       
-      if (token) {
+      // For development: Simulate connection even if token doesn't exist
+      const simulateConnected = process.env.NODE_ENV === 'development';
+      setIsConnected(!!token || simulateConnected);
+      
+      if (token || simulateConnected) {
         // Set a simulated last sync time (in a real app, store this in the database)
         setLastSyncTime(new Date());
         
@@ -48,24 +51,45 @@ export function SensorPushAuthForm() {
     setIsLoading(true);
 
     try {
-      const token = await authenticateSensorPush({ email, password });
+      // For development: Simulate successful authentication
+      const simulateAuth = process.env.NODE_ENV === 'development';
       
-      if (token) {
-        toast.success("Successfully connected to SensorPush");
+      if (simulateAuth) {
+        // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast.success("Successfully connected to SensorPush (Development Mode)");
         setEmail("");
         setPassword("");
         setIsConnected(true);
         setShowLoginForm(false);
         setLastSyncTime(new Date());
         
-        // Fetch sensors to get the device count after successful authentication
-        try {
-          const sensors = await fetchSensors();
-          if (sensors) {
-            setDeviceCount(sensors.length);
+        // Fetch sensors to get the device count
+        const sensors = await fetchSensors();
+        if (sensors) {
+          setDeviceCount(sensors.length);
+        }
+      } else {
+        // Real authentication
+        const token = await authenticateSensorPush({ email, password });
+        
+        if (token) {
+          toast.success("Successfully connected to SensorPush");
+          setEmail("");
+          setPassword("");
+          setIsConnected(true);
+          setShowLoginForm(false);
+          setLastSyncTime(new Date());
+          
+          // Fetch sensors to get the device count after successful authentication
+          try {
+            const sensors = await fetchSensors();
+            if (sensors) {
+              setDeviceCount(sensors.length);
+            }
+          } catch (error) {
+            console.error("Error fetching sensor count:", error);
           }
-        } catch (error) {
-          console.error("Error fetching sensor count:", error);
         }
       }
     } catch (error) {
