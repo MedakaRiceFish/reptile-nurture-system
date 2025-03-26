@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PhotoUploadButton } from "./PhotoUploadButton";
 import { EnclosureSelector } from "./EnclosureSelector";
 import { DetailsItem } from "./DetailsItem";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { FeedButton } from "./FeedButton";
 
 interface AnimalDetailsProps {
   animal: any;
@@ -24,7 +25,7 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
 }) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
-
+  
   // Use a dependency array to prevent useEffect from running on every render
   useEffect(() => {
     // Only fetch enclosure name if animal has enclosure_id but no enclosureName
@@ -143,6 +144,36 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
     if (!animal.last_fed_date) return "Not recorded";
     return format(new Date(animal.last_fed_date), "MMM d, yyyy");
   }, [animal.last_fed_date]);
+  
+  // Format the next feeding date
+  const formattedNextFeedingDate = useMemo(() => {
+    if (!animal.next_feeding_date) return "Not scheduled";
+    return format(parseISO(animal.next_feeding_date), "MMM d, yyyy h:mm a");
+  }, [animal.next_feeding_date]);
+  
+  // Format the feeding schedule for display
+  const formattedFeedingSchedule = useMemo(() => {
+    if (!animal.feeding_schedule) return "Not set";
+    
+    try {
+      const [interval, frequency] = animal.feeding_schedule.split(':');
+      if (interval && frequency) {
+        return `Every ${interval} ${frequency}`;
+      }
+      return animal.feeding_schedule;
+    } catch (error) {
+      console.error("Error formatting feeding schedule:", error);
+      return animal.feeding_schedule;
+    }
+  }, [animal.feeding_schedule]);
+  
+  // Handler for when feeding is updated
+  const handleFeedingUpdated = useCallback((updatedAnimal: any) => {
+    setAnimalData((prevData: any) => ({
+      ...prevData,
+      ...updatedAnimal
+    }));
+  }, [setAnimalData]);
 
   return (
     <Card className="lg:col-span-1">
@@ -181,8 +212,24 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
             {displayLength === "--" ? displayLength : `${displayLength} cm`}
           </DetailsItem>
           
-          <DetailsItem label="Feeding Schedule">
-            {animal.feeding_schedule || animal.feedingSchedule}
+          <DetailsItem 
+            label="Feeding Schedule"
+            action={
+              <FeedButton 
+                animalId={animal.id} 
+                onFeedingUpdated={handleFeedingUpdated} 
+              />
+            }
+          >
+            {formattedFeedingSchedule}
+          </DetailsItem>
+          
+          <DetailsItem label="Last Fed Date">
+            {formattedLastFedDate}
+          </DetailsItem>
+          
+          <DetailsItem label="Next Feeding">
+            {formattedNextFeedingDate}
           </DetailsItem>
           
           <div className="flex justify-between items-center">
@@ -196,10 +243,6 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
           
           <DetailsItem label="Custom ID">
             {animal.custom_id || "Not set"}
-          </DetailsItem>
-          
-          <DetailsItem label="Last Fed Date">
-            {formattedLastFedDate}
           </DetailsItem>
         </div>
       </CardContent>

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { addDays, addHours, addMonths, addWeeks } from "date-fns";
 
 export type Animal = {
   id: string;
@@ -11,6 +12,7 @@ export type Animal = {
   length: number | null;
   enclosure_id: string | null;
   feeding_schedule: string | null;
+  next_feeding_date: string | null;
   breeding_source: string | null;
   description: string | null;
   image_url: string | null;
@@ -125,5 +127,65 @@ export const deleteAnimal = async (id: string): Promise<boolean> => {
   } catch (error: any) {
     toast.error(`Error deleting animal: ${error.message}`);
     return false;
+  }
+};
+
+export const updateLastFedDate = async (id: string): Promise<Animal | null> => {
+  try {
+    // First get the current animal data to access the feeding schedule
+    const { data: animalData, error: fetchError } = await supabase
+      .from('animals')
+      .select('feeding_schedule')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (fetchError) throw fetchError;
+    
+    // Calculate next feeding date based on the feeding schedule
+    const now = new Date();
+    let nextFeedingDate = null;
+    
+    if (animalData?.feeding_schedule) {
+      const [intervalStr, frequency] = animalData.feeding_schedule.split(':');
+      const interval = parseInt(intervalStr, 10);
+      
+      if (!isNaN(interval) && interval > 0) {
+        switch (frequency) {
+          case 'hours':
+            nextFeedingDate = addHours(now, interval);
+            break;
+          case 'days':
+            nextFeedingDate = addDays(now, interval);
+            break;
+          case 'weeks':
+            nextFeedingDate = addWeeks(now, interval);
+            break;
+          case 'months':
+            nextFeedingDate = addMonths(now, interval);
+            break;
+        }
+      }
+    }
+    
+    // Update the animal with the new last_fed_date and next_feeding_date
+    const updates = {
+      last_fed_date: now.toISOString(),
+      next_feeding_date: nextFeedingDate ? nextFeedingDate.toISOString() : null
+    };
+    
+    const { data, error } = await supabase
+      .from('animals')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    toast.success(`Feeding recorded successfully!`);
+    return data;
+  } catch (error: any) {
+    toast.error(`Error updating feeding date: ${error.message}`);
+    return null;
   }
 };

@@ -66,6 +66,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               <TableHead>Length</TableHead>
               <TableHead>Enclosure</TableHead>
               <TableHead>Last Fed</TableHead>
+              <TableHead>Next Feeding</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -106,6 +107,11 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
                     {formatLastFedDate(animal.last_fed_date)}
                   </div>
                 </TableCell>
+                <TableCell>
+                  {animal.next_feeding_date ? 
+                    format(new Date(animal.next_feeding_date), "MMM d, yyyy") : 
+                    "Not scheduled"}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -132,6 +138,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               length={animal.length}
               lastFedDate={animal.last_fed_date}
               customId={animal.custom_id}
+              nextFeedingDate={animal.next_feeding_date}
               image={animal.image_url || "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60"}
             />
           </div>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateAnimal } from "@/services/animalService";
 import { supabase } from "@/integrations/supabase/client";
+import { addDays, addHours, addMonths, addWeeks } from "date-fns";
 
 export const useAnimalEdit = (
   setAnimalData: React.Dispatch<React.SetStateAction<any>>
@@ -10,16 +11,50 @@ export const useAnimalEdit = (
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  const calculateNextFeedingDate = (schedule: string, lastFedDate: Date | null) => {
+    try {
+      if (!schedule) return null;
+      
+      const [intervalStr, frequency] = schedule.split(':');
+      const interval = parseInt(intervalStr, 10);
+      
+      if (isNaN(interval) || interval <= 0) return null;
+      
+      const baseDate = lastFedDate || new Date();
+      
+      switch (frequency) {
+        case 'hours':
+          return addHours(baseDate, interval);
+        case 'days':
+          return addDays(baseDate, interval);
+        case 'weeks':
+          return addWeeks(baseDate, interval);
+        case 'months':
+          return addMonths(baseDate, interval);
+        default:
+          return null;
+      }
+    } catch (error) {
+      console.error("Error calculating next feeding date:", error);
+      return null;
+    }
+  };
+
   const handleEditSubmit = async (data: any, animalId: string) => {
     if (!animalId) return;
     
     try {
+      // Calculate the next feeding date based on the specified schedule
+      const nextFeedingDate = data.feedingSchedule ? 
+        calculateNextFeedingDate(data.feedingSchedule, null) : null;
+      
       const updatedAnimal = {
         name: data.name,
         species: data.species,
         age: parseInt(data.age),
         length: parseInt(data.length),
         feeding_schedule: data.feedingSchedule,
+        next_feeding_date: nextFeedingDate?.toISOString(),
         breeding_source: data.breederSource,
         custom_id: data.customId,
         description: data.description,

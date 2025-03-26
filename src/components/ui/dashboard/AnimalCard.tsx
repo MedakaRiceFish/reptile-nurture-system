@@ -20,6 +20,7 @@ interface AnimalCardProps {
   length: number | string | null;
   lastFedDate?: string | null;
   customId?: string | null;
+  nextFeedingDate?: string | null;
   image?: string;
   className?: string;
   onClick?: () => void;
@@ -34,6 +35,7 @@ export function AnimalCard({
   length,
   lastFedDate,
   customId,
+  nextFeedingDate,
   image,
   className,
   onClick
@@ -51,6 +53,11 @@ export function AnimalCard({
   // Format the last fed date
   const formattedLastFedDate = lastFedDate ? 
     format(new Date(lastFedDate), "MMM d, yyyy") : 
+    "--";
+    
+  // Format the next feeding date
+  const formattedNextFeedingDate = nextFeedingDate ?
+    format(new Date(nextFeedingDate), "MMM d") :
     "--";
 
   return (
@@ -111,6 +118,14 @@ export function AnimalCard({
             <span className="text-muted-foreground mr-1">ID:</span>
             <span className="font-medium text-xs truncate">{customId || "—"}</span>
           </div>
+          
+          {nextFeedingDate && (
+            <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
+              <UtensilsCrossed className="h-3 w-3 mr-1.5 text-muted-foreground" />
+              <span className="text-muted-foreground mr-1">Next Feeding:</span>
+              <span className="font-medium text-xs">{formattedNextFeedingDate}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
