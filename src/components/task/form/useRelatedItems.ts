@@ -1,66 +1,66 @@
 
-import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
-export interface RelatedItem {
+export type RelatedItem = {
   id: string;
   name: string;
-}
+};
 
-export const useRelatedItems = (
-  relatedType: 'enclosure' | 'animal' | 'hardware' | null | undefined
-) => {
+export const useRelatedItems = (type: "animal" | "enclosure" | "hardware") => {
   const [items, setItems] = useState<RelatedItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const fetchItems = useCallback(async () => {
-    if (!relatedType) {
-      setItems([]);
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      let data: RelatedItem[] = [];
-      
-      if (relatedType === 'enclosure') {
-        const { data: enclosures, error } = await supabase
-          .from('enclosures')
-          .select('id, name:label');
-          
-        if (error) throw error;
-        data = enclosures || [];
-      } 
-      else if (relatedType === 'animal') {
-        const { data: animals, error } = await supabase
-          .from('animals')
-          .select('id, name');
-          
-        if (error) throw error;
-        data = animals || [];
-      } 
-      else if (relatedType === 'hardware') {
-        const { data: devices, error } = await supabase
-          .from('hardware_devices')
-          .select('id, name:device_name');
-          
-        if (error) throw error;
-        data = devices || [];
-      }
-      
-      setItems(data);
-    } catch (error) {
-      console.error('Error fetching related items:', error);
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [relatedType]);
-  
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
   useEffect(() => {
+    const fetchItems = async () => {
+      if (!user?.id) return;
+      setLoading(true);
+
+      try {
+        switch (type) {
+          case "animal": {
+            const { data, error } = await supabase
+              .from("animals")
+              .select("id, name")
+              .eq("owner_id", user.id);
+
+            if (error) throw error;
+            setItems(data || []);
+            break;
+          }
+          case "enclosure": {
+            const { data, error } = await supabase
+              .from("enclosures")
+              .select("id, name")
+              .eq("owner_id", user.id);
+
+            if (error) throw error;
+            setItems(data || []);
+            break;
+          }
+          case "hardware": {
+            const { data, error } = await supabase
+              .from("hardware_devices")
+              .select("id, name")
+              .eq("owner_id", user.id);
+
+            if (error) throw error;
+            setItems(data || []);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching ${type} items:`, error);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchItems();
-  }, [fetchItems]);
-  
-  return { items, isLoading };
+  }, [type, user?.id]);
+
+  return { items, loading };
 };

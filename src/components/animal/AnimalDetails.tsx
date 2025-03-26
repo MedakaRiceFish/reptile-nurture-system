@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PhotoUploadButton } from "./PhotoUploadButton";
 import { EnclosureSelector } from "./EnclosureSelector";
 import { DetailsItem } from "./DetailsItem";
+import { format } from "date-fns";
 
 interface AnimalDetailsProps {
   animal: any;
@@ -137,6 +138,12 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
       "--";
   }, [animal.length]);
 
+  // Format the last fed date
+  const formattedLastFedDate = useMemo(() => {
+    if (!animal.last_fed_date) return "Not recorded";
+    return format(new Date(animal.last_fed_date), "MMM d, yyyy");
+  }, [animal.last_fed_date]);
+
   return (
     <Card className="lg:col-span-1">
       <div className="relative">
@@ -185,6 +192,14 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
           
           <DetailsItem label="Breeder Source">
             {animal.breeding_source || animal.breederSource || "Unknown"}
+          </DetailsItem>
+          
+          <DetailsItem label="Animal ID">
+            {animal.id || "N/A"}
+          </DetailsItem>
+          
+          <DetailsItem label="Last Fed Date">
+            {formattedLastFedDate}
           </DetailsItem>
         </div>
       </CardContent>

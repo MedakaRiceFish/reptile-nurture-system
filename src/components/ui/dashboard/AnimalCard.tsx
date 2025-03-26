@@ -4,7 +4,8 @@ import {
   Ruler, 
   Weight, 
   Calendar,
-  UtensilsCrossed
+  UtensilsCrossed,
+  IdCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -107,10 +108,18 @@ export function AnimalCard({
           </div>
         </div>
 
-        <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
-          <UtensilsCrossed className="h-3 w-3 mr-1.5 text-muted-foreground" />
-          <span className="text-muted-foreground mr-1">Last fed:</span>
-          <span className="font-medium">{formattedLastFedDate}</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
+            <UtensilsCrossed className="h-3 w-3 mr-1.5 text-muted-foreground" />
+            <span className="text-muted-foreground mr-1">Last fed:</span>
+            <span className="font-medium">{formattedLastFedDate}</span>
+          </div>
+          
+          <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
+            <IdCard className="h-3 w-3 mr-1.5 text-muted-foreground" />
+            <span className="text-muted-foreground mr-1">ID:</span>
+            <span className="font-medium text-xs truncate">{animalId}</span>
+          </div>
         </div>
       </div>
     </div>
