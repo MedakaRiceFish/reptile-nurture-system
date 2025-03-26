@@ -48,11 +48,6 @@ export function AnimalCard({
     }
   };
 
-  // Format length to display properly regardless of type
-  const displayLength = length ? 
-    (typeof length === 'number' ? length : parseFloat(String(length) || '0')) : 
-    "--";
-
   // Format the last fed date
   const formattedLastFedDate = lastFedDate ? 
     format(new Date(lastFedDate), "MMM d, yyyy") : 
@@ -102,19 +97,19 @@ export function AnimalCard({
           </div>
 
           <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
-            <Ruler className="h-4 w-4 mb-1 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {displayLength === "--" ? displayLength : `${displayLength} cm`}
+            <UtensilsCrossed className="h-4 w-4 mb-1 text-muted-foreground" />
+            <span className="text-sm font-medium truncate max-w-full">
+              {formattedLastFedDate}
             </span>
-            <span className="text-xs text-muted-foreground">Length</span>
+            <span className="text-xs text-muted-foreground">Last Fed</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
-            <UtensilsCrossed className="h-3 w-3 mr-1.5 text-muted-foreground" />
-            <span className="text-muted-foreground mr-1">Last fed:</span>
-            <span className="font-medium">{formattedLastFedDate}</span>
+            <Ruler className="h-3 w-3 mr-1.5 text-muted-foreground" />
+            <span className="text-muted-foreground mr-1">Length:</span>
+            <span className="font-medium">{length ? `${length} cm` : "—"}</span>
           </div>
           
           <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">

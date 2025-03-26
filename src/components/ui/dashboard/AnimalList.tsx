@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AnimalCard } from "./AnimalCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -131,6 +130,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               weight={animal.weight}
               length={animal.length}
               lastFedDate={animal.last_fed_date}
+              customId={animal.custom_id}
               image={animal.image_url || "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60"}
             />
           </div>

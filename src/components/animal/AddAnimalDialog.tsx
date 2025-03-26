@@ -1,205 +1,218 @@
 
-import React from "react";
-import { useForm } from "react-hook-form";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { createAnimal } from "@/services/animalService";
 import { useAuth } from "@/context/AuthContext";
-import { X, Save } from "lucide-react";
-import { Animal, createAnimal } from "@/services/animalService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AddAnimalDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onAnimalAdded: (animal: Animal) => void;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-export function AddAnimalDialog({
-  isOpen,
-  onClose,
-  onAnimalAdded,
-}: AddAnimalDialogProps) {
+export function AddAnimalDialog({ isOpen, onOpenChange, onSuccess }: AddAnimalDialogProps) {
+  const [name, setName] = useState("");
+  const [species, setSpecies] = useState("");
+  const [age, setAge] = useState("");
+  const [weight, setWeight] = useState("");
+  const [length, setLength] = useState("");
+  const [feedingSchedule, setFeedingSchedule] = useState("");
+  const [breederSource, setBreederSource] = useState("");
+  const [description, setDescription] = useState("");
+  const [customId, setCustomId] = useState("");
+  const [enclosureId, setEnclosureId] = useState("none");
+  const { toast } = useToast();
   const { user } = useAuth();
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      species: "",
-      age: "1",
-      weight: "0",
-      length: "",
-      feedingSchedule: "",
-      breederSource: "",
-      description: "",
-    },
-  });
 
-  const handleSubmit = async (values: any) => {
-    if (!user) return;
-
-    const newAnimalData = {
-      name: values.name,
-      species: values.species,
-      age: Number(values.age),
-      weight: Number(values.weight),
-      length: values.length ? Number(values.length) : null,
-      feeding_schedule: values.feedingSchedule,
-      breeding_source: values.breederSource,
-      description: values.description,
-      owner_id: user.id,
-      enclosure_id: null,
-      image_url: null,
-      last_fed_date: null,
-    };
-
-    const animal = await createAnimal(newAnimalData);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (animal) {
-      onAnimalAdded(animal);
-      onClose();
-      form.reset();
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add an animal",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const newAnimal = {
+        name,
+        species,
+        age: parseInt(age) || 0,
+        weight: parseFloat(weight) || 0,
+        length: parseFloat(length) || 0,
+        feeding_schedule: feedingSchedule,
+        breeding_source: breederSource,
+        description,
+        custom_id: customId,
+        owner_id: user.id,
+        enclosure_id: enclosureId === "none" ? null : enclosureId,
+        image_url: null,
+        last_fed_date: null
+      };
+      
+      const result = await createAnimal(newAnimal);
+      
+      if (result) {
+        toast({
+          title: "Success",
+          description: `${name} has been added to your collection`
+        });
+        
+        // Reset form
+        setName("");
+        setSpecies("");
+        setAge("");
+        setWeight("");
+        setLength("");
+        setFeedingSchedule("");
+        setBreederSource("");
+        setDescription("");
+        setCustomId("");
+        setEnclosureId("none");
+        
+        // Close dialog
+        onOpenChange(false);
+        
+        // Trigger success callback
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred while adding the animal",
+        variant: "destructive"
+      });
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Animal</DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Example: Rex" required />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="species"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Species</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Example: Ball Python" required />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Age (years)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" min="0" step="0.1" required />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="weight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Weight (g)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" min="0" required />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="length"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Length (cm)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" min="0" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="feedingSchedule"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Feeding Schedule</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Example: Every 7 days" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="breederSource"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Breeder Source</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Where you got the animal" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <textarea 
-                      className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Additional notes about this animal"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" />
-                Add Animal
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            <div className="space-y-2">
+              <Label htmlFor="species">Species *</Label>
+              <Input
+                id="species"
+                value={species}
+                onChange={(e) => setSpecies(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Age (years)</Label>
+              <Input
+                id="age"
+                type="number"
+                min="0"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="weight">Weight (g) *</Label>
+              <Input
+                id="weight"
+                type="number"
+                min="0"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="length">Length (cm)</Label>
+              <Input
+                id="length"
+                type="number"
+                min="0"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customId">Custom ID (max 10 chars)</Label>
+              <Input
+                id="customId"
+                value={customId}
+                onChange={(e) => setCustomId(e.target.value)}
+                maxLength={10}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="feedingSchedule">Feeding Schedule</Label>
+              <Input
+                id="feedingSchedule"
+                value={feedingSchedule}
+                onChange={(e) => setFeedingSchedule(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="breederSource">Breeder Source</Label>
+              <Input
+                id="breederSource"
+                value={breederSource}
+                onChange={(e) => setBreederSource(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="enclosure">Enclosure</Label>
+              <Select
+                value={enclosureId}
+                onValueChange={setEnclosureId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select enclosure" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {/* Here would be a map of enclosures */}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Add Animal</Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

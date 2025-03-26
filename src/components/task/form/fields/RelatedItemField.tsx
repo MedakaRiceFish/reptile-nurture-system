@@ -1,60 +1,52 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFormContext } from 'react-hook-form';
+import { Control } from 'react-hook-form';
 import { useRelatedItems } from '../useRelatedItems';
 
-interface RelatedItemFieldProps {
-  disabled?: boolean;
+export interface RelatedItem {
+  id: string;
+  name: string;
 }
 
-export function RelatedItemField({ disabled }: RelatedItemFieldProps) {
-  const form = useFormContext();
-  const relatedType = form.watch('related_type');
-  const { items, isLoading } = useRelatedItems(relatedType);
-  
-  // Reset related_id when type changes
-  useEffect(() => {
-    form.setValue('related_id', undefined);
-  }, [relatedType, form]);
-  
-  if (!relatedType) {
-    return null;
-  }
-  
+export interface RelatedItemFieldProps {
+  control: Control<any>;
+  relatedType: 'animal' | 'enclosure' | 'hardware';
+}
+
+export function RelatedItemField({ control, relatedType }: RelatedItemFieldProps) {
+  const { items, loading } = useRelatedItems(relatedType);
+
   return (
     <FormField
-      control={form.control}
+      control={control}
       name="related_id"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>
-            {relatedType === 'enclosure' ? 'Enclosure' : 
-             relatedType === 'animal' ? 'Animal' : 
-             relatedType === 'hardware' ? 'Hardware Device' : 
-             'Related Item'}
-          </FormLabel>
+          <FormLabel>Related Item</FormLabel>
           <Select
-            disabled={disabled || isLoading || items.length === 0}
+            disabled={loading}
             onValueChange={field.onChange}
-            value={field.value}
+            defaultValue={field.value}
+            value={field.value || ""}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder={
-                  isLoading ? "Loading..." : 
-                  items.length === 0 ? `No ${relatedType}s found` : 
-                  `Select ${relatedType}`
-                } />
+                <SelectValue placeholder={loading ? "Loading..." : "Select a related item"} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {items.map((item) => (
+              {items.map(item => (
                 <SelectItem key={item.id} value={item.id}>
                   {item.name}
                 </SelectItem>
               ))}
+              {items.length === 0 && !loading && (
+                <SelectItem value="none" disabled>
+                  No items available
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
           <FormMessage />
