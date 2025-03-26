@@ -5,7 +5,7 @@ import { EnvironmentContainer } from "@/components/environment/EnvironmentContai
 
 export default function Environment() {
   return (
-    <MainLayout pageTitle="Enclosure">
+    <MainLayout pageTitle="Environment Monitoring">
       <EnvironmentContainer />
     </MainLayout>
   );
