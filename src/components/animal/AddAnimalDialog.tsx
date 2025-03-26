@@ -6,13 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { createAnimal } from "@/services/animalService";
 import { useAuth } from "@/context/AuthContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AddAnimalFormFields } from "./AddAnimalFormFields";
+import { AddAnimalFormActions } from "./AddAnimalFormActions";
 
 interface AddAnimalDialogProps {
   isOpen: boolean;
@@ -72,22 +70,9 @@ export function AddAnimalDialog({ isOpen, onOpenChange, onSuccess }: AddAnimalDi
           description: `${name} has been added to your collection`
         });
         
-        // Reset form
-        setName("");
-        setSpecies("");
-        setAge("");
-        setWeight("");
-        setLength("");
-        setFeedingSchedule("");
-        setBreederSource("");
-        setDescription("");
-        setCustomId("");
-        setEnclosureId("none");
-        
-        // Close dialog
+        resetForm();
         onOpenChange(false);
         
-        // Trigger success callback
         if (onSuccess) {
           onSuccess();
         }
@@ -101,6 +86,19 @@ export function AddAnimalDialog({ isOpen, onOpenChange, onSuccess }: AddAnimalDi
     }
   };
 
+  const resetForm = () => {
+    setName("");
+    setSpecies("");
+    setAge("");
+    setWeight("");
+    setLength("");
+    setFeedingSchedule("");
+    setBreederSource("");
+    setDescription("");
+    setCustomId("");
+    setEnclosureId("none");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -108,111 +106,29 @@ export function AddAnimalDialog({ isOpen, onOpenChange, onSuccess }: AddAnimalDi
           <DialogTitle>Add New Animal</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="species">Species *</Label>
-              <Input
-                id="species"
-                value={species}
-                onChange={(e) => setSpecies(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="age">Age (years)</Label>
-              <Input
-                id="age"
-                type="number"
-                min="0"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="weight">Weight (g) *</Label>
-              <Input
-                id="weight"
-                type="number"
-                min="0"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="length">Length (cm)</Label>
-              <Input
-                id="length"
-                type="number"
-                min="0"
-                value={length}
-                onChange={(e) => setLength(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="customId">Custom ID (max 10 chars)</Label>
-              <Input
-                id="customId"
-                value={customId}
-                onChange={(e) => setCustomId(e.target.value)}
-                maxLength={10}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="feedingSchedule">Feeding Schedule</Label>
-              <Input
-                id="feedingSchedule"
-                value={feedingSchedule}
-                onChange={(e) => setFeedingSchedule(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="breederSource">Breeder Source</Label>
-              <Input
-                id="breederSource"
-                value={breederSource}
-                onChange={(e) => setBreederSource(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="enclosure">Enclosure</Label>
-              <Select
-                value={enclosureId}
-                onValueChange={setEnclosureId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select enclosure" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {/* Here would be a map of enclosures */}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Animal</Button>
-          </div>
+          <AddAnimalFormFields
+            name={name}
+            setName={setName}
+            species={species}
+            setSpecies={setSpecies}
+            age={age}
+            setAge={setAge}
+            weight={weight}
+            setWeight={setWeight}
+            length={length}
+            setLength={setLength}
+            feedingSchedule={feedingSchedule}
+            setFeedingSchedule={setFeedingSchedule}
+            breederSource={breederSource}
+            setBreederSource={setBreederSource}
+            description={description}
+            setDescription={setDescription}
+            customId={customId}
+            setCustomId={setCustomId}
+            enclosureId={enclosureId}
+            setEnclosureId={setEnclosureId}
+          />
+          <AddAnimalFormActions onCancel={() => onOpenChange(false)} />
         </form>
       </DialogContent>
     </Dialog>
