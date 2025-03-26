@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MarkdownRenderer } from "@/components/ui/documentation/MarkdownRenderer";
+import { ConnectedAccountsSection } from "@/components/settings/ConnectedAccountsSection";
 
 const Settings = () => {
   const [markdownContent, setMarkdownContent] = useState("");
   const [activeDoc, setActiveDoc] = useState<string | null>(null);
   
   const documents = [
-    { id: "backend", name: "Backend Structure", path: "/docs/backend-structure.md" }
+    { id: "backend", name: "Backend Structure", path: "/docs/backend-structure.md" },
+    { id: "frontend", name: "Frontend Architecture", path: "/docs/frontend-architecture.md" }
   ];
   
   // Function to fetch and display markdown content
@@ -38,6 +40,7 @@ const Settings = () => {
         <Tabs defaultValue="settings" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="settings">System Settings</TabsTrigger>
+            <TabsTrigger value="accounts">Connected Accounts</TabsTrigger>
             <TabsTrigger value="documentation">Documentation</TabsTrigger>
           </TabsList>
           
@@ -52,6 +55,10 @@ const Settings = () => {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="accounts">
+            <ConnectedAccountsSection />
           </TabsContent>
           
           <TabsContent value="documentation">

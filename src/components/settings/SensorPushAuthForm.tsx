@@ -1,16 +1,28 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { authenticateSensorPush } from "@/services/sensorPushService";
+import { authenticateSensorPush, getSensorPushToken } from "@/services/sensorPushService";
 import { toast } from "sonner";
+import { CheckCircle } from "lucide-react";
 
 export function SensorPushAuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    // Check if we already have a valid token
+    const checkConnection = async () => {
+      const token = await getSensorPushToken();
+      setIsConnected(!!token);
+    };
+    
+    checkConnection();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +35,7 @@ export function SensorPushAuthForm() {
         toast.success("Successfully connected to SensorPush");
         setEmail("");
         setPassword("");
+        setIsConnected(true);
       }
     } catch (error) {
       console.error("SensorPush authentication error:", error);
@@ -34,10 +47,20 @@ export function SensorPushAuthForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Connect SensorPush</CardTitle>
-        <CardDescription>
-          Enter your SensorPush account credentials to connect your sensors
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Connect SensorPush</CardTitle>
+            <CardDescription>
+              Enter your SensorPush account credentials to connect your sensors
+            </CardDescription>
+          </div>
+          {isConnected && (
+            <div className="flex items-center text-green-500">
+              <CheckCircle className="h-5 w-5 mr-1" />
+              <span className="text-sm font-medium">Connected</span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -65,7 +88,12 @@ export function SensorPushAuthForm() {
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? "Connecting..." : "Connect SensorPush Account"}
+            {isLoading 
+              ? "Connecting..." 
+              : isConnected 
+                ? "Reconnect SensorPush Account" 
+                : "Connect SensorPush Account"
+            }
           </Button>
         </CardFooter>
       </form>

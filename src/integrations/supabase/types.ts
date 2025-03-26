@@ -69,6 +69,33 @@ export type Database = {
         }
         Relationships: []
       }
+      api_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          service: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          service: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          service?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       enclosures: {
         Row: {
           created_at: string
@@ -197,6 +224,38 @@ export type Database = {
         }
         Relationships: []
       }
+      sensor_mappings: {
+        Row: {
+          created_at: string | null
+          enclosure_id: string
+          id: string
+          sensor_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enclosure_id: string
+          id?: string
+          sensor_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enclosure_id?: string
+          id?: string
+          sensor_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sensor_mappings_enclosure_id_fkey"
+            columns: ["enclosure_id"]
+            isOneToOne: false
+            referencedRelation: "enclosures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           created_at: string
@@ -279,7 +338,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_api_tokens_table: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      create_sensor_mappings_table: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_api_token: {
+        Args: {
+          p_service: string
+          p_user_id: string
+        }
+        Returns: {
+          token: string
+          expires_at: string
+        }[]
+      }
+      get_enclosure_sensor: {
+        Args: {
+          p_enclosure_id: string
+          p_user_id: string
+        }
+        Returns: {
+          sensor_id: string
+        }[]
+      }
+      map_sensor_to_enclosure: {
+        Args: {
+          p_sensor_id: string
+          p_enclosure_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      upsert_api_token: {
+        Args: {
+          p_service: string
+          p_token: string
+          p_expires_at: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
