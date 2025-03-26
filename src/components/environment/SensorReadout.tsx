@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { fetchSensorSamples } from "@/services/sensorPush/sensorPushSensorService";
+import { fetchSensorSamples } from "@/services/sensorPush/sensorPushFetchService";
 import { getEnclosureSensor } from "@/services/sensorPush/sensorPushMappingService";
 import { SensorPushSample } from "@/types/sensorpush";
 import { RefreshCwIcon, ThermometerIcon, DropletIcon } from "lucide-react";

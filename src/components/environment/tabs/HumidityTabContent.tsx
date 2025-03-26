@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SensorChart } from "@/components/ui/dashboard/SensorChart";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { format } from "date-fns";
-import { fetchSensorSamples } from "@/services/sensorPush/sensorPushSensorService";
+import { fetchSensorSamples } from "@/services/sensorPush/sensorPushFetchService";
 import { getEnclosureSensor } from "@/services/sensorPush/sensorPushMappingService";
 import { SensorPushSample } from "@/types/sensorpush";
 import { Droplets } from "lucide-react";
