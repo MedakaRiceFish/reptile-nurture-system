@@ -1,6 +1,6 @@
 
 // Follow this setup guide to integrate the Deno runtime and Supabase functions
-// https://deno.com/manual/runtime/supabase
+// https://deno.land/manual/runtime/supabase
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -14,10 +14,12 @@ serve(async (req) => {
   }
   
   try {
+    console.log("SensorPush Edge Function: Request received");
     const { path, method, token, body } = await req.json();
     
     // Build the full URL
     const url = `${BASE_URL}${path}`;
+    console.log(`SensorPush Edge Function: Making ${method} request to ${url}`);
     
     // Create current date for AWS Signature v4
     const date = new Date();
@@ -36,6 +38,12 @@ serve(async (req) => {
       headers["Content-Type"] = "application/json";
     }
     
+    // Log headers (redacted for security)
+    console.log("SensorPush Edge Function: Request headers", {
+      ...headers,
+      "Authorization": "Bearer [REDACTED]"
+    });
+    
     // Make the request to SensorPush API
     const response = await fetch(url, {
       method: method || "GET",
@@ -46,6 +54,28 @@ serve(async (req) => {
     // Get response data
     const responseData = await response.json();
     
+    // Log response status
+    console.log(`SensorPush Edge Function: Response status: ${response.status}`);
+    
+    if (!response.ok) {
+      console.error("SensorPush Edge Function: API error", {
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData
+      });
+    } else {
+      // For successful sensor responses, log the count of sensors
+      if (path === '/devices/sensors' && responseData.sensors) {
+        console.log(`SensorPush Edge Function: Found ${Object.keys(responseData.sensors).length} sensors`);
+      }
+      // For successful sample responses, log the count of samples
+      else if (path === '/samples' && responseData.sensors) {
+        const totalSamples = Object.values(responseData.sensors)
+          .reduce((sum: number, samples: any[]) => sum + samples.length, 0);
+        console.log(`SensorPush Edge Function: Found ${totalSamples} total samples`);
+      }
+    }
+    
     // Return the response with CORS headers
     return new Response(JSON.stringify(responseData), {
       status: response.status,
@@ -55,6 +85,9 @@ serve(async (req) => {
       }
     });
   } catch (error) {
+    // Log the detailed error
+    console.error("SensorPush Edge Function: Error", error);
+    
     // Return error response
     return new Response(JSON.stringify({
       error: error.message || "Unknown error occurred",

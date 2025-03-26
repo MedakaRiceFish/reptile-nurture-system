@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { SensorPushSample, SensorPushSamplesResponse, SensorPushSensor, SensorPushSensorsResponse } from "@/types/sensorpush";
 import { BASE_URL, ensureTablesExist, getCurrentUserId } from "./sensorPushBaseService";
 import { getSensorPushToken } from "./sensorPushAuthService";
+import { callSensorPushAPI } from "./edgeFunctionService";
 
 /**
  * Fetch all sensors from the SensorPush API
@@ -20,44 +21,23 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     const redactedToken = token.substring(0, 5) + "...";
     console.log("Fetching sensors with token:", redactedToken);
     
-    // Create current date for AWS Signature v4
-    const date = new Date();
-    const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
-    const dateStamp = amzDate.substring(0, 8);
-
-    // Make the request to SensorPush API with proper AWS signature format
-    try {
-      console.log("Making real API request to SensorPush API");
-      const response = await fetch(`${BASE_URL}/devices/sensors`, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "X-Amz-Date": amzDate
-        }
-      });
-
-      // Improved error handling with detailed logging
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`SensorPush API error: Status ${response.status}`, errorText);
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json() as SensorPushSensorsResponse;
-      
-      // Log success message with the count of sensors
-      console.log(`SensorPush API success: Found ${Object.keys(data.sensors).length} sensors`);
-      
-      // Store sensors data in database for historical records
-      await storeSensorsData(data.sensors);
-      
-      // Convert the object to an array and return
-      return Object.values(data.sensors);
-    } catch (error: any) {
-      console.error("Error making API request:", error.message);
-      throw error; // Rethrow to handle in the main try/catch
+    // Use the edge function service to make the request
+    const data = await callSensorPushAPI('/devices/sensors', token);
+    
+    console.log("SensorPush API response:", data);
+    
+    if (!data || !data.sensors) {
+      throw new Error("Invalid response from SensorPush API");
     }
+    
+    // Log success message with the count of sensors
+    console.log(`SensorPush API success: Found ${Object.keys(data.sensors).length} sensors`);
+    
+    // Store sensors data in database for historical records
+    await storeSensorsData(data.sensors);
+    
+    // Convert the object to an array and return
+    return Object.values(data.sensors);
   } catch (error: any) {
     console.error("Error fetching SensorPush sensors:", error.message);
     toast.error(`Failed to fetch sensors: ${error.message}`);
@@ -86,9 +66,13 @@ const storeSensorsData = async (sensors: Record<string, SensorPushSensor> | Sens
     
     for (const [sensorId, sensorData] of sensorEntries) {
       // Insert the sensor data with the current timestamp
+      const sensorJson = typeof sensorData === 'string' 
+        ? sensorData 
+        : JSON.stringify(sensorData);
+        
       await supabase.rpc('store_sensor_data', {
         p_sensor_id: sensorId,
-        p_sensor_data: JSON.stringify(sensorData),
+        p_sensor_data: sensorJson,
         p_user_id: userId,
         p_timestamp: timestamp
       });
@@ -141,50 +125,27 @@ export const fetchSensorSamples = async (
     if (startTime) params.startTime = startTime;
     if (stopTime) params.stopTime = stopTime;
 
-    // Create current date for AWS Signature v4
-    const date = new Date();
-    const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    console.log("Making API request to fetch sensor samples");
     
-    console.log("Making real API request to fetch sensor samples");
+    // Use the edge function service to make the request
+    const data = await callSensorPushAPI('/samples', token, 'POST', params);
     
-    try {
-      // According to Swagger, this is a POST request to /samples
-      const response = await fetch(`${BASE_URL}/samples`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "X-Amz-Date": amzDate
-        },
-        body: JSON.stringify(params)
-      });
-
-      // Improved error handling with detailed logging
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`SensorPush API error: Status ${response.status}`, errorText);
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json() as SensorPushSamplesResponse;
-      
-      // Log only the count of fetched samples, not the actual data
-      if (data.sensors[sensorId]) {
-        console.log(`Successfully fetched ${data.sensors[sensorId].length} samples for sensor ${sensorId}`);
-        
-        // Store samples data in database for historical analysis (18+ months)
-        await storeSamplesData(sensorId, data.sensors[sensorId]);
-      } else {
-        console.log(`No samples found for sensor ${sensorId}`);
-      }
-      
-      // Return the samples for the requested sensor
-      return data.sensors[sensorId] || [];
-    } catch (error) {
-      console.error("Error making API request for samples:", error);
-      throw error; // Rethrow to handle in the main try/catch
+    if (!data || !data.sensors) {
+      throw new Error("Invalid response from SensorPush API");
     }
+    
+    // Log only the count of fetched samples, not the actual data
+    if (data.sensors[sensorId]) {
+      console.log(`Successfully fetched ${data.sensors[sensorId].length} samples for sensor ${sensorId}`);
+      
+      // Store samples data in database for historical analysis (18+ months)
+      await storeSamplesData(sensorId, data.sensors[sensorId]);
+    } else {
+      console.log(`No samples found for sensor ${sensorId}`);
+    }
+    
+    // Return the samples for the requested sensor
+    return data.sensors[sensorId] || [];
   } catch (error: any) {
     console.error("Error fetching SensorPush samples:", error.message);
     toast.error(`Failed to fetch sensor readings: ${error.message}`);

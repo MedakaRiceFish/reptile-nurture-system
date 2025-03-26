@@ -12,6 +12,8 @@ export const callSensorPushAPI = async (
   body?: any
 ): Promise<any> => {
   try {
+    console.log(`Making ${method} request to SensorPush API at ${path}`);
+    
     // Create payload for the edge function
     const payload = {
       path,
@@ -31,6 +33,7 @@ export const callSensorPushAPI = async (
     }
     
     // Return the data from the edge function
+    console.log('Edge function response:', data);
     return data;
   } catch (error: any) {
     console.error('Error calling SensorPush API via edge function:', error);

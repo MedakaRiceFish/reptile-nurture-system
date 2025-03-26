@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { authenticateSensorPush, getSensorPushToken } from "@/services/sensorPush/sensorPushAuthService";
 import { fetchSensors } from "@/services/sensorPush/sensorPushSensorService";
 import { toast } from "sonner";
-import { CheckCircle, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw, Shield } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SensorPushSensor } from "@/types/sensorpush";
+import { Badge } from "@/components/ui/badge";
 
 export function SensorPushAuthForm() {
   const [email, setEmail] = useState("");
@@ -20,32 +21,42 @@ export function SensorPushAuthForm() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [deviceCount, setDeviceCount] = useState<number>(0);
   const [sensors, setSensors] = useState<SensorPushSensor[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<'loading' | 'connected' | 'disconnected' | 'error'>('loading');
 
   useEffect(() => {
     // Check if we already have a valid token
     const checkConnection = async () => {
+      setConnectionStatus('loading');
       const token = await getSensorPushToken();
       setIsConnected(!!token);
       
       if (token) {
-        // Set last sync time to now
-        setLastSyncTime(new Date());
-        
-        // Fetch sensors to get the device count
         try {
           setIsLoading(true);
-          const fetchedSensors = await fetchSensors();
-          setIsLoading(false);
+          // Set last sync time to now
+          setLastSyncTime(new Date());
           
-          if (fetchedSensors) {
+          // Fetch sensors to get the device count
+          const fetchedSensors = await fetchSensors();
+          
+          if (fetchedSensors && fetchedSensors.length > 0) {
             setDeviceCount(fetchedSensors.length);
             setSensors(fetchedSensors);
-            console.log("Connected sensors:", fetchedSensors);
+            setConnectionStatus('connected');
+            console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`, 
+                        fetchedSensors.map(s => s.name).join(', '));
+          } else {
+            setConnectionStatus('error');
+            console.warn("No sensors found or connection issue");
           }
         } catch (error) {
+          console.error("Error checking connection:", error);
+          setConnectionStatus('error');
+        } finally {
           setIsLoading(false);
-          console.error("Error fetching sensor count:", error);
         }
+      } else {
+        setConnectionStatus('disconnected');
       }
     };
     
@@ -55,6 +66,7 @@ export function SensorPushAuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setConnectionStatus('loading');
 
     try {
       // Real authentication
@@ -71,20 +83,28 @@ export function SensorPushAuthForm() {
         // Fetch sensors to get the device count after successful authentication
         try {
           const fetchedSensors = await fetchSensors();
-          if (fetchedSensors) {
+          if (fetchedSensors && fetchedSensors.length > 0) {
             setDeviceCount(fetchedSensors.length);
             setSensors(fetchedSensors);
-            console.log("Connected sensors:", fetchedSensors);
+            setConnectionStatus('connected');
+            console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`, 
+                        fetchedSensors.map(s => s.name).join(', '));
+          } else {
+            setConnectionStatus('error');
+            toast.error("Authentication successful but no sensors found");
           }
         } catch (error) {
           console.error("Error fetching sensor count:", error);
+          setConnectionStatus('error');
         }
       } else {
         toast.error("Failed to connect to SensorPush");
+        setConnectionStatus('disconnected');
       }
     } catch (error: any) {
       console.error("SensorPush authentication error:", error);
       toast.error(`Authentication failed: ${error.message}`);
+      setConnectionStatus('error');
     } finally {
       setIsLoading(false);
     }
@@ -97,21 +117,59 @@ export function SensorPushAuthForm() {
   const handleRefresh = async () => {
     try {
       setIsLoading(true);
+      setConnectionStatus('loading');
       const fetchedSensors = await fetchSensors();
       
-      if (fetchedSensors) {
+      if (fetchedSensors && fetchedSensors.length > 0) {
         setDeviceCount(fetchedSensors.length);
         setSensors(fetchedSensors);
         setLastSyncTime(new Date());
+        setConnectionStatus('connected');
         toast.success(`Refreshed sensors: Found ${fetchedSensors.length} devices`);
-        console.log("Refreshed sensors:", fetchedSensors);
+        console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`, 
+                    fetchedSensors.map(s => s.name).join(', '));
       } else {
-        toast.error("Failed to refresh sensors");
+        setConnectionStatus('error');
+        toast.error("No sensors found or connection issue");
       }
     } catch (error: any) {
+      setConnectionStatus('error');
       toast.error(`Error refreshing sensors: ${error.message}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getStatusDisplay = () => {
+    switch(connectionStatus) {
+      case 'loading':
+        return (
+          <div className="flex items-center text-muted-foreground">
+            <RefreshCw className="h-5 w-5 mr-1 animate-spin" />
+            <span className="text-sm font-medium">Checking...</span>
+          </div>
+        );
+      case 'connected':
+        return (
+          <div className="flex items-center text-green-500">
+            <CheckCircle className="h-5 w-5 mr-1" />
+            <span className="text-sm font-medium">Connected</span>
+          </div>
+        );
+      case 'error':
+        return (
+          <div className="flex items-center text-amber-500">
+            <AlertCircle className="h-5 w-5 mr-1" />
+            <span className="text-sm font-medium">Issues Found</span>
+          </div>
+        );
+      case 'disconnected':
+        return (
+          <div className="flex items-center text-muted-foreground">
+            <Shield className="h-5 w-5 mr-1" />
+            <span className="text-sm font-medium">Not Connected</span>
+          </div>
+        );
     }
   };
 
@@ -127,12 +185,7 @@ export function SensorPushAuthForm() {
                 : "Enter your SensorPush account credentials to connect your sensors"}
             </CardDescription>
           </div>
-          {isConnected && (
-            <div className="flex items-center text-green-500">
-              <CheckCircle className="h-5 w-5 mr-1" />
-              <span className="text-sm font-medium">Connected</span>
-            </div>
-          )}
+          {getStatusDisplay()}
         </div>
       </CardHeader>
       
@@ -140,24 +193,31 @@ export function SensorPushAuthForm() {
         <CardContent className="space-y-4">
           <div className="bg-muted/50 p-4 rounded-md">
             <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium">Last synced</p>
-                <p className="text-xs text-muted-foreground">
-                  {lastSyncTime ? lastSyncTime.toLocaleString() : "Never"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Devices Found: {deviceCount}
-                </p>
-                {sensors.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs font-medium">Connected Sensors:</p>
-                    <ul className="text-xs text-muted-foreground mt-1 list-disc pl-4">
-                      {sensors.map(sensor => (
-                        <li key={sensor.id}>{sensor.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium">Last synced</p>
+                  <p className="text-xs text-muted-foreground">
+                    {lastSyncTime ? lastSyncTime.toLocaleString() : "Never"}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium">
+                    Devices Found: {deviceCount}
+                  </p>
+                  {sensors.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium mb-1">Connected Sensors:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {sensors.map(sensor => (
+                          <Badge key={sensor.id} variant="outline" className="text-xs">
+                            {sensor.name} {sensor.active ? "✓" : "⚠️"}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <Collapsible>
                 <div className="flex items-center gap-2">
