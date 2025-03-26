@@ -21,15 +21,10 @@ serve(async (req) => {
     const url = `${BASE_URL}${path}`;
     console.log(`SensorPush Edge Function: Making ${method} request to ${url}`);
     
-    // Create current date for AWS Signature v4
-    const date = new Date();
-    const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
-    
-    // Headers for the request
+    // Create headers for the request
     const headers: HeadersInit = {
       "Accept": "application/json",
       "Authorization": `Bearer ${token}`,
-      "X-Amz-Date": amzDate,
       ...corsHeaders
     };
     

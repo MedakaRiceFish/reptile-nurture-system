@@ -66,9 +66,10 @@ const storeSensorsData = async (sensors: Record<string, SensorPushSensor> | Sens
     
     for (const [sensorId, sensorData] of sensorEntries) {
       // Insert the sensor data with the current timestamp
-      const sensorJson = typeof sensorData === 'string' 
-        ? sensorData 
-        : JSON.stringify(sensorData);
+      // Fix the type issue by ensuring sensorData is properly stringified
+      const sensorJson = typeof sensorData === 'object' 
+        ? JSON.stringify(sensorData) 
+        : sensorData;
         
       await supabase.rpc('store_sensor_data', {
         p_sensor_id: sensorId,
