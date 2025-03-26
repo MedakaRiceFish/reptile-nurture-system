@@ -36,6 +36,12 @@ export const callSensorPushAPI = async (
       throw new Error('No data returned from edge function');
     }
     
+    // If the response contains an error property, throw it
+    if (data.error) {
+      console.error('SensorPush API error:', data.error);
+      throw new Error(`SensorPush API error: ${data.error}`);
+    }
+    
     // Return the data from the edge function
     console.log('Edge function response:', data);
     return data;

@@ -46,11 +46,21 @@ serve(async (req) => {
       body: body ? JSON.stringify(body) : undefined
     });
     
-    // Get response data
-    const responseData = await response.json();
-    
-    // Log response status
+    // Log response status and potentially headers for debugging
     console.log(`SensorPush Edge Function: Response status: ${response.status}`);
+    console.log(`SensorPush Edge Function: Response headers:`, Object.fromEntries([...response.headers.entries()]));
+    
+    // Get response data
+    let responseData;
+    const responseText = await response.text();
+    
+    try {
+      responseData = JSON.parse(responseText);
+      console.log("SensorPush Edge Function: Successfully parsed response JSON");
+    } catch (e) {
+      console.error("SensorPush Edge Function: Failed to parse response as JSON", responseText);
+      responseData = { error: "Invalid JSON response", rawResponse: responseText };
+    }
     
     if (!response.ok) {
       console.error("SensorPush Edge Function: API error", {
@@ -58,22 +68,31 @@ serve(async (req) => {
         statusText: response.statusText,
         data: responseData
       });
-    } else {
-      // For successful sensor responses, log the count of sensors
-      if (path === '/devices/sensors' && responseData.sensors) {
-        console.log(`SensorPush Edge Function: Found ${Object.keys(responseData.sensors).length} sensors`);
-      }
-      // For successful sample responses, log the count of samples
-      else if (path === '/samples' && responseData.sensors) {
-        const totalSamples = Object.values(responseData.sensors)
-          .reduce((sum: number, samples: any[]) => sum + samples.length, 0);
-        console.log(`SensorPush Edge Function: Found ${totalSamples} total samples`);
-      }
+      
+      // Return the error response to the client with proper status code
+      return new Response(JSON.stringify(responseData), {
+        status: response.status,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
+    }
+    
+    // For successful sensor responses, log the count of sensors
+    if (path === '/devices/sensors' && responseData.sensors) {
+      console.log(`SensorPush Edge Function: Found ${Object.keys(responseData.sensors).length} sensors`);
+    }
+    // For successful sample responses, log the count of samples
+    else if (path === '/samples' && responseData.sensors) {
+      const totalSamples = Object.values(responseData.sensors)
+        .reduce((sum: number, samples: any[]) => sum + samples.length, 0);
+      console.log(`SensorPush Edge Function: Found ${totalSamples} total samples`);
     }
     
     // Return the response with CORS headers
     return new Response(JSON.stringify(responseData), {
-      status: response.status,
+      status: 200,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json"
@@ -86,6 +105,7 @@ serve(async (req) => {
     // Return error response
     return new Response(JSON.stringify({
       error: error.message || "Unknown error occurred",
+      stack: error.stack
     }), {
       status: 500,
       headers: {
