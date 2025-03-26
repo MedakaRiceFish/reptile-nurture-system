@@ -18,11 +18,12 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
 
     console.log("Fetching sensors with token:", token);
     
-    // SensorPush API requires the token in a specific format
+    // Make the request to SensorPush API
     const response = await fetch(`${BASE_URL}/devices/sensors`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`
+        "Accept": "application/json",
+        "Authorization": token // Remove 'Bearer ' prefix as SensorPush uses a different auth format
       }
     });
 
@@ -72,7 +73,8 @@ export const fetchSensorSamples = async (
     const response = await fetch(`${BASE_URL}/samples`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json",
+        "Authorization": token, // Remove 'Bearer ' prefix
         "Content-Type": "application/json"
       },
       body: JSON.stringify(params)
@@ -94,3 +96,4 @@ export const fetchSensorSamples = async (
     return null;
   }
 };
+
