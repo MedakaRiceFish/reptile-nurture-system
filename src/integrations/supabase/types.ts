@@ -224,6 +224,51 @@ export type Database = {
         }
         Relationships: []
       }
+      samples_history: {
+        Row: {
+          barometer: number | null
+          dewpoint: number | null
+          humidity: number | null
+          id: string
+          pressure: number | null
+          raw_data: Json | null
+          sample_id: string
+          sensor_id: string
+          temperature: number | null
+          timestamp: string
+          user_id: string
+          vpd: number | null
+        }
+        Insert: {
+          barometer?: number | null
+          dewpoint?: number | null
+          humidity?: number | null
+          id?: string
+          pressure?: number | null
+          raw_data?: Json | null
+          sample_id: string
+          sensor_id: string
+          temperature?: number | null
+          timestamp: string
+          user_id: string
+          vpd?: number | null
+        }
+        Update: {
+          barometer?: number | null
+          dewpoint?: number | null
+          humidity?: number | null
+          id?: string
+          pressure?: number | null
+          raw_data?: Json | null
+          sample_id?: string
+          sensor_id?: string
+          temperature?: number | null
+          timestamp?: string
+          user_id?: string
+          vpd?: number | null
+        }
+        Relationships: []
+      }
       sensor_mappings: {
         Row: {
           created_at: string | null
@@ -255,6 +300,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sensors_history: {
+        Row: {
+          id: string
+          sensor_data: Json
+          sensor_id: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          sensor_data: Json
+          sensor_id: string
+          timestamp: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          sensor_data?: Json
+          sensor_id?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
@@ -342,7 +411,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_samples_history_table: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_sensor_mappings_table: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      create_sensors_history_table: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -356,6 +433,12 @@ export type Database = {
           expires_at: string
         }[]
       }
+      get_data_retention_policy: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          months: number
+        }[]
+      }
       get_enclosure_sensor: {
         Args: {
           p_enclosure_id: string
@@ -365,11 +448,47 @@ export type Database = {
           sensor_id: string
         }[]
       }
+      get_sensor_history: {
+        Args: {
+          p_sensor_id: string
+          p_user_id: string
+          p_start_date: string
+          p_end_date: string
+          p_interval: string
+        }
+        Returns: {
+          time_bucket: string
+          avg_temperature: number
+          avg_humidity: number
+          avg_dewpoint: number
+          min_temperature: number
+          max_temperature: number
+          min_humidity: number
+          max_humidity: number
+          sample_count: number
+        }[]
+      }
       map_sensor_to_enclosure: {
         Args: {
           p_sensor_id: string
           p_enclosure_id: string
           p_user_id: string
+        }
+        Returns: undefined
+      }
+      purge_old_sensor_data: {
+        Args: {
+          p_user_id: string
+          p_cutoff_date: string
+        }
+        Returns: undefined
+      }
+      store_sensor_data: {
+        Args: {
+          p_sensor_id: string
+          p_sensor_data: Json
+          p_user_id: string
+          p_timestamp: string
         }
         Returns: undefined
       }
