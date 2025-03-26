@@ -19,6 +19,7 @@ interface AnimalCardProps {
   weight: number;
   length: number | string | null;
   lastFedDate?: string | null;
+  customId?: string | null;
   image?: string;
   className?: string;
   onClick?: () => void;
@@ -32,6 +33,7 @@ export function AnimalCard({
   weight,
   length,
   lastFedDate,
+  customId,
   image,
   className,
   onClick
@@ -118,7 +120,7 @@ export function AnimalCard({
           <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
             <IdCard className="h-3 w-3 mr-1.5 text-muted-foreground" />
             <span className="text-muted-foreground mr-1">ID:</span>
-            <span className="font-medium text-xs truncate">{animalId}</span>
+            <span className="font-medium text-xs truncate">{customId || "—"}</span>
           </div>
         </div>
       </div>

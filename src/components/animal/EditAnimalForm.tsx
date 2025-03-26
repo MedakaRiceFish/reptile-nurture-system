@@ -30,7 +30,8 @@ export const EditAnimalForm: React.FC<EditAnimalFormProps> = ({
       feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
       breederSource: animal?.breeding_source || animal?.breederSource || "",
       description: animal?.description || "",
-      enclosure_id: animal?.enclosure_id || "none"
+      enclosure_id: animal?.enclosure_id || "none",
+      customId: animal?.custom_id || ""
     }
   });
 
@@ -45,7 +46,8 @@ export const EditAnimalForm: React.FC<EditAnimalFormProps> = ({
         feedingSchedule: animal?.feeding_schedule || animal?.feedingSchedule || "",
         breederSource: animal?.breeding_source || animal?.breederSource || "",
         description: animal?.description || "",
-        enclosure_id: animal?.enclosure_id || "none"
+        enclosure_id: animal?.enclosure_id || "none",
+        customId: animal?.custom_id || ""
       });
     }
   }, [animal, form, isOpen]);
@@ -127,6 +129,19 @@ export const EditAnimalForm: React.FC<EditAnimalFormProps> = ({
                 <FormLabel>Breeder Source</FormLabel>
                 <FormControl>
                   <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="customId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Custom ID</FormLabel>
+                <FormControl>
+                  <Input {...field} maxLength={10} placeholder="Max 10 characters" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

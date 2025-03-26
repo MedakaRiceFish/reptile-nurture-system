@@ -194,8 +194,8 @@ export const AnimalDetails: React.FC<AnimalDetailsProps> = React.memo(({
             {animal.breeding_source || animal.breederSource || "Unknown"}
           </DetailsItem>
           
-          <DetailsItem label="Animal ID">
-            {animal.id || "N/A"}
+          <DetailsItem label="Custom ID">
+            {animal.custom_id || "Not set"}
           </DetailsItem>
           
           <DetailsItem label="Last Fed Date">

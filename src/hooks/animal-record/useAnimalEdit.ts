@@ -21,6 +21,7 @@ export const useAnimalEdit = (
         length: parseInt(data.length),
         feeding_schedule: data.feedingSchedule,
         breeding_source: data.breederSource,
+        custom_id: data.customId,
         description: data.description,
         enclosure_id: data.enclosure_id === "none" ? null : data.enclosure_id
       };

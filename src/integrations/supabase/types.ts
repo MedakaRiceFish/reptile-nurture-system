@@ -14,6 +14,7 @@ export type Database = {
           age: number | null
           breeding_source: string | null
           created_at: string
+          custom_id: string | null
           description: string | null
           enclosure_id: string | null
           feeding_schedule: string | null
@@ -31,6 +32,7 @@ export type Database = {
           age?: number | null
           breeding_source?: string | null
           created_at?: string
+          custom_id?: string | null
           description?: string | null
           enclosure_id?: string | null
           feeding_schedule?: string | null
@@ -48,6 +50,7 @@ export type Database = {
           age?: number | null
           breeding_source?: string | null
           created_at?: string
+          custom_id?: string | null
           description?: string | null
           enclosure_id?: string | null
           feeding_schedule?: string | null

@@ -16,6 +16,7 @@ export type Animal = {
   image_url: string | null;
   owner_id: string;
   last_fed_date: string | null;
+  custom_id: string | null;
   created_at?: string;
   updated_at?: string;
   enclosureName?: string;
