@@ -51,7 +51,7 @@ export function AnimalCard({
   // Format the last fed date
   const formattedLastFedDate = lastFedDate ? 
     format(new Date(lastFedDate), "MMM d, yyyy") : 
-    "Not recorded";
+    "--";
 
   return (
     <div 
@@ -106,12 +106,6 @@ export function AnimalCard({
         </div>
 
         <div className="flex flex-col gap-2">
-          <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
-            <Ruler className="h-3 w-3 mr-1.5 text-muted-foreground" />
-            <span className="text-muted-foreground mr-1">Length:</span>
-            <span className="font-medium">{length ? `${length} cm` : "—"}</span>
-          </div>
-          
           <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
             <IdCard className="h-3 w-3 mr-1.5 text-muted-foreground" />
             <span className="text-muted-foreground mr-1">ID:</span>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { AnimalCard } from "./AnimalCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
