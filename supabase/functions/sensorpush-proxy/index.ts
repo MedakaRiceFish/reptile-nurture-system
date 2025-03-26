@@ -29,6 +29,7 @@ serve(async (req) => {
     
     // Only add Authorization header if token is provided (not for initial auth)
     if (token) {
+      // According to SensorPush API docs, use "Bearer " prefix for token
       headers["Authorization"] = `Bearer ${token}`;
     }
     
@@ -85,7 +86,6 @@ serve(async (req) => {
         status: response.status,
         data: responseData
       }), {
-        status: response.status,
         headers: {
           ...corsHeaders,
           "Content-Type": "application/json"
