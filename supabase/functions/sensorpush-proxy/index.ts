@@ -270,7 +270,7 @@ serve(async (req) => {
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: response.status // Return actual error status instead of 200
+          status: 200 // Return 200 but include error details in the body
         }
       );
     }
@@ -299,7 +299,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 // Return 500 for server errors
+        status: 200 // Return 200 but include error details in the body
       }
     );
   }

@@ -32,16 +32,28 @@ export const callSensorPushAPI = async (
     // For security, only log a portion of the token
     if (token) {
       console.log(`Token present, length: ${token.length}`);
-      // Add debugging for Gateway Cloud API compatibility
-      if (path !== '/oauth/authorize') {
-        console.log(`Request to Gateway Cloud API endpoint - AWS SigV4 will be applied by the edge function`);
+      // Check token format for Gateway Cloud API
+      if (token.includes('.')) {
+        console.log(`Token contains '.' separators, which is required for Gateway Cloud API`);
+        const parts = token.split('.');
+        console.log(`Token has ${parts.length} parts separated by dots`);
+      } else {
+        console.error(`Token format is invalid - Gateway Cloud API requires accessKey.secretKey.sessionToken format`);
+        throw new Error("Invalid token format. SensorPush Gateway Cloud API requires accessKey.secretKey.sessionToken format");
       }
     }
     
-    // Call the Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('sensorpush-proxy', {
+    // Call the Supabase Edge Function with timeout handling
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Edge function request timed out after 15 seconds")), 15000)
+    );
+    
+    const fetchPromise = supabase.functions.invoke('sensorpush-proxy', {
       body: JSON.stringify(payload)
     });
+    
+    // Race between fetch and timeout
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
     
     if (error) {
       console.error('Edge function error:', error);
@@ -70,7 +82,7 @@ export const callSensorPushAPI = async (
           data.error.includes('Authorization header requires') || 
           data.error.includes('The security token included in the request is invalid')
       )) {
-        throw new Error('Authentication error with SensorPush Gateway Cloud API. Please check that you are using the correct format for your credentials and try reconnecting your account.');
+        throw new Error('Authentication error with SensorPush Gateway Cloud API. Please check that you are using the correct format for your credentials (accessKey.secretKey.sessionToken) and try reconnecting your account.');
       }
       
       throw new Error(`SensorPush API error: ${data.error}`);

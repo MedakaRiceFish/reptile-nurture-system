@@ -39,15 +39,20 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     // Store the token exactly as provided by the API - important for SensorPush auth
     const { authorization } = authResponse;
     
-    // For Gateway Cloud API, log additional token information to help debug
+    // For Gateway Cloud API, validate token format and log information to help debug
     console.log(`Token received from SensorPush. Character length: ${authorization.length}`);
-    console.log(`First 10 characters: ${authorization.substring(0, 10)}...`);
-
-    // Check token format for expected SensorPush Gateway Cloud API format
-    if (authorization.includes('.')) {
-      console.log(`Token contains '.' separators, likely in the required format for Gateway Cloud API`);
+    
+    // We expect Gateway Cloud API tokens to be in the format: accessKey.secretKey.sessionToken
+    // Check token format
+    if (!authorization.includes('.')) {
+      console.warn(`WARNING: Token does not contain '.' separators, which may cause issues with Gateway Cloud API`);
+      console.warn(`The Gateway Cloud API expects tokens in the format: accessKey.secretKey.sessionToken`);
     } else {
-      console.log(`Token does not contain separators, may not be in the expected format for Gateway Cloud API`);
+      const parts = authorization.split('.');
+      console.log(`Token contains ${parts.length} parts separated by '.'`);
+      if (parts.length < 2) {
+        console.warn(`WARNING: Token has fewer than 2 parts. Gateway Cloud API expects at least accessKey.secretKey`);
+      }
     }
     
     // Insert or update token in the custom table
@@ -118,7 +123,15 @@ export const getSensorPushToken = async (): Promise<string | null> => {
 
     // Return the token exactly as stored - critical for SensorPush API
     const token = data[0].token;
-    console.log(`Retrieved SensorPush token from database. Character length: ${token.length}`);
+    
+    // Validate token format for Gateway Cloud API
+    if (!token.includes('.')) {
+      console.warn(`WARNING: Retrieved token does not contain '.' separators`);
+      console.warn(`This may cause issues with Gateway Cloud API which expects accessKey.secretKey.sessionToken format`);
+    } else {
+      console.log(`Token format looks valid for Gateway Cloud API (contains '.' separators)`);
+    }
+    
     return token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);
