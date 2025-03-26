@@ -7,15 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const ensureTokenFunctions = async (): Promise<void> => {
   try {
-    // Create stored procedure to store all SensorPush tokens
-    await supabase.rpc('create_store_tokens_function');
-    
-    // Create stored procedure to get SensorPush tokens
-    await supabase.rpc('create_get_tokens_function');
-    
-    console.log("SensorPush token database functions created successfully");
+    // Create functions for storing and retrieving SensorPush tokens
+    // These functions are created via SQL migration and don't need to be
+    // created programmatically anymore
+    console.log("SensorPush token database functions check complete");
   } catch (error) {
-    // If there's an error, it's likely because the functions already exist
     console.log("SensorPush token functions check complete");
   }
 };
@@ -29,12 +25,33 @@ export const initSensorPushSchema = async (): Promise<void> => {
     // Ensure the api_tokens table structure is updated to support multiple tokens
     await supabase.rpc('ensure_api_tokens_schema');
     
-    // Create the stored procedures
-    await ensureTokenFunctions();
-    
     console.log("SensorPush database schema initialized successfully");
   } catch (error) {
     console.error("Error initializing SensorPush database schema:", error);
     throw error;
+  }
+};
+
+/**
+ * Ensure the sensors history table exists
+ */
+export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
+  try {
+    await supabase.rpc('ensure_sensors_history_table_exists');
+    console.log("Sensors history table check complete");
+  } catch (error) {
+    console.error("Error checking sensors history table:", error);
+  }
+};
+
+/**
+ * Ensure the samples history table exists
+ */
+export const ensureSamplesHistoryTableExists = async (): Promise<void> => {
+  try {
+    await supabase.rpc('ensure_samples_history_table_exists');
+    console.log("Samples history table check complete");
+  } catch (error) {
+    console.error("Error checking samples history table:", error);
   }
 };

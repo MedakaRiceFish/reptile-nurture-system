@@ -51,7 +51,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing tokens in database");
     
-    // Store the tokens in Supabase
+    // Store the tokens in Supabase using the custom function
     const { error: storageError } = await supabase.rpc('store_sensorpush_tokens', {
       p_user_id: userId,
       p_auth_token: authResponse.authorization,
@@ -86,7 +86,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
   try {
     const userId = await getCurrentUserId();
     
-    // Get tokens from Supabase
+    // Get tokens from Supabase using the custom function
     const { data, error } = await supabase.rpc('get_sensorpush_tokens', {
       p_user_id: userId
     });
