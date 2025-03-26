@@ -1,51 +1,66 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-interface RelatedItem {
+export interface RelatedItem {
   id: string;
   name: string;
 }
 
-export function useRelatedItems(open: boolean) {
-  const [enclosures, setEnclosures] = useState<RelatedItem[]>([]);
-  const [animals, setAnimals] = useState<RelatedItem[]>([]);
-  const [hardware, setHardware] = useState<RelatedItem[]>([]);
+export const useRelatedItems = (
+  relatedType: 'enclosure' | 'animal' | 'hardware' | null | undefined
+) => {
+  const [items, setItems] = useState<RelatedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  useEffect(() => {
-    if (!open) return;
+  const fetchItems = useCallback(async () => {
+    if (!relatedType) {
+      setItems([]);
+      return;
+    }
     
-    const fetchRelatedItems = async () => {
-      try {
-        // Fetch enclosures
-        const { data: enclosureData } = await supabase
+    setIsLoading(true);
+    
+    try {
+      let data: RelatedItem[] = [];
+      
+      if (relatedType === 'enclosure') {
+        const { data: enclosures, error } = await supabase
           .from('enclosures')
-          .select('id, name');
-        
-        // Fetch animals
-        const { data: animalData } = await supabase
+          .select('id, name:label');
+          
+        if (error) throw error;
+        data = enclosures || [];
+      } 
+      else if (relatedType === 'animal') {
+        const { data: animals, error } = await supabase
           .from('animals')
           .select('id, name');
-        
-        // Fetch hardware devices
-        const { data: hardwareData } = await supabase
+          
+        if (error) throw error;
+        data = animals || [];
+      } 
+      else if (relatedType === 'hardware') {
+        const { data: devices, error } = await supabase
           .from('hardware_devices')
-          .select('id, name');
-        
-        if (enclosureData) setEnclosures(enclosureData);
-        if (animalData) setAnimals(animalData);
-        if (hardwareData) setHardware(hardwareData);
-      } catch (error) {
-        console.error('Error fetching related items:', error);
+          .select('id, name:device_name');
+          
+        if (error) throw error;
+        data = devices || [];
       }
-    };
-    
-    fetchRelatedItems();
-  }, [open]);
-
-  return {
-    enclosures,
-    animals,
-    hardware
-  };
-}
+      
+      setItems(data);
+    } catch (error) {
+      console.error('Error fetching related items:', error);
+      setItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [relatedType]);
+  
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+  
+  return { items, isLoading };
+};
