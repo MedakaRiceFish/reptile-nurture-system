@@ -24,9 +24,13 @@ serve(async (req) => {
     // Create headers for the request
     const headers: HeadersInit = {
       "Accept": "application/json",
-      "Authorization": `Bearer ${token}`,
       ...corsHeaders
     };
+    
+    // Only add Authorization header if token is provided (not for initial auth)
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
     
     // Add content-type if method is POST
     if (method === "POST" || body) {
@@ -36,10 +40,11 @@ serve(async (req) => {
     // Log headers (redacted for security)
     console.log("SensorPush Edge Function: Request headers", {
       ...headers,
-      "Authorization": "Bearer [REDACTED]"
+      "Authorization": headers["Authorization"] ? "Bearer [REDACTED]" : undefined
     });
     
     // Make the request to SensorPush API
+    // According to docs, there's a rate limit of once per minute
     const response = await fetch(url, {
       method: method || "GET",
       headers,
@@ -56,8 +61,9 @@ serve(async (req) => {
     
     try {
       responseData = JSON.parse(responseText);
+      // Redact sensitive data in logs for auth responses
       console.log("SensorPush Edge Function: Successfully parsed response JSON", 
-        path === '/oauth/access_token' 
+        path === '/oauth/authorize' || path === '/oauth/access_token'
           ? { ...responseData, authorization: responseData?.authorization ? "[REDACTED]" : undefined }
           : responseData
       );
@@ -96,6 +102,10 @@ serve(async (req) => {
       const totalSamples = Object.values(responseData.sensors)
         .reduce((sum: number, samples: any[]) => sum + samples.length, 0);
       console.log(`SensorPush Edge Function: Found ${totalSamples} total samples`);
+    }
+    // For auth responses, log success but redact the token
+    else if ((path === '/oauth/authorize' || path === '/oauth/access_token') && responseData.authorization) {
+      console.log("SensorPush Edge Function: Successfully obtained authorization token");
     }
     
     // Return the response with CORS headers

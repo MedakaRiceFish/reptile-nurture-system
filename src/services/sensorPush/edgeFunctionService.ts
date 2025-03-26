@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 /**
  * Function to make a request to the SensorPush API through the Supabase Edge Function
+ * Handles API rate limiting (max 1 req/min) according to SensorPush documentation
  */
 export const callSensorPushAPI = async (
   path: string, 
@@ -39,11 +40,20 @@ export const callSensorPushAPI = async (
     // If the response contains an error property, throw it
     if (data.error) {
       console.error('SensorPush API error:', data.error);
+      
+      // Handle specific error cases based on API documentation
+      if (data.status === 429) {
+        throw new Error('Rate limit exceeded. SensorPush allows only 1 request per minute.');
+      }
+      
+      if (data.status === 401 || data.status === 403) {
+        throw new Error('Authentication error. Your SensorPush token may have expired.');
+      }
+      
       throw new Error(`SensorPush API error: ${data.error}`);
     }
     
     // Return the data from the edge function
-    console.log('Edge function response:', data);
     return data;
   } catch (error: any) {
     console.error('Error calling SensorPush API via edge function:', error);
