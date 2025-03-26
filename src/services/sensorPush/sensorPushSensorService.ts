@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SensorPushSample, SensorPushSamplesResponse, SensorPushSensor, SensorPushSensorsResponse } from "@/types/sensorpush";
@@ -354,5 +353,33 @@ export const clearSensorPushData = async (): Promise<boolean> => {
   } catch (error: any) {
     console.error("Error clearing SensorPush data:", error.message);
     return false;
+  }
+};
+
+/**
+ * Get the sensor ID mapped to the enclosure
+ * This function now explicitly returns a string or null
+ */
+export const getEnclosureSensor = async (enclosureId: string): Promise<string | null> => {
+  try {
+    const userId = await getCurrentUserId();
+    
+    // Check if there's a mapping for this enclosure
+    const { data, error } = await supabase
+      .from('sensor_mappings')
+      .select('sensor_id')
+      .eq('enclosure_id', enclosureId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Return the sensor ID if one exists, otherwise null
+    return data?.sensor_id || null;
+  } catch (error: any) {
+    console.error("Error getting enclosure sensor mapping:", error.message);
+    return null;
   }
 };
