@@ -33,7 +33,7 @@ serve(async (req) => {
     console.log(`Making ${method} request to SensorPush API at ${path}`);
     
     if (body) {
-      console.log("Request body:", JSON.stringify(body));
+      console.log("Request body size:", JSON.stringify(body).length);
     }
     
     // Construct the full URL
@@ -45,10 +45,11 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // Add authorization header exactly as SensorPush expects
+    // Add authorization header exactly as SensorPush expects it
+    // Don't modify or prefix the token - use it exactly as stored
     if (token) {
       headers.set('Authorization', token);
-      console.log("Added Authorization header with token length:", token.length);
+      console.log("SensorPush Edge Function: Using token for Authorization:", token.substring(0, 10) + "...");
     }
     
     // Configure the request options
@@ -69,10 +70,6 @@ serve(async (req) => {
     // Log the status of the response
     console.log(`SensorPush API Response status: ${response.status}`);
     console.log(`SensorPush API Response status text: ${response.statusText}`);
-    
-    // Log response headers for debugging
-    const responseHeaders = Object.fromEntries([...response.headers.entries()]);
-    console.log("SensorPush API Response headers:", responseHeaders);
     
     // If we get an error response, log more details
     if (!response.ok) {

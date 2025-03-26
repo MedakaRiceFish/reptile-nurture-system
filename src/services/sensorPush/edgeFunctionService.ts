@@ -28,6 +28,11 @@ export const callSensorPushAPI = async (
       bodySize: body ? JSON.stringify(body).length : 0,
       hasToken: !!token
     });
+
+    // Display token length but not the actual token for security
+    if (token) {
+      console.log(`Token length: ${token.length}`);
+    }
     
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('sensorpush-proxy', {

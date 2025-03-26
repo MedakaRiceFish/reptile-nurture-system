@@ -7,6 +7,7 @@ import { callSensorPushAPI } from "./edgeFunctionService";
 
 /**
  * Authenticate with the SensorPush API and store the authorization token
+ * Note: SensorPush uses a custom auth flow, not standard OAuth
  */
 export const authenticateSensorPush = async (credentials: SensorPushCredentials): Promise<string | null> => {
   try {
@@ -16,16 +17,19 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     console.log("Authenticating with SensorPush API...");
     
     // Make the authentication request through our edge function
+    // For the auth endpoint we don't need a token yet
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
     
-    console.log("Auth response received:", JSON.stringify(authResponse).substring(0, 100) + "...");
+    console.log("Auth response received, checking for valid authorization token");
     
     if (!authResponse || !authResponse.authorization) {
+      console.error("Invalid auth response:", authResponse);
       throw new Error("Failed to obtain authorization token from SensorPush");
     }
 
-    // Get the authorization token from the response
+    // Get the authorization token from the response - use exactly as returned
     const { authorization } = authResponse;
+    console.log("Successfully obtained authorization token from SensorPush");
     
     // According to docs, authorization token is valid for 60 minutes
     const expiresAt = new Date();
@@ -36,7 +40,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
-    // Store the token exactly as provided by the API
+    // Store the token exactly as provided by the API - don't modify it
     const formattedToken = authorization;
     
     // Insert or update token in the custom table
@@ -105,7 +109,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       console.warn("Using soon-to-expire SensorPush token");
     }
 
-    // Return the token exactly as stored in the database
+    // Return the token exactly as stored in the database - don't modify it
     return data[0].token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);
