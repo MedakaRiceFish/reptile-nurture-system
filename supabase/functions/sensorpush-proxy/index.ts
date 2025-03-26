@@ -45,10 +45,11 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // Add authorization header - SensorPush docs specify to use the token directly
+    // Add authorization header EXACTLY as provided by SensorPush
+    // According to SensorPush documentation, the token should be used directly without modification
     if (token) {
       headers.set('Authorization', token);
-      console.log(`Authorization header set with token (first 10 chars): ${token.substring(0, 10)}...`);
+      console.log(`Authorization header set with token length: ${token.length}`);
     }
     
     // Configure the request options
@@ -63,6 +64,13 @@ serve(async (req) => {
       console.log(`Request payload size: ${JSON.stringify(body).length} bytes`);
     }
     
+    // Log the full request for debugging (excluding sensitive data)
+    console.log(`Full request to SensorPush API:
+    URL: ${url}
+    Method: ${method}
+    Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => key.toLowerCase() !== 'authorization')))}
+    Has Body: ${!!options.body}`);
+    
     // Make the request to SensorPush API
     console.log(`Sending request to SensorPush API...`);
     const response = await fetch(url, options);
@@ -76,23 +84,10 @@ serve(async (req) => {
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
       console.error(`Error details: ${errorText}`);
       
-      let errorMessage = `API Error ${response.status}`;
-      
-      // Try to parse the error text as JSON if possible
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.message || errorJson.error || errorMessage;
-        console.log("Parsed error message:", errorMessage);
-      } catch (e) {
-        // If can't parse as JSON, use the raw text
-        console.log("Could not parse error as JSON, using raw text");
-      }
-      
       return new Response(
         JSON.stringify({
-          error: errorMessage,
-          status: response.status,
-          data: errorText
+          error: errorText,
+          status: response.status
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
