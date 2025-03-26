@@ -16,18 +16,24 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
       throw new Error("No valid SensorPush token found");
     }
 
+    console.log("Fetching sensors with token:", token);
+    
+    // SensorPush API requires the token in a specific format
     const response = await fetch(`${BASE_URL}/devices/sensors`, {
       method: "GET",
       headers: {
-        "Authorization": token
+        "Authorization": `Bearer ${token}`
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch sensors: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("SensorPush API error:", errorText);
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json() as SensorPushSensorsResponse;
+    console.log("SensorPush API response:", data);
     
     // Convert the object to an array
     return Object.values(data.sensors);
@@ -66,14 +72,16 @@ export const fetchSensorSamples = async (
     const response = await fetch(`${BASE_URL}/samples`, {
       method: "POST",
       headers: {
-        "Authorization": token,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify(params)
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch samples: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("SensorPush API error:", errorText);
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json() as SensorPushSamplesResponse;

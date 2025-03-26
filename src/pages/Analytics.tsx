@@ -9,8 +9,26 @@ import { SensorChart } from "@/components/ui/dashboard/SensorChart";
 import { WeightTrendsChart } from "@/components/analytics/WeightTrendsChart";
 import { SpeciesDistribution } from "@/components/analytics/SpeciesDistribution";
 import { ActivitySummary } from "@/components/analytics/ActivitySummary";
+import { SensorChartData } from "@/types/charts";
 
 const Analytics = () => {
+  // Prepare demo data for the sensor charts
+  const tempData: SensorChartData[] = [
+    { timestamp: Date.now(), value: 75, time: 'Now' },
+    { timestamp: Date.now() - 3600000, value: 76, time: '1h ago' },
+    { timestamp: Date.now() - 7200000, value: 77, time: '2h ago' },
+    { timestamp: Date.now() - 10800000, value: 75, time: '3h ago' },
+    { timestamp: Date.now() - 14400000, value: 74, time: '4h ago' },
+  ];
+  
+  const humidityData: SensorChartData[] = [
+    { timestamp: Date.now(), value: 55, time: 'Now' },
+    { timestamp: Date.now() - 3600000, value: 54, time: '1h ago' },
+    { timestamp: Date.now() - 7200000, value: 57, time: '2h ago' },
+    { timestamp: Date.now() - 10800000, value: 56, time: '3h ago' },
+    { timestamp: Date.now() - 14400000, value: 53, time: '4h ago' },
+  ];
+
   return (
     <MainLayout pageTitle="Data & Analytics">
       <div className="max-w-[1600px] mx-auto animate-fade-up">
@@ -109,14 +127,25 @@ const Analytics = () => {
           </TabsContent>
           
           <TabsContent value="environment" className="space-y-4">
-            <Card className="col-span-2">
-              <CardHeader>
-                <CardTitle>Environment Sensors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SensorChart />
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>Temperature Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SensorChart data={tempData} type="temperature" unit="°F" />
+                </CardContent>
+              </Card>
+              
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>Humidity Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SensorChart data={humidityData} type="humidity" unit="%" />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
