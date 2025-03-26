@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SensorPushAuthResponse, SensorPushCredentials, SensorPushTokens } from "@/types/sensorpush";
+import { SensorPushAuthResponse, SensorPushCredentials, SensorPushTokens, SensorPushDBTokens } from "@/types/sensorpush";
 import { BASE_URL, ensureTablesExist, getCurrentUserId } from "./sensorPushBaseService";
 import { callSensorPushAPI } from "./edgeFunctionService";
 
@@ -96,19 +96,21 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       throw error;
     }
 
-    if (!data || !data.access_token) {
+    if (!data || !data[0] || !data[0].access_token) {
       console.log("No SensorPush tokens found");
       return null;
     }
     
+    const tokens = data[0] as SensorPushDBTokens;
+    
     const now = new Date();
-    const accessExpires = new Date(data.access_expires);
-    const refreshExpires = new Date(data.refresh_expires);
+    const accessExpires = new Date(tokens.access_expires);
+    const refreshExpires = new Date(tokens.refresh_expires);
     
     // If access token is still valid, return it
     if (accessExpires > now) {
       console.log("Using existing access token, expires:", accessExpires.toLocaleString());
-      return data.access_token;
+      return tokens.access_token;
     }
     
     // If refresh token is expired too, need to re-authenticate
@@ -122,7 +124,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
     
     try {
       const refreshResponse = await callSensorPushAPI('/oauth/refreshtoken', '', 'POST', {
-        refreshtoken: data.refresh_token
+        refreshtoken: tokens.refresh_token
       });
       
       if (!refreshResponse || !refreshResponse.accesstoken || !refreshResponse.refreshtoken) {
@@ -137,7 +139,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       // Update tokens in the database
       const { error: updateError } = await supabase.rpc('store_sensorpush_tokens', {
         p_user_id: userId,
-        p_auth_token: data.auth_token, // Keep existing auth token
+        p_auth_token: tokens.auth_token, // Keep existing auth token
         p_access_token: refreshResponse.accesstoken,
         p_refresh_token: refreshResponse.refreshtoken,
         p_access_expires: newAccessExpires.toISOString(),
