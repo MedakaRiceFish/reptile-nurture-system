@@ -19,6 +19,7 @@ export type Database = {
           feeding_schedule: string | null
           id: string
           image_url: string | null
+          last_fed_date: string | null
           length: number | null
           name: string
           owner_id: string
@@ -35,6 +36,7 @@ export type Database = {
           feeding_schedule?: string | null
           id?: string
           image_url?: string | null
+          last_fed_date?: string | null
           length?: number | null
           name: string
           owner_id: string
@@ -51,6 +53,7 @@ export type Database = {
           feeding_schedule?: string | null
           id?: string
           image_url?: string | null
+          last_fed_date?: string | null
           length?: number | null
           name?: string
           owner_id?: string

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -14,6 +15,7 @@ export type Animal = {
   description: string | null;
   image_url: string | null;
   owner_id: string;
+  last_fed_date: string | null;
   created_at?: string;
   updated_at?: string;
   enclosureName?: string;

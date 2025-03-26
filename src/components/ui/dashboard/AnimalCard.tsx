@@ -3,10 +3,12 @@ import React from "react";
 import { 
   Ruler, 
   Weight, 
-  Calendar
+  Calendar,
+  UtensilsCrossed
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface AnimalCardProps {
   animalId: string | number;
@@ -15,6 +17,7 @@ interface AnimalCardProps {
   age: number;
   weight: number;
   length: number | string | null;
+  lastFedDate?: string | null;
   image?: string;
   className?: string;
   onClick?: () => void;
@@ -27,6 +30,7 @@ export function AnimalCard({
   age,
   weight,
   length,
+  lastFedDate,
   image,
   className,
   onClick
@@ -45,6 +49,11 @@ export function AnimalCard({
   const displayLength = length ? 
     (typeof length === 'number' ? length : parseFloat(String(length) || '0')) : 
     "--";
+
+  // Format the last fed date
+  const formattedLastFedDate = lastFedDate ? 
+    format(new Date(lastFedDate), "MMM d, yyyy") : 
+    "Not recorded";
 
   return (
     <div 
@@ -72,7 +81,7 @@ export function AnimalCard({
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 mb-3">
           <div className="flex flex-col items-center p-2 bg-muted/50 rounded-lg">
             <Calendar className="h-4 w-4 mb-1 text-muted-foreground" />
             <span className="text-sm font-medium">
@@ -96,6 +105,12 @@ export function AnimalCard({
             </span>
             <span className="text-xs text-muted-foreground">Length</span>
           </div>
+        </div>
+
+        <div className="flex items-center px-2 py-1 bg-muted/30 rounded-lg text-xs">
+          <UtensilsCrossed className="h-3 w-3 mr-1.5 text-muted-foreground" />
+          <span className="text-muted-foreground mr-1">Last fed:</span>
+          <span className="font-medium">{formattedLastFedDate}</span>
         </div>
       </div>
     </div>

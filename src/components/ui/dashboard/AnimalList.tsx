@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from "react";
 import { AnimalCard } from "./AnimalCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Weight, Ruler } from "lucide-react";
+import { Calendar, Weight, Ruler, UtensilsCrossed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAnimals, Animal } from "@/services/animalService";
 import { useAuth } from "@/context/AuthContext";
 import { getShortenedId } from "@/utils/idFormatters";
+import { format } from "date-fns";
 
 interface AnimalListProps {
   viewMode?: "grid" | "list";
@@ -34,6 +36,11 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
     navigate(`/animal/${id}`);
   };
 
+  const formatLastFedDate = (date: string | null) => {
+    if (!date) return "Not recorded";
+    return format(new Date(date), "MMM d, yyyy");
+  };
+
   if (loading) {
     return <div className="py-8 text-center">Loading animals...</div>;
   }
@@ -58,7 +65,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               <TableHead>Weight</TableHead>
               <TableHead>Length</TableHead>
               <TableHead>Enclosure</TableHead>
-              <TableHead>Feeding Schedule</TableHead>
+              <TableHead>Last Fed</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -93,7 +100,12 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
                     {animal.enclosure_id ? `#${getShortenedId(animal.enclosure_id)}` : "None"}
                   </span>
                 </TableCell>
-                <TableCell>{animal.feeding_schedule || "Not set"}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <UtensilsCrossed className="h-4 w-4" />
+                    {formatLastFedDate(animal.last_fed_date)}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -118,6 +130,7 @@ export function AnimalList({ viewMode = "grid" }: AnimalListProps) {
               age={animal.age}
               weight={animal.weight}
               length={animal.length}
+              lastFedDate={animal.last_fed_date}
               image={animal.image_url || "https://images.unsplash.com/photo-1597926599906-afd0d4a7ecbf?w=800&auto=format&fit=crop&q=60"}
             />
           </div>
