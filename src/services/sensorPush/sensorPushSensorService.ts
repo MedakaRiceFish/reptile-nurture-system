@@ -25,43 +25,9 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
     const dateStamp = amzDate.substring(0, 8);
 
-    // For development environment we can't directly call the API due to CORS
-    // In production this should be moved to a Supabase Edge Function
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Using simulated SensorPush data");
-      
-      // Return simulated data for development
-      const mockSensors: SensorPushSensor[] = [
-        {
-          id: "sensor1",
-          name: "Living Room Sensor",
-          deviceId: "device1",
-          address: "00:11:22:33:44:55",
-          rssi: -65,
-          battery: 85,
-          active: true,
-          alerts: false
-        },
-        {
-          id: "sensor2",
-          name: "Bedroom Sensor",
-          deviceId: "device2",
-          address: "55:44:33:22:11:00",
-          rssi: -72,
-          battery: 92,
-          active: true,
-          alerts: false
-        }
-      ];
-      
-      // Store the mock sensors in the database for historical tracking
-      await storeSensorsData(mockSensors);
-      
-      return mockSensors;
-    }
-    
     // Make the request to SensorPush API with proper AWS signature format
     try {
+      console.log("Making real API request to SensorPush API");
       const response = await fetch(`${BASE_URL}/devices/sensors`, {
         method: "GET",
         headers: {
@@ -80,53 +46,17 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
 
       const data = await response.json() as SensorPushSensorsResponse;
       
-      // Log only the success response and count, not the full payload
-      console.log(`SensorPush API response: Successfully fetched ${Object.keys(data.sensors).length} sensors`);
+      // Log success message with the count of sensors
+      console.log(`SensorPush API success: Found ${Object.keys(data.sensors).length} sensors`);
       
       // Store sensors data in database for historical records
       await storeSensorsData(data.sensors);
       
-      // Convert the object to an array with sanitized data
-      const sanitizedSensors = Object.values(data.sensors).map(sensor => ({
-        ...sensor,
-        // Redact any potentially sensitive information for logging
-        address: sensor.address ? `${sensor.address.substring(0, 5)}...` : sensor.address
-      }));
-      
-      // Return the array of sensors
-      return sanitizedSensors;
+      // Convert the object to an array and return
+      return Object.values(data.sensors);
     } catch (error: any) {
-      // This typically means CORS error in browser environment
       console.error("Error making API request:", error.message);
-      
-      // For now, return mock data even in production to avoid complete failure
-      // This should be replaced with a proper Edge Function
-      console.warn("Falling back to mock data due to API error");
-      
-      const mockSensors: SensorPushSensor[] = [
-        {
-          id: "sensor1",
-          name: "Living Room Sensor",
-          deviceId: "device1",
-          address: "00:11:22:33:44:55",
-          rssi: -65,
-          battery: 85,
-          active: true,
-          alerts: false
-        },
-        {
-          id: "sensor2",
-          name: "Bedroom Sensor",
-          deviceId: "device2",
-          address: "55:44:33:22:11:00",
-          rssi: -72,
-          battery: 92,
-          active: true,
-          alerts: false
-        }
-      ];
-      
-      return mockSensors;
+      throw error; // Rethrow to handle in the main try/catch
     }
   } catch (error: any) {
     console.error("Error fetching SensorPush sensors:", error.message);
@@ -211,34 +141,11 @@ export const fetchSensorSamples = async (
     if (startTime) params.startTime = startTime;
     if (stopTime) params.stopTime = stopTime;
 
-    // For development or when direct API call fails (CORS), use mock data
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Using simulated SensorPush samples");
-      
-      // Generate some realistic mock data
-      const mockSamples: SensorPushSample[] = [];
-      const now = new Date();
-      
-      for (let i = 0; i < limit; i++) {
-        const sampleTime = new Date(now.getTime() - (i * 60000)); // Every minute back in time
-        mockSamples.push({
-          id: `sample-${sensorId}-${i}`,
-          observation: sampleTime.toISOString(),
-          temperature: 22 + Math.random() * 2, // Random temperature around 22°C
-          humidity: 45 + Math.random() * 10, // Random humidity around 45%
-          dewpoint: 10 + Math.random() * 2
-        });
-      }
-      
-      // Store the mock samples for historical data
-      await storeSamplesData(sensorId, mockSamples);
-      
-      return mockSamples;
-    }
-
     // Create current date for AWS Signature v4
     const date = new Date();
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    
+    console.log("Making real API request to fetch sensor samples");
     
     try {
       // According to Swagger, this is a POST request to /samples
@@ -275,28 +182,8 @@ export const fetchSensorSamples = async (
       // Return the samples for the requested sensor
       return data.sensors[sensorId] || [];
     } catch (error) {
-      // This typically means CORS error in browser environment
-      console.error("Error making API request:", error);
-      
-      // For now, return mock data even in production to avoid complete failure
-      console.warn("Falling back to mock data due to API error");
-      
-      // Generate some realistic mock data
-      const mockSamples: SensorPushSample[] = [];
-      const now = new Date();
-      
-      for (let i = 0; i < limit; i++) {
-        const sampleTime = new Date(now.getTime() - (i * 60000)); // Every minute back in time
-        mockSamples.push({
-          id: `sample-${sensorId}-${i}`,
-          observation: sampleTime.toISOString(),
-          temperature: 22 + Math.random() * 2, // Random temperature around 22°C
-          humidity: 45 + Math.random() * 10, // Random humidity around 45%
-          dewpoint: 10 + Math.random() * 2
-        });
-      }
-      
-      return mockSamples;
+      console.error("Error making API request for samples:", error);
+      throw error; // Rethrow to handle in the main try/catch
     }
   } catch (error: any) {
     console.error("Error fetching SensorPush samples:", error.message);
