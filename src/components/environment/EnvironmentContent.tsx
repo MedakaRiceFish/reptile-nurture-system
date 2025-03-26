@@ -5,7 +5,6 @@ import { EnvironmentImageCard } from "./EnvironmentImageCard";
 import { EnvironmentDetailsCard } from "./EnvironmentDetailsCard";
 import { InhabitantsCard } from "./InhabitantsCard";
 import { EnvironmentTabContent } from "./EnvironmentTabContent";
-import { SensorReadout } from "./SensorReadout";
 
 interface EnvironmentContentProps {
   enclosure: any;
@@ -54,16 +53,11 @@ export const EnvironmentContent: React.FC<EnvironmentContentProps> = ({
           />
         </div>
 
-        <div className="md:col-span-1 grid grid-rows-3 gap-6 h-full">
+        <div className="md:col-span-1 grid grid-rows-2 gap-6 h-full">
           <EnvironmentDetailsCard 
             enclosure={enclosure}
             getStatusColor={getStatusColor}
             onEditClick={onEditClick}
-          />
-          
-          <SensorReadout 
-            enclosureId={enclosure.id}
-            enclosureName={enclosure.name}
           />
           
           <InhabitantsCard enclosureId={enclosure.id} />

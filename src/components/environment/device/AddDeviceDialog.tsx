@@ -14,12 +14,16 @@ interface AddDeviceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (data: DeviceFormValues) => void;
+  enclosureId: string;
+  enclosureName: string;
 }
 
 export const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({
   open,
   onOpenChange,
-  onSave
+  onSave,
+  enclosureId,
+  enclosureName
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -31,7 +35,11 @@ export const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <DeviceDialogContent onSave={onSave} />
+        <DeviceDialogContent 
+          onSave={onSave} 
+          enclosureId={enclosureId}
+          enclosureName={enclosureName}
+        />
       </DialogContent>
     </Dialog>
   );

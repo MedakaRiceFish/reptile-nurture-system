@@ -1,11 +1,11 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, WifiIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -31,16 +31,32 @@ import {
   DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
+import { fetchSensors, mapSensorToEnclosure } from "@/services/sensorPushService";
+import { toast } from "sonner";
+import { SensorPushSensor } from "@/types/sensorpush";
 
 interface DeviceDialogContentProps {
   onSave: (data: DeviceFormValues) => void;
+  enclosureId: string;
+  enclosureName: string;
 }
 
-export const DeviceDialogContent: React.FC<DeviceDialogContentProps> = ({ onSave }) => {
+export const DeviceDialogContent: React.FC<DeviceDialogContentProps> = ({ 
+  onSave, 
+  enclosureId, 
+  enclosureName 
+}) => {
   // Set default dates for the form
   const today = new Date();
   const sixMonthsLater = new Date();
   sixMonthsLater.setMonth(today.getMonth() + 6);
+
+  // State for sensor selection
+  const [selectedDeviceType, setSelectedDeviceType] = useState<string>("");
+  const [isConnectingSensor, setIsConnectingSensor] = useState(false);
+  const [sensors, setSensors] = useState<SensorPushSensor[]>([]);
+  const [selectedSensorId, setSelectedSensorId] = useState<string>("");
+  const [isLoadingSensors, setIsLoadingSensors] = useState(false);
 
   // Initialize the form
   const form = useForm<DeviceFormValues>({
@@ -53,10 +69,59 @@ export const DeviceDialogContent: React.FC<DeviceDialogContentProps> = ({ onSave
     },
   });
 
+  // Watch for changes in the device type
+  const deviceType = form.watch("type");
+  
+  useEffect(() => {
+    setSelectedDeviceType(deviceType);
+  }, [deviceType]);
+
+  // Load sensors when connecting
+  const loadSensors = async () => {
+    setIsLoadingSensors(true);
+    const sensorList = await fetchSensors();
+    if (sensorList) {
+      setSensors(sensorList);
+    }
+    setIsLoadingSensors(false);
+  };
+
+  // Handle sensor connection
+  const handleConnectSensor = async () => {
+    setIsConnectingSensor(true);
+    loadSensors();
+  };
+
+  // Handle sensor mapping
+  const handleSensorMapping = async () => {
+    if (!selectedSensorId) {
+      toast.error("Please select a sensor");
+      return;
+    }
+
+    setIsLoadingSensors(true);
+    const success = await mapSensorToEnclosure(selectedSensorId, enclosureId);
+    setIsLoadingSensors(false);
+    
+    if (success) {
+      toast.success(`Sensor successfully mapped to ${enclosureName}`);
+      setIsConnectingSensor(false);
+      
+      // Update the form with the selected sensor's name
+      const selectedSensor = sensors.find(s => s.id === selectedSensorId);
+      if (selectedSensor) {
+        form.setValue("name", selectedSensor.name);
+      }
+    }
+  };
+
   // Handle form submission
   const onSubmit = (data: DeviceFormValues) => {
     onSave(data);
     form.reset();
+    setSelectedDeviceType("");
+    setIsConnectingSensor(false);
+    setSelectedSensorId("");
   };
 
   return (
@@ -83,7 +148,11 @@ export const DeviceDialogContent: React.FC<DeviceDialogContentProps> = ({ onSave
             <FormItem>
               <FormLabel>Device Type</FormLabel>
               <Select 
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setSelectedDeviceType(value);
+                  setIsConnectingSensor(false);
+                }}
                 defaultValue={field.value}
               >
                 <FormControl>
@@ -103,6 +172,66 @@ export const DeviceDialogContent: React.FC<DeviceDialogContentProps> = ({ onSave
             </FormItem>
           )}
         />
+        
+        {selectedDeviceType === "Sensor" && !isConnectingSensor && (
+          <Button 
+            type="button" 
+            variant="outline"
+            className="w-full"
+            onClick={handleConnectSensor}
+          >
+            <WifiIcon className="h-4 w-4 mr-2" />
+            Connect SensorPush Sensor
+          </Button>
+        )}
+
+        {selectedDeviceType === "Sensor" && isConnectingSensor && (
+          <div className="space-y-4 p-4 border rounded-lg">
+            <h4 className="font-medium">Select SensorPush Sensor</h4>
+            
+            {isLoadingSensors ? (
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground">Loading sensors...</p>
+              </div>
+            ) : sensors.length === 0 ? (
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground">No sensors found. Make sure your SensorPush account is connected.</p>
+              </div>
+            ) : (
+              <Select value={selectedSensorId} onValueChange={setSelectedSensorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a sensor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sensors.map((sensor) => (
+                    <SelectItem key={sensor.id} value={sensor.id}>
+                      {sensor.name} {sensor.active ? "(Active)" : "(Inactive)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setIsConnectingSensor(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                className="flex-1"
+                disabled={!selectedSensorId || isLoadingSensors}
+                onClick={handleSensorMapping}
+              >
+                Map Sensor
+              </Button>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-2 gap-4">
           <FormField

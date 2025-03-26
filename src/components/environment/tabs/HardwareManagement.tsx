@@ -24,6 +24,33 @@ export const HardwareManagement: React.FC<HardwareManagementProps> = ({ enclosur
 
   // State for add device dialog
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
+  // Get enclosure name (for display in add device dialog)
+  const [enclosureName, setEnclosureName] = useState("Enclosure");
+
+  // Fetch enclosure name
+  useEffect(() => {
+    if (!enclosureId) return;
+    
+    const fetchEnclosureName = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('enclosures')
+          .select('name')
+          .eq('id', enclosureId)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setEnclosureName(data.name);
+        }
+      } catch (error) {
+        console.error("Error fetching enclosure name:", error);
+      }
+    };
+    
+    fetchEnclosureName();
+  }, [enclosureId]);
 
   // Fetch hardware devices
   const fetchDevices = async () => {
@@ -198,6 +225,8 @@ export const HardwareManagement: React.FC<HardwareManagementProps> = ({ enclosur
         open={isAddDeviceDialogOpen}
         onOpenChange={setIsAddDeviceDialogOpen}
         onSave={handleAddDevice}
+        enclosureId={enclosureId || ""}
+        enclosureName={enclosureName}
       />
     </Card>
   );
