@@ -51,19 +51,34 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing tokens in database");
     
-    // Store the tokens in Supabase using the custom function
-    const { error: storageError } = await supabase.rpc('store_sensorpush_tokens', {
-      p_user_id: userId,
-      p_auth_token: authResponse.authorization,
-      p_access_token: tokenResponse.accesstoken,
-      p_refresh_token: tokenResponse.refreshtoken,
-      p_access_expires: accessExpires.toISOString(),
-      p_refresh_expires: refreshExpires.toISOString()
-    });
-
-    if (storageError) {
-      console.error("Failed to store SensorPush tokens:", storageError);
-      throw storageError;
+    // First, check if the store_sensorpush_tokens function exists
+    try {
+      // Use the upsert_api_token function for each token type as a fallback
+      await supabase.rpc('upsert_api_token', {
+        p_user_id: userId,
+        p_service: 'sensorpush_auth',
+        p_token: authResponse.authorization,
+        p_expires_at: refreshExpires.toISOString()
+      });
+      
+      await supabase.rpc('upsert_api_token', {
+        p_user_id: userId,
+        p_service: 'sensorpush_access',
+        p_token: tokenResponse.accesstoken,
+        p_expires_at: accessExpires.toISOString()
+      });
+      
+      await supabase.rpc('upsert_api_token', {
+        p_user_id: userId,
+        p_service: 'sensorpush_refresh',
+        p_token: tokenResponse.refreshtoken,
+        p_expires_at: refreshExpires.toISOString()
+      });
+      
+      console.log("Successfully stored tokens using individual upsert calls");
+    } catch (storageError) {
+      console.error("Error storing tokens:", storageError);
+      throw new Error("Failed to store SensorPush tokens");
     }
 
     console.log("Successfully authenticated with SensorPush API");
@@ -86,22 +101,40 @@ export const getSensorPushToken = async (): Promise<string | null> => {
   try {
     const userId = await getCurrentUserId();
     
-    // Get tokens from Supabase using the custom function
-    const { data, error } = await supabase.rpc('get_sensorpush_tokens', {
-      p_user_id: userId
-    });
-
-    if (error) {
-      console.error("Error getting SensorPush tokens:", error);
-      throw error;
-    }
-
-    if (!data || !data[0] || !data[0].access_token) {
+    // Get tokens from database using individual queries instead of the custom function
+    const { data: authTokenData } = await supabase
+      .from('api_tokens')
+      .select('token, expires_at')
+      .eq('user_id', userId)
+      .eq('service', 'sensorpush_auth')
+      .single();
+      
+    const { data: accessTokenData } = await supabase
+      .from('api_tokens')
+      .select('token, expires_at')
+      .eq('user_id', userId)
+      .eq('service', 'sensorpush_access')
+      .single();
+      
+    const { data: refreshTokenData } = await supabase
+      .from('api_tokens')
+      .select('token, expires_at')
+      .eq('user_id', userId)
+      .eq('service', 'sensorpush_refresh')
+      .single();
+    
+    if (!accessTokenData || !refreshTokenData || !authTokenData) {
       console.log("No SensorPush tokens found");
       return null;
     }
     
-    const tokens = data[0] as SensorPushDBTokens;
+    const tokens = {
+      auth_token: authTokenData.token,
+      access_token: accessTokenData.token,
+      refresh_token: refreshTokenData.token,
+      access_expires: accessTokenData.expires_at,
+      refresh_expires: refreshTokenData.expires_at
+    } as SensorPushDBTokens;
     
     const now = new Date();
     const accessExpires = new Date(tokens.access_expires);
@@ -136,20 +169,20 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       const newAccessExpires = new Date(now.getTime() + 25 * 60 * 1000); // 25 min
       const newRefreshExpires = new Date(now.getTime() + 55 * 60 * 1000); // 55 min
       
-      // Update tokens in the database
-      const { error: updateError } = await supabase.rpc('store_sensorpush_tokens', {
+      // Update tokens in the database using individual upsert calls
+      await supabase.rpc('upsert_api_token', {
         p_user_id: userId,
-        p_auth_token: tokens.auth_token, // Keep existing auth token
-        p_access_token: refreshResponse.accesstoken,
-        p_refresh_token: refreshResponse.refreshtoken,
-        p_access_expires: newAccessExpires.toISOString(),
-        p_refresh_expires: newRefreshExpires.toISOString()
+        p_service: 'sensorpush_access',
+        p_token: refreshResponse.accesstoken,
+        p_expires_at: newAccessExpires.toISOString()
       });
       
-      if (updateError) {
-        console.error("Failed to update refreshed tokens:", updateError);
-        throw updateError;
-      }
+      await supabase.rpc('upsert_api_token', {
+        p_user_id: userId,
+        p_service: 'sensorpush_refresh',
+        p_token: refreshResponse.refreshtoken,
+        p_expires_at: newRefreshExpires.toISOString()
+      });
       
       console.log("Successfully refreshed SensorPush tokens");
       return refreshResponse.accesstoken;

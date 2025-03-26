@@ -21,9 +21,15 @@ export const ensureTokenFunctions = async (): Promise<void> => {
  */
 export const initSensorPushSchema = async (): Promise<void> => {
   try {
-    // Ensure the api_tokens table structure is updated to support multiple tokens
-    const { error } = await supabase.rpc('ensure_api_tokens_schema');
-    if (error) throw error;
+    // Check if api_tokens table exists
+    const { count, error: checkError } = await supabase
+      .from('api_tokens')
+      .select('*', { count: 'exact', head: true });
+    
+    if (checkError) {
+      // Table doesn't exist, create it with Supabase SQL
+      await supabase.rpc('create_api_tokens_table');
+    }
     
     console.log("SensorPush database schema initialized successfully");
   } catch (error) {
@@ -37,8 +43,16 @@ export const initSensorPushSchema = async (): Promise<void> => {
  */
 export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
   try {
-    const { error } = await supabase.rpc('ensure_sensors_history_table_exists');
-    if (error) throw error;
+    // Check if sensors_history table exists
+    const { count, error: checkError } = await supabase
+      .from('sensors_history')
+      .select('*', { count: 'exact', head: true });
+    
+    if (checkError) {
+      // Table doesn't exist, create it with Supabase SQL
+      await supabase.rpc('create_sensors_history_table');
+    }
+    
     console.log("Sensors history table check complete");
   } catch (error) {
     console.error("Error checking sensors history table:", error);
@@ -50,8 +64,16 @@ export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
  */
 export const ensureSamplesHistoryTableExists = async (): Promise<void> => {
   try {
-    const { error } = await supabase.rpc('ensure_samples_history_table_exists');
-    if (error) throw error;
+    // Check if samples_history table exists
+    const { count, error: checkError } = await supabase
+      .from('samples_history')
+      .select('*', { count: 'exact', head: true });
+    
+    if (checkError) {
+      // Table doesn't exist, create it with Supabase SQL
+      await supabase.rpc('create_samples_history_table');
+    }
+    
     console.log("Samples history table check complete");
   } catch (error) {
     console.error("Error checking samples history table:", error);

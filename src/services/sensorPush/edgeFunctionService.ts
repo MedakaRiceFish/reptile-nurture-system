@@ -54,6 +54,10 @@ export const callSensorPushAPI = async (
     if (data.error) {
       console.error('SensorPush API error:', data.error);
       
+      if (typeof data.error === 'string' && data.error.includes('Invalid login credentials')) {
+        throw new Error('Invalid login credentials. Please check your email and password.');
+      }
+      
       // Handle specific error cases
       if (data.status === 429) {
         throw new Error('Rate limit exceeded. SensorPush allows only 1 request per minute.');
@@ -63,10 +67,9 @@ export const callSensorPushAPI = async (
         throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
       }
       
-      throw new Error(`SensorPush API error: ${data.error}`);
+      throw new Error(`SensorPush API error: ${JSON.stringify(data.error)}`);
     }
     
-    // Return the data from the edge function
     return data;
   } catch (error: any) {
     console.error('Error calling SensorPush API via edge function:', error);
