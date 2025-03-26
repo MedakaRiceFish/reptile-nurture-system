@@ -50,7 +50,8 @@ export const getDataRetentionPolicy = async (): Promise<{ months: number } | nul
       throw error;
     }
     
-    return data;
+    // Fix: The database function returns an array with one object, so we need to return the first item
+    return data && data.length > 0 ? data[0] : { months: 18 };
   } catch (error: any) {
     console.error("Error fetching data retention policy:", error.message);
     return { months: 18 }; // Default to 18 months if we can't fetch the policy
