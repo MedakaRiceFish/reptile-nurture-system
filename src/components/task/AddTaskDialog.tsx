@@ -8,12 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { TaskFormValues } from "@/types/task";
+import { Task, TaskFormValues } from "@/types/task";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
@@ -39,18 +39,35 @@ interface AddTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTaskAdded: (task: TaskFormValues) => Promise<void>;
+  initialTask?: Task;
+  isEditing?: boolean;
 }
 
-export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialogProps) {
+export function AddTaskDialog({ 
+  open, 
+  onOpenChange, 
+  onTaskAdded, 
+  initialTask, 
+  isEditing = false 
+}: AddTaskDialogProps) {
   const { user } = useAuth();
   const [enclosures, setEnclosures] = useState<RelatedItem[]>([]);
   const [animals, setAnimals] = useState<RelatedItem[]>([]);
   const [hardware, setHardware] = useState<RelatedItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
+  // Initialize form with initialTask data if editing
   const form = useForm<TaskFormSchema>({
     resolver: zodResolver(taskSchema),
-    defaultValues: {
+    defaultValues: initialTask ? {
+      title: initialTask.title,
+      description: initialTask.description || "",
+      due_date: parseISO(initialTask.due_date),
+      due_time: initialTask.due_time || "",
+      priority: initialTask.priority,
+      related_type: initialTask.related_type,
+      related_id: initialTask.related_id,
+    } : {
       title: "",
       description: "",
       priority: "medium",
@@ -90,10 +107,12 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
     fetchRelatedItems();
   }, [open]);
   
-  // Clear related_id when related_type changes
+  // Clear related_id when related_type changes, but only if not editing
   useEffect(() => {
-    form.setValue("related_id", undefined);
-  }, [relatedType, form]);
+    if (!isEditing) {
+      form.setValue("related_id", undefined);
+    }
+  }, [relatedType, form, isEditing]);
 
   const onSubmit = async (data: TaskFormSchema) => {
     if (!user) return;
@@ -109,11 +128,13 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
         priority: data.priority,
         related_type: data.related_type,
         related_id: data.related_id,
-        status: 'pending',
+        status: initialTask?.status || 'pending',
       };
       
       await onTaskAdded(formattedTask);
-      form.reset();
+      if (!isEditing) {
+        form.reset();
+      }
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting task:', error);
@@ -126,7 +147,7 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Task" : "Add New Task"}</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -318,7 +339,7 @@ export function AddTaskDialog({ open, onOpenChange, onTaskAdded }: AddTaskDialog
             
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Task"}
+                {isLoading ? (isEditing ? "Saving..." : "Creating...") : (isEditing ? "Save Changes" : "Create Task")}
               </Button>
             </DialogFooter>
           </form>
