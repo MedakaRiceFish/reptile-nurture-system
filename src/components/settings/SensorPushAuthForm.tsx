@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { authenticateSensorPush, getSensorPushToken } from "@/services/sensorPush";
+import { authenticateSensorPush, getSensorPushToken, fetchSensors } from "@/services/sensorPush";
 import { toast } from "sonner";
 import { CheckCircle, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -16,15 +16,27 @@ export function SensorPushAuthForm() {
   const [isConnected, setIsConnected] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [deviceCount, setDeviceCount] = useState<number>(0);
 
   useEffect(() => {
     // Check if we already have a valid token
     const checkConnection = async () => {
       const token = await getSensorPushToken();
       setIsConnected(!!token);
+      
       if (token) {
         // Set a simulated last sync time (in a real app, store this in the database)
         setLastSyncTime(new Date());
+        
+        // Fetch sensors to get the device count
+        try {
+          const sensors = await fetchSensors();
+          if (sensors) {
+            setDeviceCount(sensors.length);
+          }
+        } catch (error) {
+          console.error("Error fetching sensor count:", error);
+        }
       }
     };
     
@@ -45,6 +57,16 @@ export function SensorPushAuthForm() {
         setIsConnected(true);
         setShowLoginForm(false);
         setLastSyncTime(new Date());
+        
+        // Fetch sensors to get the device count after successful authentication
+        try {
+          const sensors = await fetchSensors();
+          if (sensors) {
+            setDeviceCount(sensors.length);
+          }
+        } catch (error) {
+          console.error("Error fetching sensor count:", error);
+        }
       }
     } catch (error) {
       console.error("SensorPush authentication error:", error);
@@ -86,6 +108,9 @@ export function SensorPushAuthForm() {
                 <p className="text-sm font-medium">Last synced</p>
                 <p className="text-xs text-muted-foreground">
                   {lastSyncTime ? lastSyncTime.toLocaleString() : "Never"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Devices Found: {deviceCount}
                 </p>
               </div>
               <Collapsible>
