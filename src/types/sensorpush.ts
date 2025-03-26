@@ -48,3 +48,12 @@ export interface SensorPushSensorsResponse {
   total: number;
   sensors: Record<string, SensorPushSensor>;
 }
+
+// Database token structure
+export interface SensorPushDBTokens {
+  auth_token: string;
+  access_token: string;
+  refresh_token: string;
+  access_expires: string;
+  refresh_expires: string;
+}

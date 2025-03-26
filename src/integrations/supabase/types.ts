@@ -423,6 +423,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      ensure_api_tokens_schema: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      ensure_samples_history_table_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      ensure_sensors_history_table_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_api_token: {
         Args: {
           p_service: string
@@ -468,6 +480,18 @@ export type Database = {
           sample_count: number
         }[]
       }
+      get_sensorpush_tokens: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          auth_token: string
+          access_token: string
+          refresh_token: string
+          access_expires: string
+          refresh_expires: string
+        }[]
+      }
       map_sensor_to_enclosure: {
         Args: {
           p_sensor_id: string
@@ -489,6 +513,17 @@ export type Database = {
           p_sensor_data: Json
           p_user_id: string
           p_timestamp: string
+        }
+        Returns: undefined
+      }
+      store_sensorpush_tokens: {
+        Args: {
+          p_user_id: string
+          p_auth_token: string
+          p_access_token: string
+          p_refresh_token: string
+          p_access_expires: string
+          p_refresh_expires: string
         }
         Returns: undefined
       }

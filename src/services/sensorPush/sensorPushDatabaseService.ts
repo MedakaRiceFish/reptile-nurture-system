@@ -7,8 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const ensureTokenFunctions = async (): Promise<void> => {
   try {
-    // Create functions for storing and retrieving SensorPush tokens
-    // These functions are created via SQL migration and don't need to be
+    // These functions are now created via SQL migration and don't need to be
     // created programmatically anymore
     console.log("SensorPush token database functions check complete");
   } catch (error) {
@@ -23,7 +22,8 @@ export const ensureTokenFunctions = async (): Promise<void> => {
 export const initSensorPushSchema = async (): Promise<void> => {
   try {
     // Ensure the api_tokens table structure is updated to support multiple tokens
-    await supabase.rpc('ensure_api_tokens_schema');
+    const { error } = await supabase.rpc('ensure_api_tokens_schema');
+    if (error) throw error;
     
     console.log("SensorPush database schema initialized successfully");
   } catch (error) {
@@ -37,7 +37,8 @@ export const initSensorPushSchema = async (): Promise<void> => {
  */
 export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
   try {
-    await supabase.rpc('ensure_sensors_history_table_exists');
+    const { error } = await supabase.rpc('ensure_sensors_history_table_exists');
+    if (error) throw error;
     console.log("Sensors history table check complete");
   } catch (error) {
     console.error("Error checking sensors history table:", error);
@@ -49,7 +50,8 @@ export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
  */
 export const ensureSamplesHistoryTableExists = async (): Promise<void> => {
   try {
-    await supabase.rpc('ensure_samples_history_table_exists');
+    const { error } = await supabase.rpc('ensure_samples_history_table_exists');
+    if (error) throw error;
     console.log("Samples history table check complete");
   } catch (error) {
     console.error("Error checking samples history table:", error);
