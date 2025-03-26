@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SensorPushSample, SensorPushSamplesResponse, SensorPushSensor, SensorPushSensorsResponse } from "@/types/sensorpush";
@@ -64,14 +65,14 @@ const storeSensorsData = async (sensors: Record<string, SensorPushSensor> | Sens
       : Object.entries(sensors);
     
     for (const [sensorId, sensorData] of sensorEntries) {
-      // Always convert sensorData to a JSON string regardless of its type
-      const sensorJson = typeof sensorData === 'string' 
+      // Fix: Always stringify the object to ensure we pass a string to the RPC function
+      const sensorJsonString = typeof sensorData === 'string' 
         ? sensorData 
         : JSON.stringify(sensorData);
         
       await supabase.rpc('store_sensor_data', {
         p_sensor_id: sensorId,
-        p_sensor_data: sensorJson,
+        p_sensor_data: sensorJsonString,
         p_user_id: userId,
         p_timestamp: timestamp
       });
