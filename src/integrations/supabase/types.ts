@@ -23,6 +23,7 @@ export type Database = {
           last_fed_date: string | null
           length: number | null
           name: string
+          next_feeding_date: string | null
           owner_id: string
           species: string
           updated_at: string
@@ -41,6 +42,7 @@ export type Database = {
           last_fed_date?: string | null
           length?: number | null
           name: string
+          next_feeding_date?: string | null
           owner_id: string
           species: string
           updated_at?: string
@@ -59,6 +61,7 @@ export type Database = {
           last_fed_date?: string | null
           length?: number | null
           name?: string
+          next_feeding_date?: string | null
           owner_id?: string
           species?: string
           updated_at?: string
