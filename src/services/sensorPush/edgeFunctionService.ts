@@ -32,6 +32,10 @@ export const callSensorPushAPI = async (
     // For security, only log a portion of the token
     if (token) {
       console.log(`Token present, length: ${token.length}`);
+      // Add debugging for Gateway Cloud API compatibility
+      if (path !== '/oauth/authorize') {
+        console.log(`Request to Gateway Cloud API endpoint - AWS SigV4 will be applied by the edge function`);
+      }
     }
     
     // Call the Supabase Edge Function
@@ -59,6 +63,12 @@ export const callSensorPushAPI = async (
       
       if (data.status === 401 || data.status === 403) {
         throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
+      }
+
+      // Specific error handling for AWS SigV4 issues
+      if (data.error.includes('Authorization header requires') || 
+          data.error.includes('The security token included in the request is invalid')) {
+        throw new Error('Authentication error with SensorPush Gateway Cloud API. Please check that you are using credentials for the Gateway Cloud API and try reconnecting your account.');
       }
       
       throw new Error(`SensorPush API error: ${data.error}`);

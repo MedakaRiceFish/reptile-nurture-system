@@ -39,6 +39,17 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     // Store the token exactly as provided by the API - important for SensorPush auth
     const { authorization } = authResponse;
     
+    // For Gateway Cloud API, log additional token information to help debug
+    console.log(`Token received from SensorPush. Character length: ${authorization.length}`);
+    console.log(`First 10 characters: ${authorization.substring(0, 10)}...`);
+
+    // Check token format for expected SensorPush Gateway Cloud API format
+    if (authorization.includes('.')) {
+      console.log(`Token contains '.' separators, likely in the required format for Gateway Cloud API`);
+    } else {
+      console.log(`Token does not contain separators, may require special handling for Gateway Cloud API`);
+    }
+    
     // Insert or update token in the custom table
     const { error: storageError } = await supabase.rpc('upsert_api_token', {
       p_service: 'sensorpush',
@@ -106,7 +117,9 @@ export const getSensorPushToken = async (): Promise<string | null> => {
     }
 
     // Return the token exactly as stored - critical for SensorPush API
-    return data[0].token;
+    const token = data[0].token;
+    console.log(`Retrieved SensorPush token from database. Character length: ${token.length}`);
+    return token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);
     return null;
