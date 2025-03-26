@@ -5,9 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SensorChart } from "@/components/ui/dashboard/SensorChart";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { format } from "date-fns";
-import { fetchSensorSamples, getEnclosureSensor } from "@/services/sensorPushService";
+import { fetchSensorSamples, getEnclosureSensor } from "@/services/sensorPush";
 import { SensorPushSample } from "@/types/sensorpush";
 import { Thermometer } from "lucide-react";
+import { SensorChartData } from "@/types/charts";
 
 interface TemperatureTabContentProps {
   enclosureId?: string;
@@ -56,7 +57,7 @@ export const TemperatureTabContent: React.FC<TemperatureTabContentProps> = ({ en
   }, [sensorId]);
 
   // Format data for the chart
-  const chartData = sensorData.map(sample => ({
+  const chartData: SensorChartData[] = sensorData.map(sample => ({
     timestamp: new Date(sample.observation).getTime(),
     value: sample.temperature,
     time: format(new Date(sample.observation), 'HH:mm')
@@ -93,7 +94,7 @@ export const TemperatureTabContent: React.FC<TemperatureTabContentProps> = ({ en
                 <SensorChart 
                   data={chartData} 
                   type="temperature" 
-                  unit="°F"
+                  unit="°F" 
                 />
               ) : sensorId ? (
                 <div className="flex items-center justify-center h-full">

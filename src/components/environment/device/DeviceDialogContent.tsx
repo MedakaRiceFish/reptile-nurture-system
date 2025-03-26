@@ -31,7 +31,7 @@ import {
   DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
-import { fetchSensors, mapSensorToEnclosure } from "@/services/sensorPushService";
+import { fetchSensors, mapSensorToEnclosure } from "@/services/sensorPush";
 import { toast } from "sonner";
 import { SensorPushSensor } from "@/types/sensorpush";
 

@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { fetchSensorSamples, getEnclosureSensor } from "@/services/sensorPushService";
+import { fetchSensorSamples, getEnclosureSensor } from "@/services/sensorPush";
 import { SensorPushSample } from "@/types/sensorpush";
 import { RefreshCwIcon, ThermometerIcon, DropletIcon } from "lucide-react";
 import { toast } from "sonner";
