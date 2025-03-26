@@ -29,9 +29,9 @@ export const callSensorPushAPI = async (
       hasToken: !!token
     });
 
-    // Display token length but not the actual token for security
+    // For security, only log a portion of the token
     if (token) {
-      console.log(`Token length: ${token.length}`);
+      console.log(`Token present, length: ${token.length}`);
     }
     
     // Call the Supabase Edge Function
@@ -48,10 +48,9 @@ export const callSensorPushAPI = async (
       throw new Error('No data returned from edge function');
     }
     
-    // If the response contains an error property, throw it
+    // Check if the response contains an error property
     if (data.error) {
       console.error('SensorPush API error:', data.error);
-      console.error('SensorPush API error details:', data.data);
       
       // Handle specific error cases
       if (data.status === 429) {

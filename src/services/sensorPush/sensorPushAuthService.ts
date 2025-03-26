@@ -7,7 +7,7 @@ import { callSensorPushAPI } from "./edgeFunctionService";
 
 /**
  * Authenticate with the SensorPush API and store the authorization token
- * Note: SensorPush uses a custom auth flow, not standard OAuth
+ * This implements SensorPush's custom token-based auth flow (not standard OAuth)
  */
 export const authenticateSensorPush = async (credentials: SensorPushCredentials): Promise<string | null> => {
   try {
@@ -27,11 +27,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
       throw new Error("Failed to obtain authorization token from SensorPush");
     }
 
-    // Get the authorization token from the response - use exactly as returned
-    const { authorization } = authResponse;
-    console.log("Successfully obtained authorization token from SensorPush");
-    
-    // According to docs, authorization token is valid for 60 minutes
+    // According to SensorPush docs, authorization token is valid for 60 minutes
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 55); // Set to 55 min to be safe
     
@@ -40,13 +36,13 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
-    // Store the token exactly as provided by the API - don't modify it
-    const formattedToken = authorization;
+    // Store the token exactly as provided by the API - important for SensorPush auth
+    const { authorization } = authResponse;
     
     // Insert or update token in the custom table
     const { error: storageError } = await supabase.rpc('upsert_api_token', {
       p_service: 'sensorpush',
-      p_token: formattedToken,
+      p_token: authorization, 
       p_expires_at: expiresAt.toISOString(),
       p_user_id: userId
     });
@@ -58,7 +54,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
 
     console.log("Successfully authenticated with SensorPush API, token will expire at:", expiresAt.toLocaleString());
     toast.success("Successfully connected to SensorPush");
-    return formattedToken;
+    return authorization;
   } catch (error: any) {
     console.error("SensorPush authentication error:", error);
     toast.error(`Authentication failed: ${error.message}`);
@@ -109,7 +105,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       console.warn("Using soon-to-expire SensorPush token");
     }
 
-    // Return the token exactly as stored in the database - don't modify it
+    // Return the token exactly as stored - critical for SensorPush API
     return data[0].token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);
