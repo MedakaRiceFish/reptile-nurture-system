@@ -52,15 +52,16 @@ export function AddAnimalDialog({ isOpen, onOpenChange, onSuccess }: AddAnimalDi
         species,
         age: parseInt(age) || 0,
         weight: parseFloat(weight) || 0,
-        length: parseFloat(length) || 0,
-        feeding_schedule: feedingSchedule,
-        breeding_source: breederSource,
-        description,
-        custom_id: customId,
+        length: parseFloat(length) || null,
+        feeding_schedule: feedingSchedule || null,
+        breeding_source: breederSource || null,
+        description: description || null,
+        custom_id: customId || null,
         owner_id: user.id,
         enclosure_id: enclosureId === "none" ? null : enclosureId,
         image_url: null,
-        last_fed_date: null
+        last_fed_date: null,
+        next_feeding_date: null
       };
       
       const result = await createAnimal(newAnimal);

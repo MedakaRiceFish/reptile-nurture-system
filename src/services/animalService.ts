@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { addDays, addHours, addMonths, addWeeks } from "date-fns";
@@ -46,7 +45,6 @@ export const getAnimals = async (): Promise<Animal[]> => {
 
 export const getAnimal = async (id: string): Promise<Animal | null> => {
   try {
-    // First get the animal data
     const { data: animalData, error: animalError } = await supabase
       .from('animals')
       .select('*')
@@ -55,7 +53,6 @@ export const getAnimal = async (id: string): Promise<Animal | null> => {
     
     if (animalError) throw animalError;
     
-    // If animal has enclosure_id, get the enclosure name
     if (animalData && animalData.enclosure_id) {
       const { data: enclosureData, error: enclosureError } = await supabase
         .from('enclosures')
@@ -67,7 +64,7 @@ export const getAnimal = async (id: string): Promise<Animal | null> => {
         return {
           ...animalData,
           enclosureName: enclosureData.name,
-          enclosure: animalData.enclosure_id // Add this alias for compatibility
+          enclosure: animalData.enclosure_id
         };
       }
     }
@@ -83,7 +80,10 @@ export const createAnimal = async (animal: AnimalInsert): Promise<Animal | null>
   try {
     const { data, error } = await supabase
       .from('animals')
-      .insert(animal)
+      .insert({
+        ...animal,
+        next_feeding_date: null
+      })
       .select()
       .single();
     
@@ -132,7 +132,6 @@ export const deleteAnimal = async (id: string): Promise<boolean> => {
 
 export const updateLastFedDate = async (id: string): Promise<Animal | null> => {
   try {
-    // First get the current animal data to access the feeding schedule
     const { data: animalData, error: fetchError } = await supabase
       .from('animals')
       .select('feeding_schedule')
@@ -141,7 +140,6 @@ export const updateLastFedDate = async (id: string): Promise<Animal | null> => {
     
     if (fetchError) throw fetchError;
     
-    // Calculate next feeding date based on the feeding schedule
     const now = new Date();
     let nextFeedingDate = null;
     
@@ -167,7 +165,6 @@ export const updateLastFedDate = async (id: string): Promise<Animal | null> => {
       }
     }
     
-    // Update the animal with the new last_fed_date and next_feeding_date
     const updates = {
       last_fed_date: now.toISOString(),
       next_feeding_date: nextFeedingDate ? nextFeedingDate.toISOString() : null
