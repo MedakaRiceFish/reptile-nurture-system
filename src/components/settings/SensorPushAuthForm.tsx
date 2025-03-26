@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { authenticateSensorPush, getSensorPushToken } from "@/services/sensorPush/sensorPushAuthService";
-import { fetchSensors } from "@/services/sensorPush/sensorPushSensorService";
+import { fetchSensors } from "@/services/sensorPush/sensorPushFetchService";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw, Shield } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -98,7 +97,7 @@ export function SensorPushAuthForm() {
           setConnectionStatus('error');
         }
       } else {
-        toast.error("Failed to connect to SensorPush");
+        toast.error("Failed to connect to SensorPush. Please check your credentials and try again.");
         setConnectionStatus('disconnected');
       }
     } catch (error: any) {
@@ -130,11 +129,11 @@ export function SensorPushAuthForm() {
                     fetchedSensors.map(s => s.name).join(', '));
       } else {
         setConnectionStatus('error');
-        toast.error("No sensors found or connection issue");
+        toast.error("No sensors found or connection issue. Try reconnecting your account.");
       }
     } catch (error: any) {
       setConnectionStatus('error');
-      toast.error(`Error refreshing sensors: ${error.message}`);
+      toast.error(`Error refreshing sensors: ${error.message}. Try reconnecting your account.`);
     } finally {
       setIsLoading(false);
     }

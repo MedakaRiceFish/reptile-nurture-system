@@ -1,157 +1,120 @@
 
-// Follow this setup guide to integrate the Deno runtime and Supabase functions
-// https://deno.land/manual/runtime/supabase
+// Follow Deno and Supabase conventions for imports
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+// CORS headers for browser requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-const BASE_URL = "https://api.sensorpush.com/api/v1";
+// SensorPush API base URL
+const SENSORPUSH_API_BASE_URL = "https://api.sensorpush.com/api/v1";
 
+// Edge function to proxy requests to SensorPush API
 serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  console.log("SensorPush proxy function called");
   
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204,
+    });
+  }
+
   try {
-    console.log("SensorPush Edge Function: Request received");
-    const { path, method, token, body } = await req.json();
+    // Parse the request body
+    const requestData = await req.json();
     
-    // Build the full URL
-    const url = `${BASE_URL}${path}`;
-    console.log(`SensorPush Edge Function: Making ${method} request to ${url}`);
+    // Extract the necessary data from the request
+    const { path, method, token, body } = requestData;
     
-    // Create headers for the request
-    const headers: HeadersInit = {
-      "Accept": "application/json",
+    if (!path) {
+      throw new Error("Path is required");
+    }
+    
+    // Log what we're about to do (redact sensitive information)
+    console.log(`Making ${method} request to SensorPush API at ${path}`);
+    console.log(`Request body size: ${body ? JSON.stringify(body).length : 0} bytes`);
+    
+    // Construct the full URL
+    const url = `${SENSORPUSH_API_BASE_URL}${path}`;
+    
+    // Prepare headers
+    const headers = new Headers({
+      'Content-Type': 'application/json',
       ...corsHeaders
+    });
+    
+    // IMPORTANT FIX: If token is provided, add it to the Authorization header with 'Bearer ' prefix
+    if (token) {
+      headers.set('Authorization', token);
+      console.log("Added Authorization header");
+    }
+    
+    // Configure the request options
+    const options: RequestInit = {
+      method: method || 'GET',
+      headers: headers,
     };
     
-    // Only add Authorization header if token is provided (not for initial auth)
-    if (token) {
-      // For SensorPush API authentication:
-      // For OAuth flow: no header needed for initial authorization
-      // For authenticated calls: pass token as-is (which should be a valid JWT)
-      headers["Authorization"] = token;
-      
-      // Log that we're using the token (redacted for security)
-      const tokenPreview = token.substring(0, 10) + "...";
-      console.log(`SensorPush Edge Function: Using token for Authorization: ${tokenPreview}`);
+    // Add body for POST/PUT requests
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body);
     }
-    
-    // Add content-type for all requests to ensure proper JSON handling
-    headers["Content-Type"] = "application/json";
-    
-    // Log complete request details for debugging
-    console.log("SensorPush Edge Function: Full request details:", {
-      url,
-      method,
-      headers: {
-        ...headers,
-        "Authorization": headers["Authorization"] ? "[REDACTED]" : undefined
-      },
-      bodyLength: body ? JSON.stringify(body).length : 0
-    });
     
     // Make the request to SensorPush API
-    const response = await fetch(url, {
-      method: method || "GET",
-      headers,
-      body: body ? JSON.stringify(body) : undefined
-    });
+    console.log(`Sending request to ${url}`);
+    const response = await fetch(url, options);
     
-    // Log detailed response information
-    console.log(`SensorPush Edge Function: Response status: ${response.status} ${response.statusText}`);
-    const responseHeaders = Object.fromEntries([...response.headers.entries()]);
-    console.log("SensorPush Edge Function: Response headers:", responseHeaders);
+    // Log the status of the response
+    console.log(`SensorPush API Response status: ${response.status}`);
     
-    // Get response data
-    let responseData;
-    const responseText = await response.text();
-    
-    try {
-      responseData = JSON.parse(responseText);
-      
-      // Redact sensitive data in logs for auth responses
-      if (path === '/oauth/authorize' || path === '/oauth/access_token') {
-        console.log("SensorPush Edge Function: Successfully parsed auth response JSON", 
-          {
-            hasAuthorization: !!responseData?.authorization,
-            hasApiKey: !!responseData?.apikey,
-            responseKeys: Object.keys(responseData || {})
-          });
-      } else {
-        // Log non-sensitive response data
-        console.log("SensorPush Edge Function: Successfully parsed response JSON", 
-          path === '/devices/sensors' 
-            ? { sensorCount: Object.keys(responseData?.sensors || {}).length }
-            : { responseType: typeof responseData, status: responseData?.status });
-      }
-    } catch (e) {
-      console.error("SensorPush Edge Function: Failed to parse response as JSON:", e.message);
-      console.error("SensorPush Edge Function: Raw response text:", responseText.substring(0, 500) + (responseText.length > 500 ? "..." : ""));
-      responseData = { error: "Invalid JSON response", rawResponse: responseText.substring(0, 1000) };
-    }
-    
+    // If we get an error response, log more details
     if (!response.ok) {
-      console.error("SensorPush Edge Function: API error", {
-        status: response.status,
-        statusText: response.statusText,
-        error: responseData?.error || responseData?.message,
-        type: responseData?.type,
-        data: responseData
-      });
+      const errorText = await response.text();
+      console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
+      console.error(`Error details: ${errorText}`);
       
-      // Return the error response to the client with proper status code
-      return new Response(JSON.stringify({
-        error: responseData?.error || responseData?.message || response.statusText,
-        status: response.status,
-        data: responseData
-      }), {
-        status: response.status,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
+      // Return the error details to the client
+      return new Response(
+        JSON.stringify({
+          error: `SensorPush API error: ${response.status} ${response.statusText}`,
+          status: response.status,
+          data: errorText
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
         }
-      });
+      );
     }
     
-    // Log success metrics for various endpoints
-    if (path === '/devices/sensors' && responseData.sensors) {
-      console.log(`SensorPush Edge Function: Successfully fetched ${Object.keys(responseData.sensors).length} sensors`);
-    }
-    else if (path === '/samples' && responseData.sensors) {
-      const totalSamples = Object.values(responseData.sensors)
-        .reduce((sum: number, samples: any[]) => sum + samples.length, 0);
-      console.log(`SensorPush Edge Function: Successfully fetched ${totalSamples} samples for ${Object.keys(responseData.sensors).length} sensors`);
-    }
-    else if (path === '/oauth/authorize' && responseData.authorization) {
-      console.log("SensorPush Edge Function: Successfully obtained authorization token");
-    }
+    // Parse the response as JSON
+    const data = await response.json();
     
-    // Return the response with CORS headers
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
+    // Return the successful response to the client
+    return new Response(
+      JSON.stringify(data),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
-    });
+    );
   } catch (error) {
-    // Log the detailed error
-    console.error("SensorPush Edge Function: Unhandled error:", error.message);
-    console.error("SensorPush Edge Function: Stack trace:", error.stack);
+    // Log the error
+    console.error("SensorPush proxy error:", error.message);
     
-    // Return error response
-    return new Response(JSON.stringify({
-      error: error.message || "Unknown error occurred",
-      stack: error.stack
-    }), {
-      status: 500,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
+    // Return a formatted error response
+    return new Response(
+      JSON.stringify({
+        error: `SensorPush proxy error: ${error.message}`
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
-    });
+    );
   }
-});
+})

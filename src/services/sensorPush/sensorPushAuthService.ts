@@ -24,6 +24,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
       throw new Error("Failed to obtain authorization token from SensorPush");
     }
 
+    // Get the authorization token from the response
     const { authorization } = authResponse;
     
     // According to docs, authorization token is valid for 60 minutes
@@ -35,10 +36,13 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
+    // Store the token with 'Bearer ' prefix to match SensorPush API expectations
+    const formattedToken = `Bearer ${authorization}`;
+    
     // Insert or update token in the custom table
     const { error: storageError } = await supabase.rpc('upsert_api_token', {
       p_service: 'sensorpush',
-      p_token: authorization,
+      p_token: formattedToken,
       p_expires_at: expiresAt.toISOString(),
       p_user_id: userId
     });
@@ -49,7 +53,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     }
 
     console.log("Successfully authenticated with SensorPush API, token will expire at:", expiresAt.toLocaleString());
-    return authorization;
+    return formattedToken;
   } catch (error: any) {
     console.error("SensorPush authentication error:", error);
     toast.error(`Authentication failed: ${error.message}`);
@@ -100,6 +104,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       console.warn("Using soon-to-expire SensorPush token");
     }
 
+    // Return the token which is already properly formatted with 'Bearer ' prefix
     return data[0].token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);

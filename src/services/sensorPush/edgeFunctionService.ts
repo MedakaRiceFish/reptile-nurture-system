@@ -27,7 +27,7 @@ export const callSensorPushAPI = async (
       path, 
       method,
       bodySize: body ? JSON.stringify(body).length : 0,
-      tokenPreview: token ? `${token.substring(0, 5)}...` : undefined 
+      tokenPreview: token ? `${token.substring(0, 10)}...` : undefined 
     });
     
     // Call the Supabase Edge Function
@@ -56,6 +56,12 @@ export const callSensorPushAPI = async (
       
       if (data.status === 401 || data.status === 403) {
         throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
+      }
+      
+      // Handle 400 Bad Request specifically
+      if (data.status === 400) {
+        const errorDetails = typeof data.data === 'string' ? data.data : JSON.stringify(data.data);
+        throw new Error(`SensorPush API error (400 Bad Request): ${errorDetails}`);
       }
       
       throw new Error(`SensorPush API error: ${data.error}`);
