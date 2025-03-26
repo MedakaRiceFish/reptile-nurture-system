@@ -36,8 +36,8 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
-    // Store the token with 'Bearer ' prefix to match SensorPush API expectations
-    const formattedToken = `Bearer ${authorization}`;
+    // Store the token as is - edge function will handle it correctly
+    const formattedToken = authorization;
     
     // Insert or update token in the custom table
     const { error: storageError } = await supabase.rpc('upsert_api_token', {
@@ -104,7 +104,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       console.warn("Using soon-to-expire SensorPush token");
     }
 
-    // Return the token which is already properly formatted with 'Bearer ' prefix
+    // Return the token as is - no Bearer prefix needed
     return data[0].token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);

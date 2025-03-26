@@ -1,12 +1,7 @@
 
 // Follow Deno and Supabase conventions for imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-// CORS headers for browser requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from "../_shared/cors.ts"
 
 // SensorPush API base URL
 const SENSORPUSH_API_BASE_URL = "https://api.sensorpush.com/api/v1";
@@ -47,10 +42,11 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // IMPORTANT FIX: If token is provided, add it to the Authorization header with 'Bearer ' prefix
+    // IMPORTANT FIX: Pass token directly to Authorization header without 'Bearer ' prefix
+    // SensorPush API expects the raw token (JWT) without the Bearer prefix
     if (token) {
       headers.set('Authorization', token);
-      console.log("Added Authorization header");
+      console.log("Added Authorization header", { tokenPreviewLength: token.length });
     }
     
     // Configure the request options
@@ -70,6 +66,9 @@ serve(async (req) => {
     
     // Log the status of the response
     console.log(`SensorPush API Response status: ${response.status}`);
+    
+    // Log response headers for debugging
+    console.log("SensorPush Edge Function: Response headers:", Object.fromEntries([...response.headers.entries()]));
     
     // If we get an error response, log more details
     if (!response.ok) {
