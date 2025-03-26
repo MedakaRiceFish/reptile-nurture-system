@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchSensors, mapSensorToEnclosure } from "@/services/sensorPush";
+import { fetchSensors } from "@/services/sensorPush/sensorPushSensorService";
+import { mapSensorToEnclosure } from "@/services/sensorPush/sensorPushMappingService";
 import { SensorPushSensor } from "@/types/sensorpush";
 import { WifiIcon } from "lucide-react";
 import { toast } from "sonner";

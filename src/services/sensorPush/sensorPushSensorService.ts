@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SensorPushSample, SensorPushSamplesResponse, SensorPushSensor, SensorPushSensorsResponse } from "@/types/sensorpush";
@@ -24,46 +25,6 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
     const dateStamp = amzDate.substring(0, 8);
     
-    // Instead of calling the SensorPush API directly from browser, 
-    // we should use a Supabase edge function to avoid CORS issues
-    // For now, we'll create a simulation to test the UI
-    
-    // TEMPORARY: Return mock data for development/testing
-    console.log("Using simulated sensor data for development");
-    
-    const mockSensors: SensorPushSensor[] = [
-      {
-        id: "sensor-1",
-        name: "Gecko Enclosure",
-        deviceId: "device-1",
-        address: "00:11:22:33:44:55",
-        rssi: -65,
-        battery: 97,
-        active: true,
-        alerts: false
-      },
-      {
-        id: "sensor-2",
-        name: "Snake Terrarium",
-        deviceId: "device-2",
-        address: "00:22:33:44:55:66",
-        rssi: -72,
-        battery: 85,
-        active: true,
-        alerts: false
-      }
-    ];
-    
-    // Store mock sensors data in database for historical records
-    await storeSensorsData(mockSensors.reduce((obj, sensor) => {
-      obj[sensor.id] = sensor;
-      return obj;
-    }, {} as Record<string, SensorPushSensor>));
-    
-    return mockSensors;
-    
-    /* 
-    // COMMENTED OUT FOR NOW - TO BE IMPLEMENTED WITH EDGE FUNCTION
     // Make the request to SensorPush API with proper AWS signature format
     const response = await fetch(`${BASE_URL}/devices/sensors`, {
       method: "GET",
@@ -89,16 +50,15 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     // Store sensors data in database for historical records
     await storeSensorsData(data.sensors);
     
-    // Sanitize sensitive data before returning it
+    // Convert the object to an array with sanitized data
     const sanitizedSensors = Object.values(data.sensors).map(sensor => ({
       ...sensor,
-      // Redact any potentially sensitive information
+      // Redact any potentially sensitive information for logging
       address: sensor.address ? `${sensor.address.substring(0, 5)}...` : sensor.address
     }));
     
-    // Convert the object to an array with sanitized data
+    // Return the array of sensors
     return sanitizedSensors;
-    */
   } catch (error: any) {
     console.error("Error fetching SensorPush sensors:", error.message);
     toast.error(`Failed to fetch sensors: ${error.message}`);
@@ -173,47 +133,6 @@ export const fetchSensorSamples = async (
       throw new Error("No valid SensorPush token found");
     }
 
-    // TEMPORARY: Return mock data for development/testing
-    console.log("Using simulated sample data for development");
-    
-    // Generate a realistic timestamp for the current time
-    const now = new Date();
-    
-    // Create mock samples with realistic values
-    const mockSamples: SensorPushSample[] = Array.from({ length: limit }).map((_, index) => {
-      // Create timestamps going backward from now
-      const timestamp = new Date(now);
-      timestamp.setMinutes(timestamp.getMinutes() - index * 15); // 15-minute intervals
-      
-      // Generate realistic temperature (70-80°F converted to Celsius)
-      const tempF = 70 + Math.random() * 10;
-      const tempC = (tempF - 32) * 5/9;
-      
-      // Generate realistic humidity (40-60%)
-      const humidity = 40 + Math.random() * 20;
-      
-      // Calculate realistic dewpoint
-      const dewpoint = tempC - ((100 - humidity) / 5);
-      
-      return {
-        id: `sample-${sensorId}-${index}`,
-        observation: timestamp.toISOString(),
-        temperature: parseFloat(tempC.toFixed(2)),
-        humidity: parseFloat(humidity.toFixed(2)),
-        dewpoint: parseFloat(dewpoint.toFixed(2)),
-        pressure: 1013.25, // Standard atmospheric pressure
-        barometer: 1013.25 + (Math.random() * 2 - 1), // Slight variation
-        vpd: parseFloat((Math.random() * 0.5 + 0.8).toFixed(2)) // Vapor pressure deficit
-      };
-    });
-    
-    // Store mock samples in database
-    await storeSamplesData(sensorId, mockSamples);
-    
-    return mockSamples;
-    
-    /* 
-    // COMMENTED OUT FOR NOW - TO BE IMPLEMENTED WITH EDGE FUNCTION
     // Build query parameters according to the Swagger documentation
     const params: Record<string, any> = {
       sensors: [sensorId],
@@ -226,8 +145,7 @@ export const fetchSensorSamples = async (
     // Create current date for AWS Signature v4
     const date = new Date();
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
-    const dateStamp = amzDate.substring(0, 8);
-
+    
     // According to Swagger, this is a POST request to /samples
     const response = await fetch(`${BASE_URL}/samples`, {
       method: "POST",
@@ -261,7 +179,6 @@ export const fetchSensorSamples = async (
     
     // Return the samples for the requested sensor
     return data.sensors[sensorId] || [];
-    */
   } catch (error: any) {
     console.error("Error fetching SensorPush samples:", error.message);
     toast.error(`Failed to fetch sensor readings: ${error.message}`);
@@ -353,33 +270,5 @@ export const clearSensorPushData = async (): Promise<boolean> => {
   } catch (error: any) {
     console.error("Error clearing SensorPush data:", error.message);
     return false;
-  }
-};
-
-/**
- * Get the sensor ID mapped to the enclosure
- * This function now explicitly returns a string or null
- */
-export const getEnclosureSensor = async (enclosureId: string): Promise<string | null> => {
-  try {
-    const userId = await getCurrentUserId();
-    
-    // Check if there's a mapping for this enclosure
-    const { data, error } = await supabase
-      .from('sensor_mappings')
-      .select('sensor_id')
-      .eq('enclosure_id', enclosureId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (error) {
-      throw error;
-    }
-    
-    // Return the sensor ID if one exists, otherwise null
-    return data?.sensor_id || null;
-  } catch (error: any) {
-    console.error("Error getting enclosure sensor mapping:", error.message);
-    return null;
   }
 };
