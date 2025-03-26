@@ -56,7 +56,7 @@ serve(async (req) => {
     
     try {
       responseData = JSON.parse(responseText);
-      console.log("SensorPush Edge Function: Successfully parsed response JSON");
+      console.log("SensorPush Edge Function: Successfully parsed response JSON", responseData);
     } catch (e) {
       console.error("SensorPush Edge Function: Failed to parse response as JSON", responseText);
       responseData = { error: "Invalid JSON response", rawResponse: responseText };
@@ -70,7 +70,11 @@ serve(async (req) => {
       });
       
       // Return the error response to the client with proper status code
-      return new Response(JSON.stringify(responseData), {
+      return new Response(JSON.stringify({
+        error: responseData.error || responseData.message || response.statusText,
+        status: response.status,
+        data: responseData
+      }), {
         status: response.status,
         headers: {
           ...corsHeaders,

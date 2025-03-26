@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SensorPushSample, SensorPushSamplesResponse, SensorPushSensor, SensorPushSensorsResponse } from "@/types/sensorpush";
@@ -65,17 +64,10 @@ const storeSensorsData = async (sensors: Record<string, SensorPushSensor> | Sens
       : Object.entries(sensors);
     
     for (const [sensorId, sensorData] of sensorEntries) {
-      // Fix the type issue by converting sensorData to a string regardless of input type
-      let sensorJson: string;
-      
-      if (typeof sensorData === 'object') {
-        sensorJson = JSON.stringify(sensorData);
-      } else if (typeof sensorData === 'string') {
-        sensorJson = sensorData;
-      } else {
-        // If it's neither object nor string (unlikely), convert to string
-        sensorJson = String(sensorData);
-      }
+      // Always convert sensorData to a JSON string regardless of its type
+      const sensorJson = typeof sensorData === 'string' 
+        ? sensorData 
+        : JSON.stringify(sensorData);
         
       await supabase.rpc('store_sensor_data', {
         p_sensor_id: sensorId,
