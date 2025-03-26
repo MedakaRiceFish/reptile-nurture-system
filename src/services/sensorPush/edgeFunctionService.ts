@@ -7,7 +7,7 @@ import { toast } from "sonner";
  */
 export const callSensorPushAPI = async (
   path: string, 
-  token: string, 
+  token: string = '', 
   method: "GET" | "POST" = "GET", 
   body?: any
 ): Promise<any> => {
@@ -31,7 +31,7 @@ export const callSensorPushAPI = async (
     
     // Call the Supabase Edge Function with timeout handling
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Edge function request timed out after 15 seconds")), 15000)
+      setTimeout(() => reject(new Error("Edge function request timed out after 30 seconds")), 30000)
     );
     
     const fetchPromise = supabase.functions.invoke('sensorpush-proxy', {

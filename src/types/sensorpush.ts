@@ -9,6 +9,11 @@ export interface SensorPushAuthResponse {
   expires: string;
 }
 
+export interface SensorPushTokens {
+  accesstoken: string;
+  refreshtoken: string;
+}
+
 export interface SensorPushSensor {
   id: string;
   name: string;

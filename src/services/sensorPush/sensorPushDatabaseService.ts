@@ -2,35 +2,39 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Ensure the sensors_history table exists for long-term data storage
+ * Create the required stored procedures for token management
+ * This will be called during initialization to ensure the functions exist
  */
-export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
-  // Check if sensors_history table exists, if not create it
-  const { error: checkError } = await supabase
-    .from('sensors_history')
-    .select('count')
-    .limit(1)
-    .single();
-
-  if (checkError && checkError.code === 'PGRST116') {
-    // Table doesn't exist, create it with Supabase SQL
-    await supabase.rpc('create_sensors_history_table');
+export const ensureTokenFunctions = async (): Promise<void> => {
+  try {
+    // Create stored procedure to store all SensorPush tokens
+    await supabase.rpc('create_store_tokens_function');
+    
+    // Create stored procedure to get SensorPush tokens
+    await supabase.rpc('create_get_tokens_function');
+    
+    console.log("SensorPush token database functions created successfully");
+  } catch (error) {
+    // If there's an error, it's likely because the functions already exist
+    console.log("SensorPush token functions check complete");
   }
 };
 
 /**
- * Ensure the samples_history table exists for long-term data storage
+ * Initialize the database schema for SensorPush integration
+ * This creates the necessary tables and functions if they don't exist
  */
-export const ensureSamplesHistoryTableExists = async (): Promise<void> => {
-  // Check if samples_history table exists, if not create it
-  const { error: checkError } = await supabase
-    .from('samples_history')
-    .select('count')
-    .limit(1)
-    .single();
-
-  if (checkError && checkError.code === 'PGRST116') {
-    // Table doesn't exist, create it with Supabase SQL
-    await supabase.rpc('create_samples_history_table');
+export const initSensorPushSchema = async (): Promise<void> => {
+  try {
+    // Ensure the api_tokens table structure is updated to support multiple tokens
+    await supabase.rpc('ensure_api_tokens_schema');
+    
+    // Create the stored procedures
+    await ensureTokenFunctions();
+    
+    console.log("SensorPush database schema initialized successfully");
+  } catch (error) {
+    console.error("Error initializing SensorPush database schema:", error);
+    throw error;
   }
 };

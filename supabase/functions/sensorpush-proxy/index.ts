@@ -46,10 +46,10 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // Add authorization header if token is provided
-    if (token && path !== '/oauth/authorize') {
+    // Add authorization header if token is provided and not the initial auth request
+    if (token && !path.includes('/oauth/authorize') && !path.includes('/oauth/accesstoken')) {
       console.log("Adding authorization token to request");
-      headers.set('Authorization', token);
+      headers.set('Authorization', `Bearer ${token}`);
     }
     
     // Configure the request options
