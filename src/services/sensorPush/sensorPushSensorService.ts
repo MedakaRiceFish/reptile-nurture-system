@@ -20,12 +20,18 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     const redactedToken = token.substring(0, 5) + "...";
     console.log("Fetching sensors with token:", redactedToken);
     
-    // Make the request to SensorPush API
+    // Create current date for AWS Signature v4
+    const date = new Date();
+    const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.substring(0, 8);
+    
+    // Make the request to SensorPush API with proper AWS signature format
     const response = await fetch(`${BASE_URL}/devices/sensors`, {
       method: "GET",
       headers: {
         "Accept": "application/json",
-        "Authorization": token // Remove 'Bearer ' prefix as SensorPush uses a different auth format
+        "Authorization": `Bearer ${token}`,
+        "X-Amz-Date": amzDate
       }
     });
 
@@ -81,12 +87,18 @@ export const fetchSensorSamples = async (
     if (startTime) params.startTime = startTime;
     if (stopTime) params.stopTime = stopTime;
 
+    // Create current date for AWS Signature v4
+    const date = new Date();
+    const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.substring(0, 8);
+
     const response = await fetch(`${BASE_URL}/samples`, {
       method: "POST",
       headers: {
         "Accept": "application/json",
-        "Authorization": token, // Remove 'Bearer ' prefix
-        "Content-Type": "application/json"
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Amz-Date": amzDate
       },
       body: JSON.stringify(params)
     });
