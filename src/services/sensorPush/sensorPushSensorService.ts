@@ -16,7 +16,9 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
       throw new Error("No valid SensorPush token found");
     }
 
-    console.log("Fetching sensors with token:", token);
+    // Log redacted token for debugging (showing only first few characters)
+    const redactedToken = token.substring(0, 5) + "...";
+    console.log("Fetching sensors with token:", redactedToken);
     
     // Make the request to SensorPush API
     const response = await fetch(`${BASE_URL}/devices/sensors`, {
@@ -34,12 +36,21 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     }
 
     const data = await response.json() as SensorPushSensorsResponse;
-    console.log("SensorPush API response:", data);
     
-    // Convert the object to an array
-    return Object.values(data.sensors);
+    // Log only the success response and count, not the full payload
+    console.log(`SensorPush API response: Successfully fetched ${Object.keys(data.sensors).length} sensors`);
+    
+    // Sanitize sensitive data before returning it
+    const sanitizedSensors = Object.values(data.sensors).map(sensor => ({
+      ...sensor,
+      // Redact any potentially sensitive information
+      address: sensor.address ? `${sensor.address.substring(0, 5)}...` : sensor.address
+    }));
+    
+    // Convert the object to an array with sanitized data
+    return sanitizedSensors;
   } catch (error: any) {
-    console.error("Error fetching SensorPush sensors:", error);
+    console.error("Error fetching SensorPush sensors:", error.message);
     toast.error(`Failed to fetch sensors: ${error.message}`);
     return null;
   }
@@ -88,12 +99,44 @@ export const fetchSensorSamples = async (
 
     const data = await response.json() as SensorPushSamplesResponse;
     
+    // Log only the count of fetched samples, not the actual data
+    if (data.sensors[sensorId]) {
+      console.log(`Successfully fetched ${data.sensors[sensorId].length} samples for sensor ${sensorId}`);
+    } else {
+      console.log(`No samples found for sensor ${sensorId}`);
+    }
+    
     // Return the samples for the requested sensor
     return data.sensors[sensorId] || [];
   } catch (error: any) {
-    console.error("Error fetching SensorPush samples:", error);
+    console.error("Error fetching SensorPush samples:", error.message);
     toast.error(`Failed to fetch sensor readings: ${error.message}`);
     return null;
   }
 };
 
+/**
+ * Securely clear all cached sensor data and tokens
+ * Used when a user logs out or wants to remove their account
+ */
+export const clearSensorPushData = async (): Promise<boolean> => {
+  try {
+    const userId = await getCurrentUserId();
+    
+    // Delete the token from the database
+    const { error } = await supabase
+      .from('api_tokens')
+      .delete()
+      .eq('user_id', userId)
+      .eq('service', 'sensorpush');
+    
+    if (error) {
+      throw error;
+    }
+    
+    return true;
+  } catch (error: any) {
+    console.error("Error clearing SensorPush data:", error.message);
+    return false;
+  }
+};
