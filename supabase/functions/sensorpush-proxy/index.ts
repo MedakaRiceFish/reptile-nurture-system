@@ -29,33 +29,41 @@ serve(async (req) => {
     
     // Only add Authorization header if token is provided (not for initial auth)
     if (token) {
-      // According to SensorPush API docs, use the token as-is (it already has the proper format)
+      // For SensorPush API authentication:
+      // For OAuth flow: no header needed for initial authorization
+      // For authenticated calls: pass token as-is (which should be a valid JWT)
       headers["Authorization"] = token;
-      console.log("SensorPush Edge Function: Using provided token for Authorization");
+      
+      // Log that we're using the token (redacted for security)
+      const tokenPreview = token.substring(0, 10) + "...";
+      console.log(`SensorPush Edge Function: Using token for Authorization: ${tokenPreview}`);
     }
     
-    // Add content-type if method is POST
-    if (method === "POST" || body) {
-      headers["Content-Type"] = "application/json";
-    }
+    // Add content-type for all requests to ensure proper JSON handling
+    headers["Content-Type"] = "application/json";
     
-    // Log headers (redacted for security)
-    console.log("SensorPush Edge Function: Request headers", {
-      ...headers,
-      "Authorization": headers["Authorization"] ? "[REDACTED]" : undefined
+    // Log complete request details for debugging
+    console.log("SensorPush Edge Function: Full request details:", {
+      url,
+      method,
+      headers: {
+        ...headers,
+        "Authorization": headers["Authorization"] ? "[REDACTED]" : undefined
+      },
+      bodyLength: body ? JSON.stringify(body).length : 0
     });
     
     // Make the request to SensorPush API
-    console.log(`SensorPush Edge Function: Sending ${method} request to ${url} with body:`, body ? JSON.stringify(body) : "none");
     const response = await fetch(url, {
       method: method || "GET",
       headers,
       body: body ? JSON.stringify(body) : undefined
     });
     
-    // Log response status and potentially headers for debugging
-    console.log(`SensorPush Edge Function: Response status: ${response.status}`);
-    console.log(`SensorPush Edge Function: Response headers:`, Object.fromEntries([...response.headers.entries()]));
+    // Log detailed response information
+    console.log(`SensorPush Edge Function: Response status: ${response.status} ${response.statusText}`);
+    const responseHeaders = Object.fromEntries([...response.headers.entries()]);
+    console.log("SensorPush Edge Function: Response headers:", responseHeaders);
     
     // Get response data
     let responseData;
@@ -63,28 +71,40 @@ serve(async (req) => {
     
     try {
       responseData = JSON.parse(responseText);
+      
       // Redact sensitive data in logs for auth responses
       if (path === '/oauth/authorize' || path === '/oauth/access_token') {
         console.log("SensorPush Edge Function: Successfully parsed auth response JSON", 
-          responseData?.authorization ? "Authorization token received" : "No authorization token in response");
+          {
+            hasAuthorization: !!responseData?.authorization,
+            hasApiKey: !!responseData?.apikey,
+            responseKeys: Object.keys(responseData || {})
+          });
       } else {
-        console.log("SensorPush Edge Function: Successfully parsed response JSON", responseData);
+        // Log non-sensitive response data
+        console.log("SensorPush Edge Function: Successfully parsed response JSON", 
+          path === '/devices/sensors' 
+            ? { sensorCount: Object.keys(responseData?.sensors || {}).length }
+            : { responseType: typeof responseData, status: responseData?.status });
       }
     } catch (e) {
-      console.error("SensorPush Edge Function: Failed to parse response as JSON", responseText);
-      responseData = { error: "Invalid JSON response", rawResponse: responseText };
+      console.error("SensorPush Edge Function: Failed to parse response as JSON:", e.message);
+      console.error("SensorPush Edge Function: Raw response text:", responseText.substring(0, 500) + (responseText.length > 500 ? "..." : ""));
+      responseData = { error: "Invalid JSON response", rawResponse: responseText.substring(0, 1000) };
     }
     
     if (!response.ok) {
       console.error("SensorPush Edge Function: API error", {
         status: response.status,
         statusText: response.statusText,
+        error: responseData?.error || responseData?.message,
+        type: responseData?.type,
         data: responseData
       });
       
       // Return the error response to the client with proper status code
       return new Response(JSON.stringify({
-        error: responseData.error || responseData.message || response.statusText,
+        error: responseData?.error || responseData?.message || response.statusText,
         status: response.status,
         data: responseData
       }), {
@@ -96,18 +116,16 @@ serve(async (req) => {
       });
     }
     
-    // For successful sensor responses, log the count of sensors
+    // Log success metrics for various endpoints
     if (path === '/devices/sensors' && responseData.sensors) {
-      console.log(`SensorPush Edge Function: Found ${Object.keys(responseData.sensors).length} sensors`);
+      console.log(`SensorPush Edge Function: Successfully fetched ${Object.keys(responseData.sensors).length} sensors`);
     }
-    // For successful sample responses, log the count of samples
     else if (path === '/samples' && responseData.sensors) {
       const totalSamples = Object.values(responseData.sensors)
         .reduce((sum: number, samples: any[]) => sum + samples.length, 0);
-      console.log(`SensorPush Edge Function: Found ${totalSamples} total samples`);
+      console.log(`SensorPush Edge Function: Successfully fetched ${totalSamples} samples for ${Object.keys(responseData.sensors).length} sensors`);
     }
-    // For auth responses, log success but redact the token
-    else if ((path === '/oauth/authorize' || path === '/oauth/access_token') && responseData.authorization) {
+    else if (path === '/oauth/authorize' && responseData.authorization) {
       console.log("SensorPush Edge Function: Successfully obtained authorization token");
     }
     
@@ -121,7 +139,8 @@ serve(async (req) => {
     });
   } catch (error) {
     // Log the detailed error
-    console.error("SensorPush Edge Function: Error", error);
+    console.error("SensorPush Edge Function: Unhandled error:", error.message);
+    console.error("SensorPush Edge Function: Stack trace:", error.stack);
     
     // Return error response
     return new Response(JSON.stringify({

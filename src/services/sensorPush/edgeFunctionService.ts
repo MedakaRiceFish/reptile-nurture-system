@@ -23,7 +23,12 @@ export const callSensorPushAPI = async (
       body
     };
     
-    console.log(`Calling edge function with payload`, { ...payload, token: token ? `${token.substring(0, 5)}...` : undefined });
+    console.log(`Calling edge function with payload`, { 
+      path, 
+      method,
+      bodySize: body ? JSON.stringify(body).length : 0,
+      tokenPreview: token ? `${token.substring(0, 5)}...` : undefined 
+    });
     
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('sensorpush-proxy', {
@@ -42,6 +47,7 @@ export const callSensorPushAPI = async (
     // If the response contains an error property, throw it
     if (data.error) {
       console.error('SensorPush API error:', data.error);
+      console.error('SensorPush API error details:', data.data);
       
       // Handle specific error cases based on API documentation
       if (data.status === 429) {
