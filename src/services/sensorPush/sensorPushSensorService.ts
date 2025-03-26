@@ -26,6 +26,7 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     const dateStamp = amzDate.substring(0, 8);
     
     // Make the request to SensorPush API with proper AWS signature format
+    // According to the Swagger docs, the endpoint is /devices/sensors
     const response = await fetch(`${BASE_URL}/devices/sensors`, {
       method: "GET",
       headers: {
@@ -35,9 +36,10 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
       }
     });
 
+    // Improved error handling with detailed logging
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("SensorPush API error:", errorText);
+      console.error(`SensorPush API error: Status ${response.status}`, errorText);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
@@ -45,6 +47,9 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     
     // Log only the success response and count, not the full payload
     console.log(`SensorPush API response: Successfully fetched ${Object.keys(data.sensors).length} sensors`);
+    
+    // Store sensors data in database for historical records
+    await storeSensorsData(data.sensors);
     
     // Sanitize sensitive data before returning it
     const sanitizedSensors = Object.values(data.sensors).map(sensor => ({
@@ -59,6 +64,52 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     console.error("Error fetching SensorPush sensors:", error.message);
     toast.error(`Failed to fetch sensors: ${error.message}`);
     return null;
+  }
+};
+
+/**
+ * Store sensors data in the database for historical tracking
+ * This enables us to maintain 18+ months of history for analytics
+ */
+const storeSensorsData = async (sensors: Record<string, SensorPushSensor>): Promise<void> => {
+  try {
+    const userId = await getCurrentUserId();
+    
+    // Ensure the sensors_history table exists
+    await ensureSensorsHistoryTableExists();
+    
+    // Store each sensor in the database with a timestamp
+    const timestamp = new Date().toISOString();
+    
+    for (const [sensorId, sensorData] of Object.entries(sensors)) {
+      // Insert the sensor data with the current timestamp
+      await supabase.rpc('store_sensor_data', {
+        p_sensor_id: sensorId,
+        p_sensor_data: JSON.stringify(sensorData),
+        p_user_id: userId,
+        p_timestamp: timestamp
+      });
+    }
+  } catch (error) {
+    console.error("Error storing sensor history:", error);
+    // Don't throw here - we still want to return the sensors even if history storage fails
+  }
+};
+
+/**
+ * Ensure the sensors_history table exists for long-term data storage
+ */
+const ensureSensorsHistoryTableExists = async (): Promise<void> => {
+  // Check if sensors_history table exists, if not create it
+  const { error: checkError } = await supabase
+    .from('sensors_history')
+    .select('count')
+    .limit(1)
+    .single();
+
+  if (checkError && checkError.code === 'PGRST116') {
+    // Table doesn't exist, create it with Supabase SQL
+    await supabase.rpc('create_sensors_history_table');
   }
 };
 
@@ -78,7 +129,7 @@ export const fetchSensorSamples = async (
       throw new Error("No valid SensorPush token found");
     }
 
-    // Build query parameters
+    // Build query parameters according to the Swagger documentation
     const params: Record<string, any> = {
       sensors: [sensorId],
       limit
@@ -92,6 +143,7 @@ export const fetchSensorSamples = async (
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
     const dateStamp = amzDate.substring(0, 8);
 
+    // According to Swagger, this is a POST request to /samples
     const response = await fetch(`${BASE_URL}/samples`, {
       method: "POST",
       headers: {
@@ -103,9 +155,10 @@ export const fetchSensorSamples = async (
       body: JSON.stringify(params)
     });
 
+    // Improved error handling with detailed logging
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("SensorPush API error:", errorText);
+      console.error(`SensorPush API error: Status ${response.status}`, errorText);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
@@ -114,6 +167,9 @@ export const fetchSensorSamples = async (
     // Log only the count of fetched samples, not the actual data
     if (data.sensors[sensorId]) {
       console.log(`Successfully fetched ${data.sensors[sensorId].length} samples for sensor ${sensorId}`);
+      
+      // Store samples data in database for historical analysis (18+ months)
+      await storeSamplesData(sensorId, data.sensors[sensorId]);
     } else {
       console.log(`No samples found for sensor ${sensorId}`);
     }
@@ -124,6 +180,67 @@ export const fetchSensorSamples = async (
     console.error("Error fetching SensorPush samples:", error.message);
     toast.error(`Failed to fetch sensor readings: ${error.message}`);
     return null;
+  }
+};
+
+/**
+ * Store sensor samples in the database for long-term analytics
+ * This ensures we maintain 18+ months of historical data
+ */
+const storeSamplesData = async (sensorId: string, samples: SensorPushSample[]): Promise<void> => {
+  try {
+    const userId = await getCurrentUserId();
+    
+    // Ensure the samples_history table exists
+    await ensureSamplesHistoryTableExists();
+    
+    // Store each sample in the database
+    for (const sample of samples) {
+      // Skip if we already have this sample (based on sample.id)
+      const { data: existingSample } = await supabase
+        .from('samples_history')
+        .select('id')
+        .eq('sample_id', sample.id)
+        .maybeSingle();
+        
+      if (!existingSample) {
+        await supabase
+          .from('samples_history')
+          .insert({
+            sample_id: sample.id,
+            sensor_id: sensorId,
+            user_id: userId,
+            timestamp: sample.observation,
+            temperature: sample.temperature,
+            humidity: sample.humidity,
+            dewpoint: sample.dewpoint,
+            pressure: sample.pressure,
+            barometer: sample.barometer,
+            vpd: sample.vpd,
+            raw_data: JSON.stringify(sample)
+          });
+      }
+    }
+  } catch (error) {
+    console.error("Error storing samples history:", error);
+    // Don't throw here - we still want to return the samples even if history storage fails
+  }
+};
+
+/**
+ * Ensure the samples_history table exists for long-term data storage
+ */
+const ensureSamplesHistoryTableExists = async (): Promise<void> => {
+  // Check if samples_history table exists, if not create it
+  const { error: checkError } = await supabase
+    .from('samples_history')
+    .select('count')
+    .limit(1)
+    .single();
+
+  if (checkError && checkError.code === 'PGRST116') {
+    // Table doesn't exist, create it with Supabase SQL
+    await supabase.rpc('create_samples_history_table');
   }
 };
 
