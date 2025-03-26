@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SensorPushSample, SensorPushSamplesResponse, SensorPushSensor, SensorPushSensorsResponse } from "@/types/sensorpush";
+import { SensorPushSample, SensorPushSensor } from "@/types/sensorpush";
 import { BASE_URL, ensureTablesExist, getCurrentUserId } from "./sensorPushBaseService";
 import { getSensorPushToken } from "./sensorPushAuthService";
 import { callSensorPushAPI } from "./edgeFunctionService";
@@ -61,7 +61,7 @@ const storeSensorsData = async (sensors: Record<string, SensorPushSensor> | Sens
     
     // Handle both array and record formats
     const sensorEntries = Array.isArray(sensors) 
-      ? sensors.map(sensor => [sensor.id, sensor])
+      ? sensors.map(sensor => [sensor.id, sensor] as [string, SensorPushSensor])
       : Object.entries(sensors);
     
     for (const [sensorId, sensorData] of sensorEntries) {

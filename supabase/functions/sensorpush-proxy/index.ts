@@ -29,9 +29,9 @@ serve(async (req) => {
     
     // Only add Authorization header if token is provided (not for initial auth)
     if (token) {
-      // According to SensorPush API docs, Authorization header should be "Bearer token"
-      headers["Authorization"] = `Bearer ${token}`;
-      console.log("SensorPush Edge Function: Using Bearer token authentication");
+      // According to SensorPush API docs, use the token as-is (it already has the proper format)
+      headers["Authorization"] = token;
+      console.log("SensorPush Edge Function: Using provided token for Authorization");
     }
     
     // Add content-type if method is POST
@@ -42,7 +42,7 @@ serve(async (req) => {
     // Log headers (redacted for security)
     console.log("SensorPush Edge Function: Request headers", {
       ...headers,
-      "Authorization": headers["Authorization"] ? "Bearer [REDACTED]" : undefined
+      "Authorization": headers["Authorization"] ? "[REDACTED]" : undefined
     });
     
     // Make the request to SensorPush API
