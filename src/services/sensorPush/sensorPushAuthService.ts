@@ -18,7 +18,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     // Make the authentication request through our edge function
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
     
-    console.log("Auth response received:", authResponse);
+    console.log("Auth response received:", JSON.stringify(authResponse).substring(0, 100) + "...");
     
     if (!authResponse || !authResponse.authorization) {
       throw new Error("Failed to obtain authorization token from SensorPush");
@@ -36,7 +36,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
-    // Store the token as is - edge function will handle it correctly
+    // Store the token exactly as provided by the API
     const formattedToken = authorization;
     
     // Insert or update token in the custom table
@@ -53,6 +53,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     }
 
     console.log("Successfully authenticated with SensorPush API, token will expire at:", expiresAt.toLocaleString());
+    toast.success("Successfully connected to SensorPush");
     return formattedToken;
   } catch (error: any) {
     console.error("SensorPush authentication error:", error);
@@ -104,7 +105,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       console.warn("Using soon-to-expire SensorPush token");
     }
 
-    // Return the token as is - no Bearer prefix needed
+    // Return the token exactly as stored in the database
     return data[0].token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);

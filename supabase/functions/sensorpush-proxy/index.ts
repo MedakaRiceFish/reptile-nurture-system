@@ -31,7 +31,10 @@ serve(async (req) => {
     
     // Log what we're about to do (redact sensitive information)
     console.log(`Making ${method} request to SensorPush API at ${path}`);
-    console.log(`Request body size: ${body ? JSON.stringify(body).length : 0} bytes`);
+    
+    if (body) {
+      console.log("Request body:", JSON.stringify(body));
+    }
     
     // Construct the full URL
     const url = `${SENSORPUSH_API_BASE_URL}${path}`;
@@ -42,11 +45,10 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // IMPORTANT FIX: Pass token directly to Authorization header without 'Bearer ' prefix
-    // SensorPush API expects the raw token (JWT) without the Bearer prefix
+    // Add authorization header exactly as SensorPush expects
     if (token) {
       headers.set('Authorization', token);
-      console.log("Added Authorization header", { tokenPreviewLength: token.length });
+      console.log("Added Authorization header with token length:", token.length);
     }
     
     // Configure the request options
@@ -66,9 +68,11 @@ serve(async (req) => {
     
     // Log the status of the response
     console.log(`SensorPush API Response status: ${response.status}`);
+    console.log(`SensorPush API Response status text: ${response.statusText}`);
     
     // Log response headers for debugging
-    console.log("SensorPush Edge Function: Response headers:", Object.fromEntries([...response.headers.entries()]));
+    const responseHeaders = Object.fromEntries([...response.headers.entries()]);
+    console.log("SensorPush API Response headers:", responseHeaders);
     
     // If we get an error response, log more details
     if (!response.ok) {
@@ -76,7 +80,6 @@ serve(async (req) => {
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
       console.error(`Error details: ${errorText}`);
       
-      // Return the error details to the client
       return new Response(
         JSON.stringify({
           error: `SensorPush API error: ${response.status} ${response.statusText}`,

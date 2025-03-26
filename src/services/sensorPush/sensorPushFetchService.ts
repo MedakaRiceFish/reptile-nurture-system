@@ -15,17 +15,14 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     const token = await getSensorPushToken();
     
     if (!token) {
+      toast.error("No SensorPush token found. Please connect your account first.");
       throw new Error("No valid SensorPush token found");
     }
 
-    // Log redacted token for debugging (showing only first few characters)
-    const redactedToken = token.substring(0, 5) + "...";
-    console.log("Fetching sensors with token:", redactedToken);
+    console.log("Fetching sensors with token length:", token.length);
     
     // Use the edge function service to make the request
     const data = await callSensorPushAPI('/devices/sensors', token);
-    
-    console.log("SensorPush API response:", data);
     
     if (!data || !data.sensors) {
       throw new Error("Invalid response from SensorPush API");
@@ -59,10 +56,11 @@ export const fetchSensorSamples = async (
     const token = await getSensorPushToken();
     
     if (!token) {
+      toast.error("No SensorPush token found. Please connect your account first.");
       throw new Error("No valid SensorPush token found");
     }
 
-    // Build query parameters according to the Swagger documentation
+    // Build query parameters according to the documentation
     const params: Record<string, any> = {
       sensors: [sensorId],
       limit
@@ -71,7 +69,7 @@ export const fetchSensorSamples = async (
     if (startTime) params.startTime = startTime;
     if (stopTime) params.stopTime = stopTime;
 
-    console.log("Making API request to fetch sensor samples");
+    console.log("Making API request to fetch sensor samples with params:", params);
     
     // Use the edge function service to make the request
     const data = await callSensorPushAPI('/samples', token, 'POST', params);
@@ -84,7 +82,7 @@ export const fetchSensorSamples = async (
     if (data.sensors[sensorId]) {
       console.log(`Successfully fetched ${data.sensors[sensorId].length} samples for sensor ${sensorId}`);
       
-      // Store samples data in database for historical analysis (18+ months)
+      // Store samples data in database for historical analysis
       await storeSamplesData(sensorId, data.sensors[sensorId]);
     } else {
       console.log(`No samples found for sensor ${sensorId}`);
