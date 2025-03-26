@@ -28,20 +28,6 @@ export const callSensorPushAPI = async (
       bodySize: body ? JSON.stringify(body).length : 0,
       hasToken: !!token
     });
-
-    // For security, only log a portion of the token
-    if (token) {
-      console.log(`Token present, length: ${token.length}`);
-      // Check token format for Gateway Cloud API
-      if (token.includes('.')) {
-        console.log(`Token contains '.' separators, which is required for Gateway Cloud API`);
-        const parts = token.split('.');
-        console.log(`Token has ${parts.length} parts separated by dots`);
-      } else {
-        console.error(`Token format is invalid - Gateway Cloud API requires accessKey.secretKey.sessionToken format`);
-        throw new Error("Invalid token format. SensorPush Gateway Cloud API requires accessKey.secretKey.sessionToken format");
-      }
-    }
     
     // Call the Supabase Edge Function with timeout handling
     const timeoutPromise = new Promise((_, reject) => 
@@ -75,14 +61,6 @@ export const callSensorPushAPI = async (
       
       if (data.status === 401 || data.status === 403) {
         throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
-      }
-
-      // Specific error handling for AWS SigV4 issues
-      if (typeof data.error === 'string' && (
-          data.error.includes('Authorization header requires') || 
-          data.error.includes('The security token included in the request is invalid')
-      )) {
-        throw new Error('Authentication error with SensorPush Gateway Cloud API. Please check that you are using the correct format for your credentials (accessKey.secretKey.sessionToken) and try reconnecting your account.');
       }
       
       throw new Error(`SensorPush API error: ${data.error}`);

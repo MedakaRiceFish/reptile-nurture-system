@@ -7,7 +7,7 @@ import { callSensorPushAPI } from "./edgeFunctionService";
 
 /**
  * Authenticate with the SensorPush API and store the authorization token
- * This implements SensorPush's custom token-based auth flow (not standard OAuth)
+ * This implements SensorPush's standard OAuth flow
  */
 export const authenticateSensorPush = async (credentials: SensorPushCredentials): Promise<string | null> => {
   try {
@@ -16,8 +16,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Authenticating with SensorPush API...");
     
-    // Make the authentication request through our edge function
-    // For the auth endpoint we don't need a token yet, we pass an empty string
+    // Step 1: Get an authorization token by providing email/password credentials
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
     
     console.log("Auth response received, checking for valid authorization token");
@@ -36,24 +35,8 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
-    // Store the token exactly as provided by the API - important for SensorPush auth
+    // Store the token exactly as provided by the API
     const { authorization } = authResponse;
-    
-    // For Gateway Cloud API, validate token format and log information to help debug
-    console.log(`Token received from SensorPush. Character length: ${authorization.length}`);
-    
-    // We expect Gateway Cloud API tokens to be in the format: accessKey.secretKey.sessionToken
-    // Check token format
-    if (!authorization.includes('.')) {
-      console.warn(`WARNING: Token does not contain '.' separators, which may cause issues with Gateway Cloud API`);
-      console.warn(`The Gateway Cloud API expects tokens in the format: accessKey.secretKey.sessionToken`);
-    } else {
-      const parts = authorization.split('.');
-      console.log(`Token contains ${parts.length} parts separated by '.'`);
-      if (parts.length < 2) {
-        console.warn(`WARNING: Token has fewer than 2 parts. Gateway Cloud API expects at least accessKey.secretKey`);
-      }
-    }
     
     // Insert or update token in the custom table
     const { error: storageError } = await supabase.rpc('upsert_api_token', {
@@ -121,18 +104,8 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       console.warn("Using soon-to-expire SensorPush token");
     }
 
-    // Return the token exactly as stored - critical for SensorPush API
-    const token = data[0].token;
-    
-    // Validate token format for Gateway Cloud API
-    if (!token.includes('.')) {
-      console.warn(`WARNING: Retrieved token does not contain '.' separators`);
-      console.warn(`This may cause issues with Gateway Cloud API which expects accessKey.secretKey.sessionToken format`);
-    } else {
-      console.log(`Token format looks valid for Gateway Cloud API (contains '.' separators)`);
-    }
-    
-    return token;
+    // Return the token exactly as stored
+    return data[0].token;
   } catch (error) {
     console.error("Failed to get SensorPush token:", error);
     return null;
