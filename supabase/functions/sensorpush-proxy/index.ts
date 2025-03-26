@@ -6,25 +6,6 @@ import { corsHeaders } from "../_shared/cors.ts"
 // SensorPush API base URL
 const SENSORPUSH_API_BASE_URL = "https://api.sensorpush.com/api/v1";
 
-// Helper to create an AWS Signature V4 for SensorPush API
-const createAwsSignature = (token: string) => {
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
-  const dateStamp = amzDate.substring(0, 8);
-  
-  // Extract components from the provided token
-  // The token from SensorPush OAuth contains the necessary AWS credentials
-  const tokenParts = token.split('.');
-  const credentials = tokenParts[0] || '';
-  const signature = tokenParts[1] || '';
-  
-  // Create the authorization header according to AWS Signature V4 format
-  return {
-    Authorization: `AWS4-HMAC-SHA256 Credential=${credentials}/${dateStamp}/us-east-1/execute-api/aws4_request, SignedHeaders=host;x-amz-date, Signature=${signature}`,
-    'X-Amz-Date': amzDate
-  };
-};
-
 // Edge function to proxy requests to SensorPush API
 serve(async (req) => {
   console.log("SensorPush proxy function called");
@@ -64,23 +45,18 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // Add AWS Signature V4 authentication headers
+    // Add authorization token
     if (token) {
-      // The authorization endpoint provides a special token that must be used as-is
+      // Use the token as-is without modification for auth endpoint
       if (path === '/oauth/authorize') {
-        console.log("Using token as-is for authorization endpoint");
+        console.log("Using raw token for authorization endpoint");
         headers.set('Authorization', token);
       } else {
-        // For all other endpoints, we need AWS Signature V4
-        console.log("Creating AWS Signature V4 for authenticated endpoint");
-        const awsHeaders = createAwsSignature(token);
-        
-        for (const [key, value] of Object.entries(awsHeaders)) {
-          headers.set(key, value);
-        }
+        // For authenticated endpoints, use the token as provided by SensorPush
+        // Do not attempt to modify it or format it as AWS signature - just use it directly
+        console.log("Setting token for authenticated endpoint");
+        headers.set('Authorization', token);
       }
-      
-      console.log("Authentication headers set");
     }
     
     // Configure the request options
@@ -99,7 +75,7 @@ serve(async (req) => {
     console.log(`Full request to SensorPush API:
     URL: ${url}
     Method: ${method}
-    Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => !['authorization', 'x-amz-date'].includes(key.toLowerCase()))))}
+    Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => key.toLowerCase() !== 'authorization')))}
     Has Body: ${!!options.body}`);
     
     // Make the request to SensorPush API
