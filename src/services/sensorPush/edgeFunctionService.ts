@@ -66,9 +66,11 @@ export const callSensorPushAPI = async (
       }
 
       // Specific error handling for AWS SigV4 issues
-      if (data.error.includes('Authorization header requires') || 
-          data.error.includes('The security token included in the request is invalid')) {
-        throw new Error('Authentication error with SensorPush Gateway Cloud API. Please check that you are using credentials for the Gateway Cloud API and try reconnecting your account.');
+      if (typeof data.error === 'string' && (
+          data.error.includes('Authorization header requires') || 
+          data.error.includes('The security token included in the request is invalid')
+      )) {
+        throw new Error('Authentication error with SensorPush Gateway Cloud API. Please check that you are using the correct format for your credentials and try reconnecting your account.');
       }
       
       throw new Error(`SensorPush API error: ${data.error}`);

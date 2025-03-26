@@ -17,7 +17,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     console.log("Authenticating with SensorPush API...");
     
     // Make the authentication request through our edge function
-    // For the auth endpoint we don't need a token yet
+    // For the auth endpoint we don't need a token yet, we pass an empty string
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
     
     console.log("Auth response received, checking for valid authorization token");
@@ -47,7 +47,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     if (authorization.includes('.')) {
       console.log(`Token contains '.' separators, likely in the required format for Gateway Cloud API`);
     } else {
-      console.log(`Token does not contain separators, may require special handling for Gateway Cloud API`);
+      console.log(`Token does not contain separators, may not be in the expected format for Gateway Cloud API`);
     }
     
     // Insert or update token in the custom table
