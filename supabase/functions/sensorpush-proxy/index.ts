@@ -56,7 +56,11 @@ serve(async (req) => {
     
     try {
       responseData = JSON.parse(responseText);
-      console.log("SensorPush Edge Function: Successfully parsed response JSON", responseData);
+      console.log("SensorPush Edge Function: Successfully parsed response JSON", 
+        path === '/oauth/access_token' 
+          ? { ...responseData, authorization: responseData?.authorization ? "[REDACTED]" : undefined }
+          : responseData
+      );
     } catch (e) {
       console.error("SensorPush Edge Function: Failed to parse response as JSON", responseText);
       responseData = { error: "Invalid JSON response", rawResponse: responseText };
