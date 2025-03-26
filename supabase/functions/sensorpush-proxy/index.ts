@@ -68,8 +68,7 @@ serve(async (req) => {
     console.log(`Full request to SensorPush API:
     URL: ${url}
     Method: ${method}
-    Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => !['authorization'].includes(key.toLowerCase()))))}
-    Has Body: ${!!options.body}`);
+    Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => !['authorization'].includes(key.toLowerCase()))))}`);
     
     // Make the request to SensorPush API
     console.log(`Sending request to SensorPush API...`);
@@ -80,7 +79,14 @@ serve(async (req) => {
     
     // Handle non-OK responses
     if (!response.ok) {
-      const errorText = await response.text();
+      let errorText;
+      try {
+        const errorJson = await response.json();
+        errorText = JSON.stringify(errorJson);
+      } catch (e) {
+        errorText = await response.text();
+      }
+      
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
       console.error(`Error details: ${errorText}`);
       
@@ -98,7 +104,20 @@ serve(async (req) => {
     
     // Parse the response as JSON
     const data = await response.json();
-    console.log(`SensorPush API successful response received`);
+    
+    // Sanitize sensitive data in logs
+    const sanitizedData = { ...data };
+    if (sanitizedData.accesstoken) {
+      sanitizedData.accesstoken = "***TOKEN HIDDEN***";
+    }
+    if (sanitizedData.refreshtoken) {
+      sanitizedData.refreshtoken = "***TOKEN HIDDEN***";
+    }
+    if (sanitizedData.authorization) {
+      sanitizedData.authorization = "***TOKEN HIDDEN***";
+    }
+    
+    console.log(`SensorPush API successful response received:`, sanitizedData);
     
     // Return the successful response to the client
     return new Response(
