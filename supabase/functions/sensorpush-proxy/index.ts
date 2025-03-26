@@ -29,8 +29,9 @@ serve(async (req) => {
     
     // Only add Authorization header if token is provided (not for initial auth)
     if (token) {
-      // According to SensorPush API docs, use "Bearer " prefix for token
+      // According to SensorPush API docs, Authorization header should be "Bearer token"
       headers["Authorization"] = `Bearer ${token}`;
+      console.log("SensorPush Edge Function: Using Bearer token authentication");
     }
     
     // Add content-type if method is POST
@@ -45,7 +46,7 @@ serve(async (req) => {
     });
     
     // Make the request to SensorPush API
-    // According to docs, there's a rate limit of once per minute
+    console.log(`SensorPush Edge Function: Sending ${method} request to ${url} with body:`, body ? JSON.stringify(body) : "none");
     const response = await fetch(url, {
       method: method || "GET",
       headers,
@@ -63,11 +64,12 @@ serve(async (req) => {
     try {
       responseData = JSON.parse(responseText);
       // Redact sensitive data in logs for auth responses
-      console.log("SensorPush Edge Function: Successfully parsed response JSON", 
-        path === '/oauth/authorize' || path === '/oauth/access_token'
-          ? { ...responseData, authorization: responseData?.authorization ? "[REDACTED]" : undefined }
-          : responseData
-      );
+      if (path === '/oauth/authorize' || path === '/oauth/access_token') {
+        console.log("SensorPush Edge Function: Successfully parsed auth response JSON", 
+          responseData?.authorization ? "Authorization token received" : "No authorization token in response");
+      } else {
+        console.log("SensorPush Edge Function: Successfully parsed response JSON", responseData);
+      }
     } catch (e) {
       console.error("SensorPush Edge Function: Failed to parse response as JSON", responseText);
       responseData = { error: "Invalid JSON response", rawResponse: responseText };
@@ -86,6 +88,7 @@ serve(async (req) => {
         status: response.status,
         data: responseData
       }), {
+        status: response.status,
         headers: {
           ...corsHeaders,
           "Content-Type": "application/json"

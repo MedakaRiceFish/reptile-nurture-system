@@ -23,6 +23,8 @@ export const callSensorPushAPI = async (
       body
     };
     
+    console.log(`Calling edge function with payload`, { ...payload, token: token ? `${token.substring(0, 5)}...` : undefined });
+    
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('sensorpush-proxy', {
       body: JSON.stringify(payload)
@@ -47,7 +49,7 @@ export const callSensorPushAPI = async (
       }
       
       if (data.status === 401 || data.status === 403) {
-        throw new Error('Authentication error. Your SensorPush token may have expired.');
+        throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
       }
       
       throw new Error(`SensorPush API error: ${data.error}`);
@@ -57,6 +59,16 @@ export const callSensorPushAPI = async (
     return data;
   } catch (error: any) {
     console.error('Error calling SensorPush API via edge function:', error);
+    
+    // Add more context to the error message
+    if (error.message?.includes('fetch failed')) {
+      throw new Error('Network error while connecting to SensorPush API. Please check your internet connection.');
+    } 
+    
+    if (error.message?.includes('timed out')) {
+      throw new Error('Request to SensorPush API timed out. Please try again later.');
+    }
+    
     throw error;
   }
 };

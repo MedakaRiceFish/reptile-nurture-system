@@ -18,6 +18,8 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     // Make the authentication request through our edge function
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
     
+    console.log("Auth response received:", authResponse);
+    
     if (!authResponse || !authResponse.authorization) {
       throw new Error("Failed to obtain authorization token from SensorPush");
     }
@@ -30,6 +32,8 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     // Store the token in Supabase
     const userId = await getCurrentUserId();
+    
+    console.log("Storing token in database, expires at:", expiresAt.toISOString());
     
     // Insert or update token in the custom table
     const { error: storageError } = await supabase.rpc('upsert_api_token', {
@@ -68,6 +72,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
     });
 
     if (error) {
+      console.error("Error getting token:", error);
       throw error;
     }
 
@@ -80,6 +85,9 @@ export const getSensorPushToken = async (): Promise<string | null> => {
     const expiresAt = new Date(data[0].expires_at);
     const now = new Date();
     const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+    
+    console.log("Token expires at:", expiresAt.toLocaleString());
+    console.log("Current time:", now.toLocaleString());
     
     if (expiresAt < now) {
       console.log("SensorPush token has expired");
