@@ -67,7 +67,7 @@ export const callSensorPushAPI = async (
         throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
       }
       
-      throw new Error(`SensorPush API error: ${JSON.stringify(data.error)}`);
+      throw new Error(`SensorPush API error: ${data.error}`);
     }
     
     return data;

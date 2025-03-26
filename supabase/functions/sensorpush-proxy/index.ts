@@ -49,6 +49,7 @@ serve(async (req) => {
     // Add authorization header if token is provided and not the initial auth request
     if (token && !path.includes('/oauth/authorize') && !path.includes('/oauth/accesstoken')) {
       console.log("Adding authorization token to request");
+      // Fix: Properly format authorization header with "Bearer" prefix
       headers.set('Authorization', `Bearer ${token}`);
     }
     
