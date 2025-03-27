@@ -64,6 +64,11 @@ export const callSensorPushAPI = async (
           if (parsedError.message && parsedError.message.includes('Authorization header')) {
             throw new Error('Authentication error with SensorPush. Please reconnect your account.');
           }
+          
+          if (parsedError.message && parsedError.message.includes('Invalid key=value pair')) {
+            console.error('Authorization header format error. Prompting user to reconnect.');
+            throw new Error('Authorization format error with SensorPush API. Please reconnect your account.');
+          }
         } catch (parseError) {
           // If parsing fails, just use the original error string
           console.error('Error parsing error string:', parseError);

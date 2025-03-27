@@ -50,13 +50,13 @@ serve(async (req) => {
     if (token && !path.includes('/oauth/authorize') && !path.includes('/oauth/accesstoken')) {
       console.log("Adding authorization token to request");
       
-      // IMPORTANT: SensorPush API expects a proper Bearer token format
-      // Make sure there's no extra space or formatting issues with the token
-      const trimmedToken = token.trim();
-      headers.set('Authorization', `Bearer ${trimmedToken}`);
+      // CRITICAL FIX: SensorPush API has specific expectations for the Authorization header
+      // According to the error, it's looking for a key=value format, not a Bearer token
+      // The token should be used directly without the "Bearer" prefix
+      headers.set('Authorization', token.trim());
       
       // Debug the header to ensure it's properly formatted (hide token value for security)
-      console.log(`Authorization header set with format: 'Bearer ${trimmedToken.substring(0, 10)}...'`);
+      console.log(`Authorization header set: ${token.substring(0, 10)}...`);
     }
     
     // Configure the request options
