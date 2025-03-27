@@ -40,11 +40,10 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Starting SensorPush OAuth flow...");
     
-    // Enforce rate limiting
-    await enforceRateLimit();
-    
     // Step 1: Get an authorization token by providing email/password credentials
     console.log("Step 1: Getting authorization token...");
+    
+    // First call - get authorization token
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
     
     if (!authResponse || !authResponse.authorization) {
@@ -54,7 +53,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Authorization token received successfully");
     
-    // Enforce rate limiting between API calls
+    // Calculate time to wait before making the next API call (respecting rate limit)
     await enforceRateLimit();
     
     // Step 2: Use the authorization token to get access and refresh tokens

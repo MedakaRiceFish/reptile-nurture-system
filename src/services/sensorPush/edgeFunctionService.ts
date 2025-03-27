@@ -51,8 +51,7 @@ export const callSensorPushAPI = async (
       throw new Error('No data returned from edge function');
     }
     
-    // Handle error responses from the edge function
-    // The edge function now returns the actual status code from the SensorPush API
+    // Forward the actual status code from the SensorPush API
     if (data.error || data.status >= 400) {
       console.error('SensorPush API error:', data.error || data.statusText);
       
@@ -111,8 +110,9 @@ export const callSensorPushAPI = async (
       throw new Error('Request to SensorPush API timed out. Please try again later.');
     }
     
-    // Handle rate limit errors
+    // Handle rate limit errors with more user-friendly messaging
     if (error.message?.includes('Rate limit exceeded')) {
+      console.log('Rate limit reached - showing toast notification');
       toast.error('SensorPush API rate limit reached. Please wait a minute before trying again.');
     }
     
