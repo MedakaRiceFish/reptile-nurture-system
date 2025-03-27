@@ -1,171 +1,161 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { SensorPushCredentials } from "@/types/sensorpush";
-import { ensureTablesExist, getCurrentUserId } from "./sensorPushBaseService";
-import { callSensorPushAPI } from "./edgeFunctionService";
-import { enforceRateLimit } from "./sensorPushRateLimiter";
-import { storeApiToken, getApiToken } from "./sensorPushTokenService";
+import { SensorPushCredentials, SensorPushTokens } from "@/types/sensorpush";
+import { getRateLimitedFunction } from "./sensorPushRateLimiter";
+import { authenticateSensorPushWithCredentials, callSensorPushAPI } from "./edgeFunctionService";
+import { storeSensorPushTokens } from "./sensorPushDatabaseService";
+import { getCurrentUserId } from "./sensorPushBaseService";
+
+// Limit authentication to once per 30 seconds
+const throttledAuthenticate = getRateLimitedFunction(
+  authenticateSensorPushWithCredentials,
+  30000
+);
 
 /**
- * Authenticate with the SensorPush API and store the authorization token
- * This implements SensorPush's OAuth2 flow
+ * Authenticate with SensorPush API and store the tokens
  */
-export const authenticateSensorPush = async (credentials: SensorPushCredentials): Promise<string | null> => {
+export const authenticateSensorPush = async (
+  credentials: SensorPushCredentials
+): Promise<string | null> => {
   try {
-    // Ensure required tables exist
-    await ensureTablesExist();
+    const { email, password } = credentials;
     
-    console.log("Starting SensorPush OAuth flow...");
-    
-    // Step 1: Get an authorization token by providing email/password credentials
-    console.log("Step 1: Getting authorization token...");
-    
-    // First call - get authorization token
-    const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
-    
-    if (!authResponse || !authResponse.authorization) {
-      console.error("Invalid auth response:", authResponse);
-      throw new Error("Failed to obtain authorization token from SensorPush");
+    if (!email || !password) {
+      throw new Error("Email and password are required");
     }
     
-    console.log("Authorization token received successfully");
+    console.log("Starting SensorPush authentication...");
     
-    // Calculate time to wait before making the next API call (respecting rate limit)
-    await enforceRateLimit();
+    // Use the rate-limited version to prevent too many requests
+    const tokens = await throttledAuthenticate(email, password);
     
-    // Step 2: Use the authorization token to get access and refresh tokens
-    console.log("Step 2: Getting access and refresh tokens...");
-    const tokenResponse = await callSensorPushAPI('/oauth/accesstoken', '', 'POST', {
-      authorization: authResponse.authorization
-    });
-    
-    if (!tokenResponse || !tokenResponse.accesstoken) {
-      console.error("Invalid token response:", tokenResponse);
-      throw new Error("Failed to obtain access tokens from SensorPush");
+    if (!tokens || !tokens.accesstoken) {
+      throw new Error("Failed to obtain authentication tokens from SensorPush");
     }
     
-    if (!tokenResponse.refreshtoken) {
-      console.warn("No refresh token in response:", tokenResponse);
-      // Continue anyway, as we got an access token
-      console.log("No refresh token provided, but proceeding with access token");
-    }
+    // Get current user ID to store tokens
+    const userId = await getCurrentUserId();
     
-    console.log("Access token received successfully");
-    
-    // Calculate expiration dates according to documentation
-    // Access token valid for 30 minutes, refresh token for 60 minutes
+    // Calculate token expiration dates (30 minutes for access token, 24 hours for refresh token)
     const now = new Date();
-    const accessExpires = new Date(now.getTime() + 25 * 60 * 1000); // 25 min to be safe
-    const refreshExpires = new Date(now.getTime() + 55 * 60 * 1000); // 55 min to be safe
+    const accessExpires = new Date(now.getTime() + 30 * 60000); // 30 minutes
+    const refreshExpires = new Date(now.getTime() + 24 * 60 * 60000); // 24 hours
     
-    // Store all tokens in the database
-    console.log("Storing tokens in database");
+    // Store the tokens in the database
+    await storeSensorPushTokens(
+      userId,
+      tokens.accesstoken,
+      tokens.refreshtoken,
+      accessExpires,
+      refreshExpires
+    );
     
-    try {
-      // Store the auth token
-      await storeApiToken('sensorpush_auth', authResponse.authorization, refreshExpires);
-      
-      // Store the access token
-      await storeApiToken('sensorpush_access', tokenResponse.accesstoken, accessExpires);
-      
-      // Store the refresh token if we have one
-      if (tokenResponse.refreshtoken) {
-        await storeApiToken('sensorpush_refresh', tokenResponse.refreshtoken, refreshExpires);
-      }
-      
-      console.log("Successfully stored tokens in database");
-    } catch (storageError) {
-      console.error("Error storing tokens:", storageError);
-      throw new Error("Failed to store SensorPush tokens");
-    }
-
-    console.log("Successfully authenticated with SensorPush API");
-    
-    // Return the access token for immediate use
-    return tokenResponse.accesstoken;
+    console.log("SensorPush authentication successful");
+    return tokens.accesstoken;
   } catch (error: any) {
     console.error("SensorPush authentication error:", error);
-    toast.error(`Authentication failed: ${error.message}`);
+    throw new Error(`Failed to authenticate with SensorPush: ${error.message}`);
+  }
+};
+
+/**
+ * Get the SensorPush access token - either from the local storage or refresh if needed
+ */
+export const getSensorPushToken = async (): Promise<string | null> => {
+  try {
+    // First try to get the token from storage
+    const userId = await getCurrentUserId();
+    
+    // This function gets tokens from the database
+    const tokens = await getSensorPushTokensFromDatabase(userId);
+    
+    if (!tokens) {
+      console.log("No SensorPush tokens found");
+      return null;
+    }
+    
+    // If the access token is still valid, return it
+    if (tokens.access_token && new Date(tokens.access_expires) > new Date()) {
+      console.log("Using existing SensorPush access token");
+      return tokens.access_token;
+    }
+    
+    // If the refresh token is still valid, use it to get a new access token
+    if (tokens.refresh_token && new Date(tokens.refresh_expires) > new Date()) {
+      console.log("Refreshing SensorPush access token...");
+      return await refreshAccessToken(tokens.refresh_token);
+    }
+    
+    // If we got here, all tokens are expired
+    console.log("All SensorPush tokens are expired");
+    return null;
+  } catch (error) {
+    console.error("Error getting SensorPush token:", error);
     return null;
   }
 };
 
 /**
- * Get the current valid SensorPush access token
- * If the access token is expired but the refresh token is valid, it will refresh automatically
- * If both are expired, it returns null so a new authentication can be performed
+ * Refresh the access token using the refresh token
  */
-export const getSensorPushToken = async (): Promise<string | null> => {
+const refreshAccessToken = async (refreshToken: string): Promise<string | null> => {
   try {
-    // Get access token
-    const accessTokenData = await getApiToken('sensorpush_access');
-      
-    if (!accessTokenData) {
-      console.log("No SensorPush access token found");
-      return null;
+    const response = await callSensorPushAPI("/oauth/refreshtoken", "", "POST", {
+      refreshtoken: refreshToken
+    });
+    
+    if (!response || !response.accesstoken) {
+      throw new Error("Failed to refresh access token");
     }
     
-    // Get refresh token
-    const refreshTokenData = await getApiToken('sensorpush_refresh');
+    const userId = await getCurrentUserId();
     
+    // Calculate token expiration dates (30 minutes for access token, 24 hours for refresh token)
     const now = new Date();
-    const accessExpires = new Date(accessTokenData.expires_at);
+    const accessExpires = new Date(now.getTime() + 30 * 60000); // 30 minutes
+    const refreshExpires = new Date(now.getTime() + 24 * 60 * 60000); // 24 hours
     
-    // If access token is still valid, return it
-    if (accessExpires > now) {
-      console.log("Using existing access token, expires:", accessExpires.toLocaleString());
-      return accessTokenData.token;
-    }
+    // Store the new tokens
+    await storeSensorPushTokens(
+      userId,
+      response.accesstoken,
+      response.refreshtoken || refreshToken,
+      accessExpires,
+      refreshExpires
+    );
     
-    // If no refresh token or refresh token is expired, need to re-authenticate
-    if (!refreshTokenData) {
-      console.log("No refresh token found, need to re-authenticate");
-      return null;
-    }
-    
-    const refreshExpires = new Date(refreshTokenData.expires_at);
-    if (refreshExpires <= now) {
-      console.log("Refresh token expired, need to re-authenticate");
-      return null;
-    }
-    
-    // Access token expired but refresh token valid, attempt to refresh
-    console.log("Access token expired, refreshing using refresh token");
-    
-    try {
-      // Enforce rate limiting
-      await enforceRateLimit();
-      
-      const refreshResponse = await callSensorPushAPI('/oauth/refreshtoken', '', 'POST', {
-        refreshtoken: refreshTokenData.token
-      });
-      
-      if (!refreshResponse || !refreshResponse.accesstoken) {
-        console.error("Invalid refresh response:", refreshResponse);
-        throw new Error("Failed to refresh SensorPush tokens");
-      }
-      
-      // Calculate new expiration dates
-      const newAccessExpires = new Date(now.getTime() + 25 * 60 * 1000); // 25 min
-      const newRefreshExpires = new Date(now.getTime() + 55 * 60 * 1000); // 55 min
-      
-      // Update access token in the database
-      await storeApiToken('sensorpush_access', refreshResponse.accesstoken, newAccessExpires);
-      
-      // Update refresh token if we have one
-      if (refreshResponse.refreshtoken) {
-        await storeApiToken('sensorpush_refresh', refreshResponse.refreshtoken, newRefreshExpires);
-      }
-      
-      console.log("Successfully refreshed SensorPush tokens");
-      return refreshResponse.accesstoken;
-    } catch (refreshError) {
-      console.error("Error refreshing tokens:", refreshError);
-      return null;
-    }
+    return response.accesstoken;
   } catch (error) {
-    console.error("Failed to get SensorPush token:", error);
+    console.error("Error refreshing access token:", error);
+    return null;
+  }
+};
+
+/**
+ * Get the SensorPush tokens from the database
+ */
+const getSensorPushTokensFromDatabase = async (userId: string): Promise<{
+  auth_token: string;
+  access_token: string;
+  refresh_token: string;
+  access_expires: string;
+  refresh_expires: string;
+} | null> => {
+  try {
+    // This is implemented in sensorPushDatabaseService.ts
+    // Importing it here would cause circular dependency
+    const { data, error } = await supabase.rpc('get_sensorpush_tokens', {
+      p_user_id: userId
+    });
+    
+    if (error || !data || !data.access_token) {
+      console.log("No SensorPush tokens found in database");
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error getting SensorPush tokens from database:", error);
     return null;
   }
 };

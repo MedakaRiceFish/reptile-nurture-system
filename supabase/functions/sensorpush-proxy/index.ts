@@ -37,7 +37,7 @@ serve(async (req) => {
     
     // Construct the full URL
     const url = `${SENSORPUSH_API_BASE_URL}${path}`;
-    console.log(`Making request to SensorPush API: ${method} ${url}`);
+    console.log(`Making request to SensorPush API: ${method || 'GET'} ${url}`);
     
     // Prepare headers
     const headers = new Headers({

@@ -119,3 +119,38 @@ export const callSensorPushAPI = async (
     throw error;
   }
 };
+
+/**
+ * Function to authenticate with SensorPush using email and password
+ * This initiates the two-step OAuth flow through a dedicated edge function
+ */
+export const authenticateSensorPushWithCredentials = async (
+  email: string,
+  password: string
+): Promise<{ accesstoken: string; refreshtoken: string }> => {
+  try {
+    console.log('Authenticating with SensorPush using email...');
+    
+    const { data, error } = await supabase.functions.invoke('sensorpush-auth', {
+      body: JSON.stringify({ email, password })
+    });
+    
+    if (error) {
+      console.error('SensorPush authentication error:', error);
+      throw new Error(`Failed to authenticate with SensorPush: ${error.message}`);
+    }
+    
+    if (!data || !data.accesstoken) {
+      throw new Error('No access token returned from SensorPush authentication');
+    }
+    
+    console.log('SensorPush authentication successful');
+    return {
+      accesstoken: data.accesstoken,
+      refreshtoken: data.refreshtoken || ''
+    };
+  } catch (error: any) {
+    console.error('Error authenticating with SensorPush:', error);
+    throw new Error(`SensorPush authentication failed: ${error.message}`);
+  }
+};
