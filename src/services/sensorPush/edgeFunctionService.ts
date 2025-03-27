@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 /**
  * Function to make a request to the SensorPush API through the Supabase Edge Function
+ * Handles retries and proper error handling
  */
 export const callSensorPushAPI = async (
   path: string, 
@@ -50,24 +51,42 @@ export const callSensorPushAPI = async (
       throw new Error('No data returned from edge function');
     }
     
-    // Check if the response contains an error property
-    if (data.error) {
-      console.error('SensorPush API error:', data.error);
+    // Handle error responses from the edge function
+    // The edge function now returns the actual status code from the SensorPush API
+    if (data.error || data.status >= 400) {
+      console.error('SensorPush API error:', data.error || data.statusText);
       
-      // More detailed error logging to help diagnose
+      // Extract status code if available
+      const statusCode = data.status || 500;
+      
+      // Handle specific error cases based on status codes
+      if (statusCode === 429) {
+        throw new Error('Rate limit exceeded. SensorPush API allows only 1 request per minute.');
+      }
+      
+      if (statusCode === 401 || statusCode === 403) {
+        throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
+      }
+      
+      // More detailed error parsing
       if (typeof data.error === 'string') {
         try {
           // Try to parse the error if it's a JSON string
           const parsedError = JSON.parse(data.error);
           console.error('Parsed error details:', parsedError);
           
-          if (parsedError.message && parsedError.message.includes('Authorization header')) {
-            throw new Error('Authentication error with SensorPush. Please reconnect your account.');
-          }
-          
-          if (parsedError.message && parsedError.message.includes('Invalid key=value pair')) {
-            console.error('Authorization header format error. Prompting user to reconnect.');
-            throw new Error('Authorization format error with SensorPush API. Please reconnect your account.');
+          if (parsedError.message) {
+            if (parsedError.message.includes('Authorization header')) {
+              throw new Error('Authentication error with SensorPush. Please reconnect your account.');
+            }
+            
+            if (parsedError.message.includes('Invalid key=value pair')) {
+              throw new Error('Authorization format error with SensorPush API. Please reconnect your account.');
+            }
+            
+            if (parsedError.message.includes('expired')) {
+              throw new Error('Your SensorPush token has expired. Please reconnect your account.');
+            }
           }
         } catch (parseError) {
           // If parsing fails, just use the original error string
@@ -75,20 +94,8 @@ export const callSensorPushAPI = async (
         }
       }
       
-      if (typeof data.error === 'string' && data.error.includes('Invalid login credentials')) {
-        throw new Error('Invalid login credentials. Please check your email and password.');
-      }
-      
-      // Handle specific error cases
-      if (data.status === 429) {
-        throw new Error('Rate limit exceeded. SensorPush allows only 1 request per minute.');
-      }
-      
-      if (data.status === 401 || data.status === 403) {
-        throw new Error('Authentication error. Your SensorPush token may have expired. Please reconnect your account.');
-      }
-      
-      throw new Error(`SensorPush API error: ${data.error}`);
+      // Generic error for other cases
+      throw new Error(`SensorPush API error (${statusCode}): ${data.error || data.statusText || 'Unknown error'}`);
     }
     
     return data;
@@ -102,6 +109,11 @@ export const callSensorPushAPI = async (
     
     if (error.message?.includes('timed out')) {
       throw new Error('Request to SensorPush API timed out. Please try again later.');
+    }
+    
+    // Handle rate limit errors
+    if (error.message?.includes('Rate limit exceeded')) {
+      toast.error('SensorPush API rate limit reached. Please wait a minute before trying again.');
     }
     
     throw error;

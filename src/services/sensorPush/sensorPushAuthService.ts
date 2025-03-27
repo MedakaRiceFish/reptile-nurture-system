@@ -5,6 +5,30 @@ import { SensorPushAuthResponse, SensorPushCredentials, SensorPushTokens, Sensor
 import { BASE_URL, ensureTablesExist, getCurrentUserId } from "./sensorPushBaseService";
 import { callSensorPushAPI } from "./edgeFunctionService";
 
+// Track the last API call time to respect rate limiting (1 call per minute)
+let lastApiCallTime = 0;
+const API_RATE_LIMIT_MS = 60 * 1000; // 1 minute in milliseconds
+
+/**
+ * Helper function to enforce rate limiting
+ * @returns Promise that resolves when it's safe to make another API call
+ */
+const enforceRateLimit = async (): Promise<void> => {
+  const now = Date.now();
+  const timeElapsed = now - lastApiCallTime;
+  
+  if (lastApiCallTime > 0 && timeElapsed < API_RATE_LIMIT_MS) {
+    const waitTime = API_RATE_LIMIT_MS - timeElapsed;
+    console.log(`Rate limiting: waiting ${waitTime}ms before next API call`);
+    
+    // Wait for the required time
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  // Update the last API call time
+  lastApiCallTime = Date.now();
+};
+
 /**
  * Authenticate with the SensorPush API and store the authorization token
  * This implements SensorPush's OAuth2 flow
@@ -16,6 +40,9 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     
     console.log("Starting SensorPush OAuth flow...");
     
+    // Enforce rate limiting
+    await enforceRateLimit();
+    
     // Step 1: Get an authorization token by providing email/password credentials
     console.log("Step 1: Getting authorization token...");
     const authResponse = await callSensorPushAPI('/oauth/authorize', '', 'POST', credentials);
@@ -26,6 +53,9 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     }
     
     console.log("Authorization token received successfully");
+    
+    // Enforce rate limiting between API calls
+    await enforceRateLimit();
     
     // Step 2: Use the authorization token to get access and refresh tokens
     console.log("Step 2: Getting access and refresh tokens...");
@@ -39,7 +69,7 @@ export const authenticateSensorPush = async (credentials: SensorPushCredentials)
     }
     
     if (!tokenResponse.refreshtoken) {
-      console.error("No refresh token in response:", tokenResponse);
+      console.warn("No refresh token in response:", tokenResponse);
       // Continue anyway, as we got an access token
       console.log("No refresh token provided, but proceeding with access token");
     }
@@ -116,7 +146,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       .select('token, expires_at')
       .eq('user_id', userId)
       .eq('service', 'sensorpush_access')
-      .single();
+      .maybeSingle();
       
     if (accessError || !accessTokenData) {
       console.log("No SensorPush access token found");
@@ -129,7 +159,7 @@ export const getSensorPushToken = async (): Promise<string | null> => {
       .select('token, expires_at')
       .eq('user_id', userId)
       .eq('service', 'sensorpush_refresh')
-      .single();
+      .maybeSingle();
     
     const now = new Date();
     const accessExpires = new Date(accessTokenData.expires_at);
@@ -156,6 +186,9 @@ export const getSensorPushToken = async (): Promise<string | null> => {
     console.log("Access token expired, refreshing using refresh token");
     
     try {
+      // Enforce rate limiting
+      await enforceRateLimit();
+      
       const refreshResponse = await callSensorPushAPI('/oauth/refreshtoken', '', 'POST', {
         refreshtoken: refreshTokenData.token
       });

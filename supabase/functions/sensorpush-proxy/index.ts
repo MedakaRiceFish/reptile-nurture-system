@@ -46,17 +46,20 @@ serve(async (req) => {
       ...corsHeaders
     });
     
-    // Add authorization header if token is provided and not the initial auth request
-    if (token && !path.includes('/oauth/authorize') && !path.includes('/oauth/accesstoken')) {
-      console.log("Adding authorization token to request");
+    // Add authorization header if token is provided
+    // IMPORTANT: OAuth endpoints don't need auth, but all data endpoints need "Bearer" prefix
+    if (token) {
+      const trimmedToken = token.trim();
       
-      // CRITICAL FIX: SensorPush API has specific expectations for the Authorization header
-      // According to the error, it's looking for a key=value format, not a Bearer token
-      // The token should be used directly without the "Bearer" prefix
-      headers.set('Authorization', token.trim());
-      
-      // Debug the header to ensure it's properly formatted (hide token value for security)
-      console.log(`Authorization header set: ${token.substring(0, 10)}...`);
+      if (path.includes('/oauth/authorize') || path.includes('/oauth/accesstoken') || path.includes('/oauth/refreshtoken')) {
+        // Auth endpoints don't need Authorization header
+        console.log("No Authorization header needed for OAuth endpoint");
+      } else {
+        // For all other API endpoints, use Bearer token format
+        console.log("Adding Bearer token Authorization header");
+        headers.set('Authorization', `Bearer ${trimmedToken}`);
+        console.log(`Authorization header set with Bearer prefix (token length: ${trimmedToken.length})`);
+      }
     }
     
     // Configure the request options
@@ -84,56 +87,63 @@ serve(async (req) => {
     // Log the response status
     console.log(`SensorPush API response status: ${response.status} ${response.statusText}`);
     
-    // Handle non-OK responses
+    // Parse the response based on content type
+    let responseData;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      responseData = await response.text();
+    }
+    
+    // Handle non-OK responses - CRITICAL: Preserve the original status code
     if (!response.ok) {
-      let errorText;
-      try {
-        const errorJson = await response.json();
-        errorText = JSON.stringify(errorJson);
-        
-        // Log more details about the error
-        console.error(`SensorPush API error details:`, errorJson);
-      } catch (e) {
-        errorText = await response.text();
-        console.error(`SensorPush API error text: ${errorText}`);
-      }
-      
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
       
+      if (typeof responseData === 'object') {
+        console.error(`SensorPush API error details:`, responseData);
+      } else {
+        console.error(`SensorPush API error text: ${responseData}`);
+      }
+      
+      // Return the error with the ACTUAL status code, not 200
       return new Response(
         JSON.stringify({
-          error: errorText,
-          status: response.status
+          error: responseData,
+          status: response.status,
+          statusText: response.statusText
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 // Return 200 but include error details in the body
+          status: response.status // Forward the actual status code
         }
       );
     }
     
-    // Parse the response as JSON
-    const data = await response.json();
-    
     // Sanitize sensitive data in logs
-    const sanitizedData = { ...data };
-    if (sanitizedData.accesstoken) {
-      sanitizedData.accesstoken = "***TOKEN HIDDEN***";
+    let sanitizedData;
+    if (typeof responseData === 'object') {
+      sanitizedData = { ...responseData };
+      if (sanitizedData.accesstoken) {
+        sanitizedData.accesstoken = "***TOKEN HIDDEN***";
+      }
+      if (sanitizedData.refreshtoken) {
+        sanitizedData.refreshtoken = "***TOKEN HIDDEN***";
+      }
+      if (sanitizedData.authorization) {
+        sanitizedData.authorization = "***TOKEN HIDDEN***";
+      }
+      console.log(`SensorPush API successful response received:`, sanitizedData);
+    } else {
+      console.log(`SensorPush API successful response received (non-JSON)`);
     }
-    if (sanitizedData.refreshtoken) {
-      sanitizedData.refreshtoken = "***TOKEN HIDDEN***";
-    }
-    if (sanitizedData.authorization) {
-      sanitizedData.authorization = "***TOKEN HIDDEN***";
-    }
-    
-    console.log(`SensorPush API successful response received:`, sanitizedData);
     
     // Return the successful response to the client
     return new Response(
-      JSON.stringify(data),
+      typeof responseData === 'object' ? JSON.stringify(responseData) : responseData,
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': response.headers.get('Content-Type') || 'application/json' },
         status: 200
       }
     );
@@ -145,11 +155,13 @@ serve(async (req) => {
     // Return a formatted error response
     return new Response(
       JSON.stringify({
-        error: `SensorPush proxy error: ${error.message}`
+        error: `SensorPush proxy error: ${error.message}`,
+        status: 500,
+        statusText: "Internal Server Error"
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 // Return 200 but include error details in the body
+        status: 500 // Use appropriate status code for proxy errors
       }
     );
   }
