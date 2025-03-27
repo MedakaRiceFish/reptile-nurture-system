@@ -48,22 +48,23 @@ serve(async (req) => {
     
     // Add authorization header if token is provided
     if (token) {
-      // FIXED: Correctly handle the token based on the endpoint type
-      if (path.includes('/oauth/')) {
-        // Auth endpoints like /oauth/authorize, /oauth/accesstoken don't use Bearer prefix
+      // Different handling based on the endpoint type
+      if (path.startsWith('/oauth/')) {
+        // OAuth endpoints don't use Authorization header for /oauth/authorize
+        // For /oauth/accesstoken and /oauth/refreshtoken, the tokens are in the body
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
-        // For all other API endpoints that need token (like /devices/sensors),
-        // we need to use the Bearer prefix properly
+        // For all other API endpoints (like /devices/sensors), format the token correctly
         const trimmedToken = token.trim();
         
-        // Check if the token already has the Bearer prefix
+        // SensorPush expects exactly "Bearer " followed by the token
+        // Make sure we don't double-prefix it
         if (!trimmedToken.startsWith('Bearer ')) {
           headers.set('Authorization', `Bearer ${trimmedToken}`);
-          console.log(`Authorization header set with Bearer prefix (token length: ${trimmedToken.length})`);
+          console.log(`Setting Authorization: Bearer ${trimmedToken.substring(0, 10)}...`);
         } else {
           headers.set('Authorization', trimmedToken);
-          console.log(`Authorization header set with existing Bearer prefix (token length: ${trimmedToken.length})`);
+          console.log(`Using existing Bearer token: ${trimmedToken.substring(0, 15)}...`);
         }
       }
     }
@@ -83,7 +84,7 @@ serve(async (req) => {
     // Log the full request for debugging (excluding sensitive data)
     console.log(`Full request to SensorPush API:
     URL: ${url}
-    Method: ${method}
+    Method: ${method || 'GET'}
     Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => !['authorization'].includes(key.toLowerCase()))))}`);
     
     // Make the request to SensorPush API
@@ -103,7 +104,7 @@ serve(async (req) => {
       responseData = await response.text();
     }
     
-    // Handle non-OK responses - CRITICAL: Preserve the original status code
+    // Handle non-OK responses
     if (!response.ok) {
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
       
@@ -113,7 +114,7 @@ serve(async (req) => {
         console.error(`SensorPush API error text: ${responseData}`);
       }
       
-      // Return the error with the ACTUAL status code, not 200
+      // Return the error with the actual status code
       return new Response(
         JSON.stringify({
           error: responseData,
@@ -122,7 +123,7 @@ serve(async (req) => {
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: response.status // Forward the actual status code
+          status: response.status
         }
       );
     }
@@ -167,7 +168,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 // Use appropriate status code for proxy errors
+        status: 500
       }
     );
   }

@@ -19,7 +19,7 @@ export const callSensorPushAPI = async (
     const payload = {
       path,
       method,
-      token, // The token will be handled correctly by the edge function
+      token: token.trim(), // Ensure token is trimmed
       body
     };
     
