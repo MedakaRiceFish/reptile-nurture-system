@@ -49,8 +49,14 @@ serve(async (req) => {
     // Add authorization header if token is provided and not the initial auth request
     if (token && !path.includes('/oauth/authorize') && !path.includes('/oauth/accesstoken')) {
       console.log("Adding authorization token to request");
-      // Fix: Properly format authorization header with "Bearer" prefix
-      headers.set('Authorization', `Bearer ${token}`);
+      
+      // IMPORTANT: SensorPush API expects a proper Bearer token format
+      // Make sure there's no extra space or formatting issues with the token
+      const trimmedToken = token.trim();
+      headers.set('Authorization', `Bearer ${trimmedToken}`);
+      
+      // Debug the header to ensure it's properly formatted (hide token value for security)
+      console.log(`Authorization header set with format: 'Bearer ${trimmedToken.substring(0, 10)}...'`);
     }
     
     // Configure the request options
@@ -84,12 +90,15 @@ serve(async (req) => {
       try {
         const errorJson = await response.json();
         errorText = JSON.stringify(errorJson);
+        
+        // Log more details about the error
+        console.error(`SensorPush API error details:`, errorJson);
       } catch (e) {
         errorText = await response.text();
+        console.error(`SensorPush API error text: ${errorText}`);
       }
       
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
-      console.error(`Error details: ${errorText}`);
       
       return new Response(
         JSON.stringify({

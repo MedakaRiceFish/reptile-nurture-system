@@ -54,6 +54,22 @@ export const callSensorPushAPI = async (
     if (data.error) {
       console.error('SensorPush API error:', data.error);
       
+      // More detailed error logging to help diagnose
+      if (typeof data.error === 'string') {
+        try {
+          // Try to parse the error if it's a JSON string
+          const parsedError = JSON.parse(data.error);
+          console.error('Parsed error details:', parsedError);
+          
+          if (parsedError.message && parsedError.message.includes('Authorization header')) {
+            throw new Error('Authentication error with SensorPush. Please reconnect your account.');
+          }
+        } catch (parseError) {
+          // If parsing fails, just use the original error string
+          console.error('Error parsing error string:', parseError);
+        }
+      }
+      
       if (typeof data.error === 'string' && data.error.includes('Invalid login credentials')) {
         throw new Error('Invalid login credentials. Please check your email and password.');
       }
