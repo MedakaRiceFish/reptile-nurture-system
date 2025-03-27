@@ -9,3 +9,4 @@ export * from "./sensorPushHistoryService";
 export * from "./sensorPushMappingService";
 export * from "./sensorPushTokenService";
 export * from "./sensorPushRateLimiter";
+export * from "./edgeFunctionService";

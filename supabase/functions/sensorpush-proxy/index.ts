@@ -48,19 +48,23 @@ serve(async (req) => {
     
     // Add authorization header if token is provided
     if (token) {
-      const trimmedToken = token.trim();
-      
-      // IMPORTANT: Different endpoints require different authorization header formats
-      // OAuth endpoints (authorize, accesstoken, refreshtoken) don't need "Bearer" prefix
-      // All other endpoints (data endpoints) need "Bearer" prefix
+      // FIXED: Correctly handle the token based on the endpoint type
       if (path.includes('/oauth/')) {
-        // Auth endpoints don't need Authorization header
+        // Auth endpoints like /oauth/authorize, /oauth/accesstoken don't use Bearer prefix
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
-        // For all other API endpoints, use Bearer token format
-        console.log("Adding Bearer token Authorization header");
-        headers.set('Authorization', `Bearer ${trimmedToken}`);
-        console.log(`Authorization header set with Bearer prefix (token length: ${trimmedToken.length})`);
+        // For all other API endpoints that need token (like /devices/sensors),
+        // we need to use the Bearer prefix properly
+        const trimmedToken = token.trim();
+        
+        // Check if the token already has the Bearer prefix
+        if (!trimmedToken.startsWith('Bearer ')) {
+          headers.set('Authorization', `Bearer ${trimmedToken}`);
+          console.log(`Authorization header set with Bearer prefix (token length: ${trimmedToken.length})`);
+        } else {
+          headers.set('Authorization', trimmedToken);
+          console.log(`Authorization header set with existing Bearer prefix (token length: ${trimmedToken.length})`);
+        }
       }
     }
     
