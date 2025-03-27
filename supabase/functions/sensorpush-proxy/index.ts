@@ -47,11 +47,13 @@ serve(async (req) => {
     });
     
     // Add authorization header if token is provided
-    // IMPORTANT: OAuth endpoints don't need auth, but all data endpoints need "Bearer" prefix
     if (token) {
       const trimmedToken = token.trim();
       
-      if (path.includes('/oauth/authorize') || path.includes('/oauth/accesstoken') || path.includes('/oauth/refreshtoken')) {
+      // IMPORTANT: Different endpoints require different authorization header formats
+      // OAuth endpoints (authorize, accesstoken, refreshtoken) don't need "Bearer" prefix
+      // All other endpoints (data endpoints) need "Bearer" prefix
+      if (path.includes('/oauth/')) {
         // Auth endpoints don't need Authorization header
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
