@@ -53,14 +53,10 @@ serve(async (req) => {
         // For /oauth/accesstoken and /oauth/refreshtoken, the tokens are in the body
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
-        // For all other API endpoints (like /devices/sensors), format the token correctly
-        const trimmedToken = token.trim();
-
-        // SensorPush expects exactly "Bearer " followed by the token
-        // Remove any existing "Bearer " prefix to avoid double-prefixing
-        const cleanToken = trimmedToken.replace(/^Bearer\s+/, '');
+        // For all other API endpoints, use Bearer token format
+        const cleanToken = token.trim().replace(/^Bearer\s+/, '');
         headers.set('Authorization', `Bearer ${cleanToken}`);
-        console.log(`Setting Authorization header with token (first 10 chars): ${cleanToken.substring(0, 10)}...`);
+        console.log(`Setting Authorization header with Bearer token (first 10 chars): ${cleanToken.substring(0, 10)}...`);
       }
     }
 

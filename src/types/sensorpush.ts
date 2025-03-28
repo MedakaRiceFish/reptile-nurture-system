@@ -1,4 +1,3 @@
-
 export interface SensorPushCredentials {
   email: string;
   password: string;
