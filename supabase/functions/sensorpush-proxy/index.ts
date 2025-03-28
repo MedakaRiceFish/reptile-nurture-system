@@ -20,6 +20,8 @@ async function handleRequest(req: Request): Promise<Response> {
     const url = `${SENSORPUSH_API_BASE}${path}`;
     const headers = new Headers({
       "Content-Type": "application/json",
+      // Add current date header as required by the API
+      "Date": new Date().toUTCString()
     });
 
     // Add authorization header if token is provided
@@ -30,15 +32,15 @@ async function handleRequest(req: Request): Promise<Response> {
         // For /oauth/accesstoken and /oauth/refreshtoken, the tokens are in the body
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
-        // For all other API endpoints, use the correct Authorization format
+        // For all other API endpoints, use standard OAuth2 Bearer token format
         const cleanToken = token.trim().replace(/^Bearer\s+/, '');
-        // Format: Authorization: Bearer accesstoken=<token>
-        headers.set('Authorization', `Bearer accesstoken=${cleanToken}`);
-        console.log(`Setting Authorization header with token format: Bearer accesstoken=<token>`);
+        headers.set('Authorization', `Bearer ${cleanToken}`);
+        console.log(`Setting Authorization header: Bearer <token>`);
       }
     }
 
     console.log(`Making ${method} request to ${url}`);
+    console.log('Request headers:', Object.fromEntries(headers.entries()));
 
     // Make the request to SensorPush API
     const response = await fetch(url, {
@@ -54,6 +56,7 @@ async function handleRequest(req: Request): Promise<Response> {
     if (!response.ok) {
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
       console.error('Error details:', JSON.stringify(data, null, 2));
+      console.error('Response headers:', Object.fromEntries(response.headers.entries()));
     } else {
       console.log(`SensorPush API success: ${response.status}`);
       if (data.sensors) {
