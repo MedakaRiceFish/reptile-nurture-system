@@ -68,23 +68,23 @@ export const getSensorPushToken = async (): Promise<string | null> => {
     const userId = await getCurrentUserId();
     
     // This function gets tokens from the database
-    const tokens = await getSensorPushTokensFromDatabase(userId);
+    const tokensResult = await getSensorPushTokensFromDatabase(userId);
     
-    if (!tokens) {
+    if (!tokensResult) {
       console.log("No SensorPush tokens found");
       return null;
     }
     
     // If the access token is still valid, return it
-    if (tokens.access_token && new Date(tokens.access_expires) > new Date()) {
+    if (tokensResult.access_token && new Date(tokensResult.access_expires) > new Date()) {
       console.log("Using existing SensorPush access token");
-      return tokens.access_token;
+      return tokensResult.access_token;
     }
     
     // If the refresh token is still valid, use it to get a new access token
-    if (tokens.refresh_token && new Date(tokens.refresh_expires) > new Date()) {
+    if (tokensResult.refresh_token && new Date(tokensResult.refresh_expires) > new Date()) {
       console.log("Refreshing SensorPush access token...");
-      return await refreshAccessToken(tokens.refresh_token);
+      return await refreshAccessToken(tokensResult.refresh_token);
     }
     
     // If we got here, all tokens are expired
@@ -143,17 +143,17 @@ const getSensorPushTokensFromDatabase = async (userId: string): Promise<{
   refresh_expires: string;
 } | null> => {
   try {
-    // This is implemented in sensorPushDatabaseService.ts
-    // Importing it here would cause circular dependency
+    // Call the database function to get SensorPush tokens
     const { data, error } = await supabase.rpc('get_sensorpush_tokens', {
       p_user_id: userId
     });
     
-    if (error || !data || !data.access_token) {
-      console.log("No SensorPush tokens found in database");
+    if (error || !data) {
+      console.log("No SensorPush tokens found in database:", error?.message);
       return null;
     }
     
+    // The RPC returns a single record, not an array
     return data;
   } catch (error) {
     console.error("Error getting SensorPush tokens from database:", error);

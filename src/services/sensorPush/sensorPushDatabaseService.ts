@@ -50,10 +50,17 @@ export const storeSensorPushTokens = async (
   refreshExpires: Date
 ): Promise<void> => {
   try {
-    // Store the access token
+    // First delete any existing tokens for this user to avoid constraint violations
+    await supabase
+      .from('api_tokens')
+      .delete()
+      .eq('user_id', userId)
+      .in('service', ['sensorpush_access', 'sensorpush_refresh']);
+    
+    // Insert the access token
     const { error: accessError } = await supabase
       .from('api_tokens')
-      .upsert({
+      .insert({
         user_id: userId,
         service: 'sensorpush_access',
         token: accessToken,
@@ -64,11 +71,11 @@ export const storeSensorPushTokens = async (
       throw new Error(`Failed to store access token: ${accessError.message}`);
     }
     
-    // Store the refresh token if provided
+    // Insert the refresh token if provided
     if (refreshToken) {
       const { error: refreshError } = await supabase
         .from('api_tokens')
-        .upsert({
+        .insert({
           user_id: userId,
           service: 'sensorpush_refresh',
           token: refreshToken,
