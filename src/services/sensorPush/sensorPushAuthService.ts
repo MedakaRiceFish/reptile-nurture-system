@@ -153,7 +153,13 @@ const getSensorPushTokensFromDatabase = async (userId: string): Promise<{
       return null;
     }
     
-    // The RPC returns a single record, not an array
+    // Handle the response - data could be an array or a single object based on the RPC function
+    // If it's an array, grab the first item
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0];
+    }
+    
+    // If it's a single object (as expected in most cases)
     return data;
   } catch (error) {
     console.error("Error getting SensorPush tokens from database:", error);
