@@ -4,6 +4,7 @@ import { getRateLimitedFunction } from "./sensorPushRateLimiter";
 import { authenticateSensorPushWithCredentials, callSensorPushAPI } from "./edgeFunctionService";
 import { storeSensorPushTokens } from "./sensorPushDatabaseService";
 import { getCurrentUserId } from "./sensorPushBaseService";
+import { supabase } from "@/integrations/supabase/client";
 
 // Limit authentication to once per 30 seconds
 const throttledAuthenticate = getRateLimitedFunction(

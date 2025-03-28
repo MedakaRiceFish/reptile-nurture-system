@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { SensorPushDBTokens } from "@/types/sensorpush";
 
 /**
  * Create the required stored procedures for token management
@@ -34,6 +35,54 @@ export const initSensorPushSchema = async (): Promise<void> => {
     console.log("SensorPush database schema initialized successfully");
   } catch (error) {
     console.error("Error initializing SensorPush database schema:", error);
+    throw error;
+  }
+};
+
+/**
+ * Store SensorPush tokens in the database for a specific user
+ */
+export const storeSensorPushTokens = async (
+  userId: string,
+  accessToken: string,
+  refreshToken: string,
+  accessExpires: Date,
+  refreshExpires: Date
+): Promise<void> => {
+  try {
+    // Store the access token
+    const { error: accessError } = await supabase
+      .from('api_tokens')
+      .upsert({
+        user_id: userId,
+        service: 'sensorpush_access',
+        token: accessToken,
+        expires_at: accessExpires.toISOString()
+      });
+      
+    if (accessError) {
+      throw new Error(`Failed to store access token: ${accessError.message}`);
+    }
+    
+    // Store the refresh token if provided
+    if (refreshToken) {
+      const { error: refreshError } = await supabase
+        .from('api_tokens')
+        .upsert({
+          user_id: userId,
+          service: 'sensorpush_refresh',
+          token: refreshToken,
+          expires_at: refreshExpires.toISOString()
+        });
+        
+      if (refreshError) {
+        throw new Error(`Failed to store refresh token: ${refreshError.message}`);
+      }
+    }
+    
+    console.log("SensorPush tokens stored successfully");
+  } catch (error) {
+    console.error("Error storing SensorPush tokens:", error);
     throw error;
   }
 };
