@@ -1,4 +1,3 @@
-
 // Follow Deno and Supabase conventions for imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
@@ -30,7 +29,6 @@ async function handleRequest(req: Request): Promise<Response> {
         // For /oauth/accesstoken and /oauth/refreshtoken, the tokens are in the body
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
-  CursorUpdate1
         // For all other API endpoints, use Bearer token format
         const cleanToken = token.trim().replace(/^Bearer\s+/, '');
         headers.set('Authorization', `Bearer ${cleanToken}`);
