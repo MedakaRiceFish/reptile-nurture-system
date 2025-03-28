@@ -1,4 +1,3 @@
-
 // Follow Deno and Supabase conventions for imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
@@ -9,7 +8,7 @@ const SENSORPUSH_API_BASE_URL = "https://api.sensorpush.com/api/v1";
 // Edge function to proxy requests to SensorPush API
 serve(async (req) => {
   console.log("SensorPush proxy function called");
-  
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -27,25 +26,25 @@ serve(async (req) => {
       hasToken: !!requestData.token,
       hasBody: !!requestData.body
     }));
-    
+
     // Extract the necessary data from the request
     const { path, method, token, body } = requestData;
-    
+
     if (!path) {
       throw new Error("Path is required");
     }
-    
+
     // Construct the full URL
     const url = `${SENSORPUSH_API_BASE_URL}${path}`;
     console.log(`Making request to SensorPush API: ${method || 'GET'} ${url}`);
-    
+
     // Prepare headers
     const headers = new Headers({
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       ...corsHeaders
     });
-    
+
     // Add authorization header if token is provided
     if (token) {
       // Different handling based on the endpoint type
@@ -56,64 +55,60 @@ serve(async (req) => {
       } else {
         // For all other API endpoints (like /devices/sensors), format the token correctly
         const trimmedToken = token.trim();
-        
+
         // SensorPush expects exactly "Bearer " followed by the token
-        // Make sure we don't double-prefix it
-        if (!trimmedToken.startsWith('Bearer ')) {
-          headers.set('Authorization', `Bearer ${trimmedToken}`);
-          console.log(`Setting Authorization: Bearer ${trimmedToken.substring(0, 10)}...`);
-        } else {
-          headers.set('Authorization', trimmedToken);
-          console.log(`Using existing Bearer token: ${trimmedToken.substring(0, 15)}...`);
-        }
+        // Remove any existing "Bearer " prefix to avoid double-prefixing
+        const cleanToken = trimmedToken.replace(/^Bearer\s+/, '');
+        headers.set('Authorization', `Bearer ${cleanToken}`);
+        console.log(`Setting Authorization header with token (first 10 chars): ${cleanToken.substring(0, 10)}...`);
       }
     }
-    
+
     // Configure the request options
     const options: RequestInit = {
       method: method || 'GET',
       headers: headers,
     };
-    
+
     // Add body for POST/PUT requests
     if (body && (method === 'POST' || method === 'PUT')) {
       options.body = JSON.stringify(body);
       console.log(`Request payload size: ${JSON.stringify(body).length} bytes`);
     }
-    
+
     // Log the full request for debugging (excluding sensitive data)
     console.log(`Full request to SensorPush API:
     URL: ${url}
     Method: ${method || 'GET'}
     Headers: ${JSON.stringify(Object.fromEntries([...headers.entries()].filter(([key]) => !['authorization'].includes(key.toLowerCase()))))}`);
-    
+
     // Make the request to SensorPush API
     console.log(`Sending request to SensorPush API...`);
     const response = await fetch(url, options);
-    
+
     // Log the response status
     console.log(`SensorPush API response status: ${response.status} ${response.statusText}`);
-    
+
     // Parse the response based on content type
     let responseData;
     const contentType = response.headers.get('content-type');
-    
+
     if (contentType && contentType.includes('application/json')) {
       responseData = await response.json();
     } else {
       responseData = await response.text();
     }
-    
+
     // Handle non-OK responses
     if (!response.ok) {
       console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
-      
+
       if (typeof responseData === 'object') {
         console.error(`SensorPush API error details:`, responseData);
       } else {
         console.error(`SensorPush API error text: ${responseData}`);
       }
-      
+
       // Return the error with the actual status code
       return new Response(
         JSON.stringify({
@@ -127,7 +122,7 @@ serve(async (req) => {
         }
       );
     }
-    
+
     // Sanitize sensitive data in logs
     let sanitizedData;
     if (typeof responseData === 'object') {
@@ -145,7 +140,7 @@ serve(async (req) => {
     } else {
       console.log(`SensorPush API successful response received (non-JSON)`);
     }
-    
+
     // Return the successful response to the client
     return new Response(
       typeof responseData === 'object' ? JSON.stringify(responseData) : responseData,
@@ -158,7 +153,7 @@ serve(async (req) => {
     // Log the error
     console.error("SensorPush proxy error:", error.message);
     console.error("Error stack:", error.stack);
-    
+
     // Return a formatted error response
     return new Response(
       JSON.stringify({
