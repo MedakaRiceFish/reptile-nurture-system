@@ -7,7 +7,8 @@ const SENSORPUSH_API_BASE = "https://api.sensorpush.com/api/v1";
 
 async function handleRequest(req: Request): Promise<Response> {
   try {
-    const { path, token, body } = await req.json();
+    const { path, token, method = "POST", body } = await req.json();
+    console.log(`Processing request for path: ${path}, method: ${method}`);
 
     if (!path) {
       return new Response(JSON.stringify({ error: "No path provided" }), {
@@ -36,15 +37,28 @@ async function handleRequest(req: Request): Promise<Response> {
       }
     }
 
+    console.log(`Making ${method} request to ${url}`);
+
     // Make the request to SensorPush API
     const response = await fetch(url, {
-      method: "POST",
+      method: method,
       headers: headers,
       body: body ? JSON.stringify(body) : undefined
     });
 
     // Get the response data
     const data = await response.json();
+
+    // Log detailed error information if the response is not successful
+    if (!response.ok) {
+      console.error(`SensorPush API error: ${response.status} ${response.statusText}`);
+      console.error('Error details:', JSON.stringify(data, null, 2));
+    } else {
+      console.log(`SensorPush API success: ${response.status}`);
+      if (data.sensors) {
+        console.log(`Found ${Object.keys(data.sensors).length} sensors`);
+      }
+    }
 
     // Return the response with CORS headers
     return new Response(JSON.stringify(data), {

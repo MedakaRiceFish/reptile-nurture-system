@@ -36,7 +36,7 @@ export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
     console.log("Fetching sensors with token length:", token.length);
 
     // Use the edge function service to make the request
-    const data = await callSensorPushAPI('/devices/sensors', token);
+    const data = await callSensorPushAPI('/devices/sensors', token, 'GET');
 
     if (!data || !data.sensors) {
       throw new Error("Invalid response from SensorPush API");
