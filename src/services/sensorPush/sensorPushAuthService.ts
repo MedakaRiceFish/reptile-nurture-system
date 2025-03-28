@@ -159,8 +159,13 @@ const getSensorPushTokensFromDatabase = async (userId: string): Promise<{
       return data[0];
     }
     
-    // If it's a single object (as expected in most cases)
-    return data;
+    // If it's not an array but the expected object type, return it directly
+    if (data && typeof data === 'object' && 'access_token' in data) {
+      return data as any;
+    }
+    
+    console.log("Unexpected data format from get_sensorpush_tokens:", data);
+    return null;
   } catch (error) {
     console.error("Error getting SensorPush tokens from database:", error);
     return null;
