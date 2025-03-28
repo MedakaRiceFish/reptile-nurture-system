@@ -19,8 +19,16 @@ export function SensorPushAuthForm() {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [deviceCount, setDeviceCount] = useState<number>(0);
+  const [activeDeviceCount, setActiveDeviceCount] = useState<number>(0);
   const [sensors, setSensors] = useState<SensorPushSensor[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'loading' | 'connected' | 'disconnected' | 'error'>('loading');
+
+  const updateDeviceCounts = (fetchedSensors: SensorPushSensor[]) => {
+    setDeviceCount(fetchedSensors.length);
+    const activeSensors = fetchedSensors.filter(sensor => sensor.active);
+    setActiveDeviceCount(activeSensors.length);
+    setSensors(fetchedSensors);
+  };
 
   useEffect(() => {
     // Check if we already have a valid token
@@ -28,22 +36,21 @@ export function SensorPushAuthForm() {
       setConnectionStatus('loading');
       const token = await getSensorPushToken();
       setIsConnected(!!token);
-      
+
       if (token) {
         try {
           setIsLoading(true);
           // Set last sync time to now
           setLastSyncTime(new Date());
-          
+
           // Fetch sensors to get the device count
           const fetchedSensors = await fetchSensors();
-          
+
           if (fetchedSensors && fetchedSensors.length > 0) {
-            setDeviceCount(fetchedSensors.length);
-            setSensors(fetchedSensors);
+            updateDeviceCounts(fetchedSensors);
             setConnectionStatus('connected');
-            console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`, 
-                        fetchedSensors.map(s => s.name).join(', '));
+            console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`,
+              fetchedSensors.map(s => s.name).join(', '));
           } else {
             setConnectionStatus('error');
             console.warn("No sensors found or connection issue");
@@ -58,7 +65,7 @@ export function SensorPushAuthForm() {
         setConnectionStatus('disconnected');
       }
     };
-    
+
     checkConnection();
   }, []);
 
@@ -70,7 +77,7 @@ export function SensorPushAuthForm() {
     try {
       // Real authentication
       const token = await authenticateSensorPush({ email, password });
-      
+
       if (token) {
         toast.success("Successfully connected to SensorPush");
         setEmail("");
@@ -78,16 +85,15 @@ export function SensorPushAuthForm() {
         setIsConnected(true);
         setShowLoginForm(false);
         setLastSyncTime(new Date());
-        
+
         // Fetch sensors to get the device count after successful authentication
         try {
           const fetchedSensors = await fetchSensors();
           if (fetchedSensors && fetchedSensors.length > 0) {
-            setDeviceCount(fetchedSensors.length);
-            setSensors(fetchedSensors);
+            updateDeviceCounts(fetchedSensors);
             setConnectionStatus('connected');
-            console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`, 
-                        fetchedSensors.map(s => s.name).join(', '));
+            console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`,
+              fetchedSensors.map(s => s.name).join(', '));
           } else {
             setConnectionStatus('error');
             toast.error("Authentication successful but no sensors found");
@@ -118,15 +124,14 @@ export function SensorPushAuthForm() {
       setIsLoading(true);
       setConnectionStatus('loading');
       const fetchedSensors = await fetchSensors();
-      
+
       if (fetchedSensors && fetchedSensors.length > 0) {
-        setDeviceCount(fetchedSensors.length);
-        setSensors(fetchedSensors);
+        updateDeviceCounts(fetchedSensors);
         setLastSyncTime(new Date());
         setConnectionStatus('connected');
         toast.success(`Refreshed sensors: Found ${fetchedSensors.length} devices`);
-        console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`, 
-                    fetchedSensors.map(s => s.name).join(', '));
+        console.log(`Connected to SensorPush with ${fetchedSensors.length} sensors:`,
+          fetchedSensors.map(s => s.name).join(', '));
       } else {
         setConnectionStatus('error');
         toast.error("No sensors found or connection issue. Try reconnecting your account.");
@@ -140,7 +145,7 @@ export function SensorPushAuthForm() {
   };
 
   const getStatusDisplay = () => {
-    switch(connectionStatus) {
+    switch (connectionStatus) {
       case 'loading':
         return (
           <div className="flex items-center text-muted-foreground">
@@ -179,15 +184,15 @@ export function SensorPushAuthForm() {
           <div>
             <CardTitle>Connect SensorPush</CardTitle>
             <CardDescription>
-              {isConnected 
-                ? "Your SensorPush account is connected and actively syncing sensor data" 
+              {isConnected
+                ? "Your SensorPush account is connected and actively syncing sensor data"
                 : "Enter your SensorPush account credentials to connect your sensors"}
             </CardDescription>
           </div>
           {getStatusDisplay()}
         </div>
       </CardHeader>
-      
+
       {isConnected && !showLoginForm ? (
         <CardContent className="space-y-4">
           <div className="bg-muted/50 p-4 rounded-md">
@@ -199,17 +204,21 @@ export function SensorPushAuthForm() {
                     {lastSyncTime ? lastSyncTime.toLocaleString() : "Never"}
                   </p>
                 </div>
-                
+
                 <div>
                   <p className="text-sm font-medium">
-                    Devices Found: {deviceCount}
+                    Connected Devices: {activeDeviceCount} active / {deviceCount} total
                   </p>
                   {sensors.length > 0 && (
                     <div className="mt-2">
-                      <p className="text-xs font-medium mb-1">Connected Sensors:</p>
+                      <p className="text-xs font-medium mb-1">Sensor Status:</p>
                       <div className="flex flex-wrap gap-1">
                         {sensors.map(sensor => (
-                          <Badge key={sensor.id} variant="outline" className="text-xs">
+                          <Badge
+                            key={sensor.id}
+                            variant={sensor.active ? "default" : "secondary"}
+                            className="text-xs"
+                          >
                             {sensor.name} {sensor.active ? "✓" : "⚠️"}
                           </Badge>
                         ))}
@@ -220,9 +229,9 @@ export function SensorPushAuthForm() {
               </div>
               <Collapsible>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleRefresh}
                     disabled={isLoading}
                     className="flex items-center gap-1"
@@ -230,9 +239,9 @@ export function SensorPushAuthForm() {
                     <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
                     {isLoading ? "Refreshing..." : "Refresh"}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleReconnect}
                     className="flex items-center gap-1"
                   >
@@ -308,10 +317,10 @@ export function SensorPushAuthForm() {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading 
-                ? "Connecting..." 
-                : isConnected 
-                  ? "Reconnect SensorPush Account" 
+              {isLoading
+                ? "Connecting..."
+                : isConnected
+                  ? "Reconnect SensorPush Account"
                   : "Connect SensorPush Account"
               }
             </Button>
