@@ -1,3 +1,4 @@
+
 // Follow Deno and Supabase conventions for imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
@@ -55,12 +56,15 @@ serve(async (req) => {
       } else {
         // For all other API endpoints (like /devices/sensors), format the token correctly
         const trimmedToken = token.trim();
-
+        
         // SensorPush expects exactly "Bearer " followed by the token
         // Remove any existing "Bearer " prefix to avoid double-prefixing
-        const cleanToken = trimmedToken.replace(/^Bearer\s+/, '');
-        headers.set('Authorization', `Bearer ${cleanToken}`);
-        console.log(`Setting Authorization header with token (first 10 chars): ${cleanToken.substring(0, 10)}...`);
+        const cleanToken = trimmedToken.startsWith('Bearer ') 
+          ? trimmedToken 
+          : `Bearer ${trimmedToken}`;
+          
+        headers.set('Authorization', cleanToken);
+        console.log(`Setting Authorization header: ${cleanToken.substring(0, 20)}...`);
       }
     }
 

@@ -1,3 +1,4 @@
+
 import { SensorPushCredentials, SensorPushTokens } from "@/types/sensorpush";
 import { getRateLimitedFunction } from "./sensorPushRateLimiter";
 import { authenticateSensorPushWithCredentials, callSensorPushAPI } from "./edgeFunctionService";
@@ -160,15 +161,9 @@ const getSensorPushTokensFromDatabase = async (userId: string): Promise<{
       return null;
     }
 
-    // Handle the response - data could be an array or a single object based on the RPC function
-    // If it's an array, grab the first item
+    // Handle the response - data is an array from the RPC function
     if (Array.isArray(data) && data.length > 0) {
       return data[0];
-    }
-
-    // If it's not an array but the expected object type, return it directly
-    if (data && typeof data === 'object' && 'access_token' in data) {
-      return data as any;
     }
 
     console.log("Unexpected data format from get_sensorpush_tokens:", data);
