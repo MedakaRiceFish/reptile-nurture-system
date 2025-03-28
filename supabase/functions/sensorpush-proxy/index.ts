@@ -30,10 +30,11 @@ async function handleRequest(req: Request): Promise<Response> {
         // For /oauth/accesstoken and /oauth/refreshtoken, the tokens are in the body
         console.log("No Authorization header needed for OAuth endpoint");
       } else {
-        // For all other API endpoints, use Bearer token format
+        // For all other API endpoints, use the correct Authorization format
         const cleanToken = token.trim().replace(/^Bearer\s+/, '');
-        headers.set('Authorization', `Bearer ${cleanToken}`);
-        console.log(`Setting Authorization header with Bearer token (first 10 chars): ${cleanToken.substring(0, 10)}...`);
+        // Format: Authorization: Bearer accesstoken=<token>
+        headers.set('Authorization', `Bearer accesstoken=${cleanToken}`);
+        console.log(`Setting Authorization header with token format: Bearer accesstoken=<token>`);
       }
     }
 
