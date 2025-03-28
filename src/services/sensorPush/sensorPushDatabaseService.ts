@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SensorPushDBTokens } from "@/types/sensorpush";
 
@@ -26,12 +25,12 @@ export const initSensorPushSchema = async (): Promise<void> => {
     const { count, error: checkError } = await supabase
       .from('api_tokens')
       .select('*', { count: 'exact', head: true });
-    
+
     if (checkError) {
       // Table doesn't exist, create it with Supabase SQL
       await supabase.rpc('create_api_tokens_table');
     }
-    
+
     console.log("SensorPush database schema initialized successfully");
   } catch (error) {
     console.error("Error initializing SensorPush database schema:", error);
@@ -56,7 +55,7 @@ export const storeSensorPushTokens = async (
       .delete()
       .eq('user_id', userId)
       .in('service', ['sensorpush_access', 'sensorpush_refresh']);
-    
+
     // Insert the access token
     const { error: accessError } = await supabase
       .from('api_tokens')
@@ -66,11 +65,11 @@ export const storeSensorPushTokens = async (
         token: accessToken,
         expires_at: accessExpires.toISOString()
       });
-      
+
     if (accessError) {
       throw new Error(`Failed to store access token: ${accessError.message}`);
     }
-    
+
     // Insert the refresh token if provided
     if (refreshToken) {
       const { error: refreshError } = await supabase
@@ -81,12 +80,12 @@ export const storeSensorPushTokens = async (
           token: refreshToken,
           expires_at: refreshExpires.toISOString()
         });
-        
+
       if (refreshError) {
         throw new Error(`Failed to store refresh token: ${refreshError.message}`);
       }
     }
-    
+
     console.log("SensorPush tokens stored successfully");
   } catch (error) {
     console.error("Error storing SensorPush tokens:", error);
@@ -103,12 +102,12 @@ export const ensureSensorsHistoryTableExists = async (): Promise<void> => {
     const { count, error: checkError } = await supabase
       .from('sensors_history')
       .select('*', { count: 'exact', head: true });
-    
+
     if (checkError) {
       // Table doesn't exist, create it with Supabase SQL
       await supabase.rpc('create_sensors_history_table');
     }
-    
+
     console.log("Sensors history table check complete");
   } catch (error) {
     console.error("Error checking sensors history table:", error);
@@ -124,12 +123,12 @@ export const ensureSamplesHistoryTableExists = async (): Promise<void> => {
     const { count, error: checkError } = await supabase
       .from('samples_history')
       .select('*', { count: 'exact', head: true });
-    
+
     if (checkError) {
       // Table doesn't exist, create it with Supabase SQL
       await supabase.rpc('create_samples_history_table');
     }
-    
+
     console.log("Samples history table check complete");
   } catch (error) {
     console.error("Error checking samples history table:", error);

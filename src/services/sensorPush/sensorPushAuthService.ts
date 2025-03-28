@@ -49,7 +49,8 @@ export const authenticateSensorPush = async (
       tokens.accesstoken,
       tokens.refreshtoken,
       accessExpires,
-      refreshExpires
+      refreshExpires,
+      tokens.apikey
     );
 
     // Start polling for sensor data

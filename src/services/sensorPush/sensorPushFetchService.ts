@@ -9,11 +9,24 @@ import { storeSensorsData, storeSamplesData } from "./sensorPushStorageService";
 let stopPolling: (() => void) | null = null;
 
 /**
+ * Get the appropriate token for the endpoint
+ */
+const getTokenForEndpoint = async (path: string): Promise<string | null> => {
+  try {
+    // For all endpoints, use the access token
+    return await getSensorPushToken();
+  } catch (error) {
+    console.error("Error getting token for endpoint:", error);
+    return null;
+  }
+};
+
+/**
  * Fetch all sensors from the SensorPush API
  */
 export const fetchSensors = async (): Promise<SensorPushSensor[] | null> => {
   try {
-    const token = await getSensorPushToken();
+    const token = await getTokenForEndpoint('/devices/sensors');
 
     if (!token) {
       toast.error("No SensorPush token found. Please connect your account first.");
